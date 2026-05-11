@@ -30,7 +30,7 @@ import {
  * (Gegenseite) ein Gesamt-Limit teilt.
  */
 export interface StackingCounterSpec {
-  label: string;
+  labelKey: 'addGame.flags.fuchsCaught' | 'addGame.flags.doppelkopf';
   /** Codes der Stufen 1..N fuer die Re-Seite (Index 0 = Stufe 1). */
   reCodes: ReadonlyArray<string>;
   /** Codes der Stufen 1..N fuer die Kontra-Seite (Index 0 = Stufe 1). */
@@ -44,14 +44,14 @@ export function stepsPerSide(spec: StackingCounterSpec): number {
 }
 
 export const fuchsSpec: StackingCounterSpec = {
-  label: 'Fuchs gefangen',
+  labelKey: 'addGame.flags.fuchsCaught',
   reCodes: [reFuchs1.code, reFuchs2.code],
   contraCodes: [contraFuchs1.code, contraFuchs2.code],
   maxTotal: 2,
 };
 
 export const doppelkopfSpec: StackingCounterSpec = {
-  label: 'Doppelkopf',
+  labelKey: 'addGame.flags.doppelkopf',
   reCodes: [
     reDoppelkopf1.code,
     reDoppelkopf2.code,

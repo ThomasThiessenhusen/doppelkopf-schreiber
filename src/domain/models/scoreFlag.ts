@@ -27,7 +27,7 @@ export const FlagGroup = {
  */
 export interface ScoreFlag {
   readonly code: string;
-  readonly label: string;
+  readonly labelKey: string;
   readonly value: number;
   readonly target: FlagTarget;
   readonly description?: string;

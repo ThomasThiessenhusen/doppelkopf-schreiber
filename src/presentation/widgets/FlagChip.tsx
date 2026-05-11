@@ -1,6 +1,7 @@
 import { Chip } from 'react-native-paper';
 
 import type { ScoreFlag } from '@/domain/models/scoreFlag';
+import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 export interface FlagChipProps {
   flag: ScoreFlag;
@@ -23,8 +24,10 @@ export function FlagChip({
   enabled = true,
   onChanged,
 }: FlagChipProps) {
+  const { t } = useTranslation();
   const value = displayedValue ?? flag.value;
-  const label = selected ? `${flag.label}  ${formatValue(value)}` : flag.label;
+  const flagLabel = t(flag.labelKey);
+  const label = selected ? `${flagLabel}  ${formatValue(value)}` : flagLabel;
   const isDisabled = !enabled && !selected;
   return (
     <Chip

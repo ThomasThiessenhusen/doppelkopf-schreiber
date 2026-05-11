@@ -17,6 +17,7 @@ import type { Round } from '@/domain/models/round';
 import { BockLevel } from '@/domain/scoring/bockLevel';
 import type { GameScore } from '@/domain/scoring/scoreCalculator';
 import { flagByCode } from '@/domain/scoring/scoringRules';
+import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 export interface RoundSectionProps {
   round: Round;
@@ -39,6 +40,7 @@ export function RoundSection({
   onEditGame,
   onDeleteGame,
 }: RoundSectionProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const [deleteTarget, setDeleteTarget] = useState<Game | null>(null);
 
@@ -58,22 +60,24 @@ export function RoundSection({
     return codes
       .map((c) => flagByCode(c))
       .filter((f): f is NonNullable<typeof f> => f !== null)
-      .map((f) => f.label)
+      .map((f) => t(f.labelKey))
       .join(' · ');
   }
 
   return (
     <Card style={{ marginHorizontal: 12, marginVertical: 6 }}>
       <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 }}>
-        <Text variant="titleMedium">Runde {round.index + 1}</Text>
+        <Text variant="titleMedium">{t('sheet.roundTitle', { n: round.index + 1 })}</Text>
       </View>
       <Divider />
       {round.games.map((game, i) => {
         const score = scoresByGame.get(game.id) ?? { rePerPlayer: 0, contraPerPlayer: 0 };
         const level = bockLevelByGame.get(game.id) ?? BockLevel.none;
-        const reLabel = game.isSolo ? 'Solo' : 'Re';
+        const reLabel = game.isSolo ? t('sheet.soloLabel') : t('sheet.reLabel');
         const winnerText =
-          game.winner === WinnerSide.re ? (game.isSolo ? 'Solist' : 'Re') : 'Kontra';
+          game.winner === WinnerSide.re
+            ? (game.isSolo ? t('sheet.soloWinner') : t('sheet.reLabel'))
+            : t('sheet.kontraWinner');
         const scoreColor = score.rePerPlayer >= 0 ? theme.colors.primary : theme.colors.error;
         const flags = flagsLabel(game.flagCodes);
         const sittingOut = game.sittingOutPlayerId !== null ? byId(game.sittingOutPlayerId) : null;
@@ -103,18 +107,18 @@ export function RoundSection({
                     variant="bodySmall"
                     style={{ color: theme.colors.error, fontWeight: 'bold' }}
                   >
-                    Kontra:{' '}
+                    {`${t('sheet.kontraLabel')}: `}
                   </Text>
                   {names(game.contraPlayerIds)}
                 </Text>
                 {sittingOut !== undefined && sittingOut !== null && (
-                  <Text variant="bodySmall">Aussetzer: {playerDisplayName(sittingOut)}</Text>
+                  <Text variant="bodySmall">{t('sheet.sittingOut', { name: playerDisplayName(sittingOut) })}</Text>
                 )}
                 <Text variant="bodySmall" style={{ marginTop: 2 }}>
-                  {winnerText} gewinnt
+                  {t('sheet.winnerWins', { side: winnerText })}
                   {flags !== '' ? ` · ${flags}` : ''}
-                  {level === BockLevel.single ? ' · Bock' : ''}
-                  {level === BockLevel.double ? ' · Doppelbock' : ''}
+                  {level === BockLevel.single ? ` · ${t('sheet.bockSingleSuffix')}` : ''}
+                  {level === BockLevel.double ? ` · ${t('sheet.bockDoubleSuffix')}` : ''}
                 </Text>
               </View>
               <View style={{ marginLeft: 8, alignItems: 'flex-end' }}>
@@ -132,7 +136,7 @@ export function RoundSection({
                       fontVariant: ['tabular-nums'],
                     }}
                   >
-                    je Kontra: {formatPoints(score.contraPerPlayer)}
+                    {t('sheet.contraPerPlayer', { points: formatPoints(score.contraPerPlayer) })}
                   </Text>
                 )}
               </View>
@@ -143,9 +147,9 @@ export function RoundSection({
 
       <Portal>
         <Dialog visible={deleteTarget !== null} onDismiss={() => setDeleteTarget(null)}>
-          <Dialog.Title>Spiel loeschen?</Dialog.Title>
+          <Dialog.Title>{t('sheet.deleteGameTitle')}</Dialog.Title>
           <Dialog.Actions>
-            <Button onPress={() => setDeleteTarget(null)}>Abbrechen</Button>
+            <Button onPress={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
             <Button
               mode="contained-tonal"
               onPress={() => {
@@ -154,7 +158,7 @@ export function RoundSection({
                 if (target !== null) onDeleteGame(target);
               }}
             >
-              Loeschen
+              {t('common.delete')}
             </Button>
           </Dialog.Actions>
         </Dialog>
