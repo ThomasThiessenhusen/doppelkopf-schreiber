@@ -97,6 +97,40 @@ export const de = {
     emptyTitle: 'Noch keine Spieler',
     emptyHint: 'Tippe unten auf „Spieler", um den ersten Spieler anzulegen.',
   },
+  groupType: {
+    season: 'Saison',
+    tournament: 'Turnier',
+  },
+  groups: {
+    descriptionLine: '{{type}}  ·  {{count}} Spielbogen',
+    menuRename: 'Umbenennen',
+    menuChangeType: 'Typ aendern',
+    menuDelete: 'Loeschen',
+    fabNew: 'Neue Gruppe',
+    editorTitleNew: 'Neue Gruppe',
+    editorTitleRename: 'Gruppe umbenennen',
+    nameLabel: 'Name',
+    typeSeason: 'Saison',
+    typeTournament: 'Turnier',
+    editorCreate: 'Anlegen',
+    editorSave: 'Speichern',
+    changeTypeTitle: 'Typ aendern',
+    deleteTitle: 'Gruppe {{name}} loeschen?',
+    deleteBodyEmpty: 'Diese Gruppe enthaelt keine Spielboegen.',
+    deleteBodyWithSheets:
+      'Diese Gruppe enthaelt {{count}} Spielbogen. Sollen die Spielboegen mitgeloescht oder nur entkoppelt werden?',
+    deleteKeepSheets: 'Spielboegen behalten',
+    deleteCascade: 'Mit loeschen',
+    emptyTitle: 'Noch keine Gruppen angelegt.',
+    emptyHint: 'Tippe auf „Neue Gruppe", um eine Saison oder ein Turnier zu starten.',
+    rankings: {
+      groupNotFound: 'Gruppe nicht gefunden.',
+      empty: 'Noch keine ausgewerteten Spielboegen in dieser Gruppe.',
+      byPlacement: 'nach Platzierung',
+      byPoints: 'nach Spielpunkten',
+      bySoli: 'nach gewonnenen Soli',
+    },
+  },
 } as const;
 
 /** Shape-compatible type: same keys as `de`, but string values (allows other locales). */

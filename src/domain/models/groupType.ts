@@ -9,8 +9,11 @@ export const GroupType = {
   tournament: 'tournament' as const,
 };
 
-export function groupTypeLabel(t: GroupType): string {
-  return t === 'season' ? 'Saison' : 'Turnier';
+/** Translation-Key fuer den Anzeigenamen eines GroupType. */
+export type GroupTypeLabelKey = 'groupType.season' | 'groupType.tournament';
+
+export function groupTypeLabelKey(type: GroupType): GroupTypeLabelKey {
+  return type === 'season' ? 'groupType.season' : 'groupType.tournament';
 }
 
 export function groupTypeToJson(t: GroupType): string {

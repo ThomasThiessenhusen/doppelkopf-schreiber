@@ -8,8 +8,10 @@ import type { RankingEntry } from '@/domain/scoring/groupRankings';
 import { useSettingsStore } from '@/application/stores/settingsStore';
 import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
 import { useSheetListStore } from '@/application/stores/sheetListStore';
+import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 export function GroupRankingsScreen({ groupId }: { groupId: string }) {
+  const { t } = useTranslation();
   const groupsLoading = useSheetGroupListStore((s) => s.loading);
   const groups = useSheetGroupListStore((s) => s.groups);
   const refreshGroups = useSheetGroupListStore((s) => s.refresh);
@@ -50,7 +52,7 @@ export function GroupRankingsScreen({ groupId }: { groupId: string }) {
   if (group === undefined) {
     return (
       <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
-        <Text>Gruppe nicht gefunden.</Text>
+        <Text>{t('groups.rankings.groupNotFound')}</Text>
       </View>
     );
   }
@@ -64,7 +66,7 @@ export function GroupRankingsScreen({ groupId }: { groupId: string }) {
     return (
       <View style={{ flex: 1, padding: 32, justifyContent: 'center' }}>
         <Text variant="bodyMedium" style={{ textAlign: 'center' }}>
-          Noch keine ausgewerteten Spielboegen in dieser Gruppe.
+          {t('groups.rankings.empty')}
         </Text>
       </View>
     );
@@ -73,19 +75,19 @@ export function GroupRankingsScreen({ groupId }: { groupId: string }) {
   return (
     <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
       <RankingSection
-        title="nach Platzierung"
+        title={t('groups.rankings.byPlacement')}
         entries={rankings.placementPoints}
         formatValue={(v) => String(v)}
         colorize={false}
       />
       <RankingSection
-        title="nach Spielpunkten"
+        title={t('groups.rankings.byPoints')}
         entries={rankings.totalPoints}
         formatValue={(v) => (v > 0 ? `+${v}` : `${v}`)}
         colorize
       />
       <RankingSection
-        title="nach gewonnenen Soli"
+        title={t('groups.rankings.bySoli')}
         entries={rankings.wonSoli}
         formatValue={(v) => String(v)}
         colorize={false}

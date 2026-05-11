@@ -18,7 +18,7 @@ import {
 import { createGameSheet } from '@/domain/models/gameSheet';
 import { playerDisplayName, type Player } from '@/domain/models/player';
 import { appSettingsFallback } from '@/domain/models/appSettings';
-import { GroupType, groupTypeLabel } from '@/domain/models/groupType';
+import { GroupType, groupTypeLabelKey } from '@/domain/models/groupType';
 import type { SheetGroup } from '@/domain/models/sheetGroup';
 import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import { usePlayerListStore } from '@/application/stores/playerListStore';
@@ -181,7 +181,7 @@ export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
         >
           {selectedGroup === null
             ? t('newSheet.groupNone')
-            : t('newSheet.groupSummary', { name: selectedGroup.name, type: groupTypeLabel(selectedGroup.type) })}
+            : t('newSheet.groupSummary', { name: selectedGroup.name, type: t(groupTypeLabelKey(selectedGroup.type)) })}
         </Button>
       </View>
 
@@ -334,7 +334,7 @@ export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
             {groups.map((g) => (
               <RadioButton.Item
                 key={g.id}
-                label={t('newSheet.groupOptionWithType', { name: g.name, type: groupTypeLabel(g.type) })}
+                label={t('newSheet.groupOptionWithType', { name: g.name, type: t(groupTypeLabelKey(g.type)) })}
                 value={g.id}
               />
             ))}
