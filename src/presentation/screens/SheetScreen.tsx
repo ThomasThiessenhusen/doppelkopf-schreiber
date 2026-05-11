@@ -144,8 +144,11 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
     router.push({ pathname: '/sheets/[sheetId]/add-game', params: { sheetId: sheet.id } });
   }
 
-  function onEditGame(_game: Game) {
-    router.push({ pathname: '/sheets/[sheetId]/add-game', params: { sheetId: sheet.id } });
+  function onEditGame(game: Game) {
+    router.push({
+      pathname: '/sheets/[sheetId]/add-game',
+      params: { sheetId: sheet.id, gameId: game.id },
+    });
   }
 
   return (
