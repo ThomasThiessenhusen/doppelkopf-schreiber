@@ -36,11 +36,9 @@ import { useSheetStore } from '@/application/stores/sheetStore';
 import { FlagChip } from '@/presentation/widgets/FlagChip';
 import { TeamPicker } from '@/presentation/widgets/TeamPicker';
 import {
-  announcementChipLabel,
   contraAnnouncementCodes,
   doppelkopfSpec,
   fuchsSpec,
-  levelChipLabel,
   levelCodes,
   reAnnouncementCodes,
   stepsPerSide,
@@ -67,6 +65,7 @@ export interface AddGameScreenProps {
 }
 
 export function AddGameScreen({ sheetId, gameId }: AddGameScreenProps) {
+  const { t } = useTranslation();
   const state = useSheetStore((s) => s.state);
   const load = useSheetStore((s) => s.load);
 
@@ -77,14 +76,14 @@ export function AddGameScreen({ sheetId, gameId }: AddGameScreenProps) {
   if (state.status === 'loading') {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <Text>Laedt …</Text>
+        <Text>{t('common.loading')}</Text>
       </View>
     );
   }
   if (state.status === 'error') {
     return (
       <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
-        <Text>Fehler: {state.error.message}</Text>
+        <Text>{t('common.errorLoading')}: {state.error.message}</Text>
       </View>
     );
   }
@@ -93,6 +92,23 @@ export function AddGameScreen({ sheetId, gameId }: AddGameScreenProps) {
 
 function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
   const { t } = useTranslation();
+
+  function buildLevelChipLabel(count: number): string {
+    if (count === 1) return t('addGame.levelChip_one', { count });
+    if (count === 2) return t('addGame.levelChip_two', { count });
+    if (count === 3) return t('addGame.levelChip_three', { count });
+    if (count === 4) return t('addGame.levelChip_four', { count });
+    return t('addGame.levelChipBase');
+  }
+
+  function buildAnnouncementChipLabel(count: number): string {
+    if (count <= 0) return t('addGame.noLevelAnnounced');
+    if (count === 1) return t('addGame.announcementChip_one', { count });
+    if (count === 2) return t('addGame.announcementChip_two', { count });
+    if (count === 3) return t('addGame.announcementChip_three', { count });
+    return t('addGame.announcementChip_many', { count });
+  }
+
   const router = useRouter();
   const theme = useTheme();
   const addGame = useSheetStore((s) => s.addGame);
@@ -334,8 +350,8 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
               }}
             >
               {currentBockLevel === BockLevel.double
-                ? 'Dieses Spiel ist Doppelbock — Sieger erhaelt +4 zusaetzlich'
-                : 'Dieses Spiel ist Bock — Sieger erhaelt +2 zusaetzlich'}
+                ? t('addGame.bockBannerDouble')
+                : t('addGame.bockBannerSingle')}
             </Text>
           </View>
         </Card>
@@ -366,21 +382,21 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
           setWinner(v === WinnerSide.contra ? WinnerSide.contra : WinnerSide.re)
         }
         buttons={[
-          { value: WinnerSide.re, label: isSolo ? 'Solist gewinnt' : 'Re gewinnt' },
-          { value: WinnerSide.contra, label: 'Kontra gewinnt' },
+          { value: WinnerSide.re, label: isSolo ? t('addGame.winnerSoloRe') : t('addGame.winnerRe') },
+          { value: WinnerSide.contra, label: t('addGame.winnerKontra') },
         ]}
       />
 
       <View style={{ alignSelf: 'flex-start' }}>
         <Chip selected={levelCount() > 0} showSelectedCheck={false} onPress={() => cycleLevel()}>
-          {levelChipLabel(levelCount())}
+          {buildLevelChipLabel(levelCount())}
         </Chip>
       </View>
 
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <View style={{ flex: 1, gap: 6 }}>
           <Text variant="bodyMedium" style={{ fontWeight: '600' }}>
-            Punkte der Re-Partei
+            {t('addGame.rePoints')}
           </Text>
           <FlagGroupSection
             flags={flagsByGroup(FlagGroup.reParty)}
@@ -394,7 +410,7 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
                 showSelectedCheck={false}
                 onPress={() => cycleAnnouncement(true)}
               >
-                {announcementChipLabel(announcementCount(true))}
+                {buildAnnouncementChipLabel(announcementCount(true))}
               </Chip>
             }
             trailingChips={[
@@ -417,7 +433,7 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
         </View>
         <View style={{ flex: 1, gap: 6 }}>
           <Text variant="bodyMedium" style={{ fontWeight: '600' }}>
-            Punkte der Kontra-Partei
+            {t('addGame.kontraPoints')}
           </Text>
           <FlagGroupSection
             flags={flagsByGroup(FlagGroup.contraParty)}
@@ -431,7 +447,7 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
                 showSelectedCheck={false}
                 onPress={() => cycleAnnouncement(false)}
               >
-                {announcementChipLabel(announcementCount(false))}
+                {buildAnnouncementChipLabel(announcementCount(false))}
               </Chip>
             }
             trailingChips={[
@@ -469,7 +485,7 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
               fontVariant: ['tabular-nums'],
             }}
           >
-            {previewText(preview, isSolo)}
+            {previewText(t, preview, isSolo)}
           </Text>
         </View>
       </Card>
@@ -478,10 +494,10 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
         <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, gap: 12 }}>
           <View style={{ flex: 1 }}>
             <Text variant="bodyMedium" style={{ fontWeight: '600' }}>
-              Pflichtbock ausloesen
+              {t('addGame.manualBockTitle')}
             </Text>
             <Text variant="bodySmall">
-              Loest eine neue Bockrunde ab dem naechsten Spiel aus.
+              {t('addGame.manualBockHint')}
             </Text>
           </View>
           <Switch value={triggersManualBock} onValueChange={setTriggersManualBock} />
@@ -489,21 +505,22 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
       </Card>
 
       <Button mode="contained" icon="check" disabled={!canSubmit} onPress={() => void submit()}>
-        {existing === null ? 'Spiel speichern' : 'Aenderungen speichern'}
+        {existing === null ? t('addGame.submitNew') : t('addGame.submitEdit')}
       </Button>
     </ScrollView>
   );
 }
 
 function previewText(
+  t: (k: string, p?: Record<string, unknown>) => string,
   score: { rePerPlayer: number; contraPerPlayer: number },
   isSolo: boolean,
 ): string {
   const value = Math.abs(score.contraPerPlayer);
   const solistValue = Math.abs(score.rePerPlayer);
   return isSolo
-    ? `Spielwert: ${value}   ·   Solist: ${solistValue}`
-    : `Spielwert: ${value}`;
+    ? t('addGame.previewSoloValue', { value, solist: solistValue })
+    : t('addGame.previewValue', { value });
 }
 
 interface FlagGroupSectionProps {

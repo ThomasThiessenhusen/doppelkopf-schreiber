@@ -88,24 +88,3 @@ export const contraAnnouncementCodes: ReadonlyArray<string> = [
   contraAnnouncedUnder30.code,
   contraAnnouncedSchwarz.code,
 ];
-
-/**
- * Stufenansage-Anzeige-Label.
- * 0 → "keine Stufe angesagt", 1..4 → "Unter 90/60/30 / Schwarz angesagt +N".
- */
-export function announcementChipLabel(count: number): string {
-  if (count <= 0) return 'keine Stufe angesagt';
-  if (count === 1) return 'Unter 90 angesagt +1';
-  if (count === 2) return 'Unter 60 angesagt +2';
-  if (count === 3) return 'Unter 30 angesagt +3';
-  return 'Schwarz angesagt +' + String(count);
-}
-
-/** Stufe-Chip-Label. 0 → "Stufe", 1..4 → "Unter 90/60/30 / Schwarz +N". */
-export function levelChipLabel(count: number): string {
-  if (count === 1) return 'Unter 90 +1';
-  if (count === 2) return 'Unter 60 +2';
-  if (count === 3) return 'Unter 30 +3';
-  if (count === 4) return 'Schwarz +4';
-  return 'Stufe';
-}
