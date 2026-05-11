@@ -1,16 +1,13 @@
 # Bockzettel
 
 Mobile-App (Android & iOS) zur Unterstuetzung des Schreibers beim Doppelkopf-Kartenspiel.
-React-Native-Reimplementierung der frueheren Flutter-App. Migration nach Spec
-`2026-05-11-react-native-migration-design.md` (im urspruenglichen Flutter-Repo unter
-`doppelkopf_app/docs/superpowers/specs/`).
 
 ## Voraussetzungen
 
 - Node.js >= 20
 - pnpm >= 10
 - Android Studio mit eingerichtetem Emulator (fuer Android-Lauf)
-- macOS + Xcode (fuer iOS-Simulator; spaeter, siehe M8 in der Spec)
+- macOS + Xcode (fuer iOS-Simulator)
 
 ## Setup
 
@@ -34,6 +31,11 @@ pnpm typecheck      # tsc --noEmit
 pnpm lint           # ESLint
 ```
 
-## Stand
+## Tech-Stack
 
-Migration laeuft. Aktueller Meilenstein: M1 (Projekt-Setup) abgeschlossen.
+- Expo SDK 54 (Managed Workflow) mit Expo Router (File-based Routing)
+- React Native + TypeScript (strict)
+- React Native Paper (Material 3)
+- Zustand fuer State Management
+- `expo-file-system/legacy` fuer JSON-Persistenz
+- Jest + babel-jest fuer Unit-Tests

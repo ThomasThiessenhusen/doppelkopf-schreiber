@@ -1,4 +1,4 @@
-/** Discriminated Union — passt zu Flutters AsyncValue<T>. */
+/** Discriminated Union fuer ladende, fertige oder fehlgeschlagene Werte. */
 export type AsyncState<T> =
   | { status: 'loading' }
   | { status: 'data'; value: T }
