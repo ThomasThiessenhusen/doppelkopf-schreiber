@@ -4,6 +4,7 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^expo-crypto$': '<rootDir>/__mocks__/expo-crypto.ts',
+    '^expo-localization$': '<rootDir>/__mocks__/expo-localization.ts',
   },
   transform: {
     '^.+\\.(t|j)sx?$': 'babel-jest',
