@@ -14,6 +14,7 @@ describe('LocalSettingsRepository', () => {
     const repo = createLocalSettingsRepository(createInMemoryStorage());
     const original: AppSettings = {
       defaultStackingMode: BockStackingMode.doppelbock,
+      language: 'system',
     };
     await repo.save(original);
     const restored = await repo.load();
