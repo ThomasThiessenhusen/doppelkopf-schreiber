@@ -31,4 +31,23 @@ export const en: Resources = {
     languageDe: 'German',
     languageEn: 'English',
   },
+  home: {
+    filterAll: 'All sheets',
+    filterGroupSummary: '{{name}} ({{type}})',
+    rankings: 'Rankings',
+    open: 'Open',
+    deleteMenu: 'Delete',
+    newSheet: 'New sheet',
+    managementGroups: 'Manage groups',
+    deleteTitle: 'Delete sheet?',
+    deleteBody: 'The sheet "{{title}}" will be permanently deleted.',
+    metaLine: '{{playerCount}} players  ·  {{gameCount}} games  ·  {{time}}',
+    defaultTitle: 'Sheet {{date}}',
+    emptyFiltered: 'No sheets in "{{groupName}}"',
+    emptyAll: 'No sheets yet',
+    emptyHintFiltered:
+      'Create a new sheet in this group, or clear the filter to see all sheets.',
+    emptyHintAll: 'Tap "New sheet" to create your first sheet.',
+    clearFilter: 'Clear filter',
+  },
 };
