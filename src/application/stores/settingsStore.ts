@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 
-import { appSettingsFallback, type AppSettings } from '@/domain/models/appSettings';
+import {
+  appSettingsFallback,
+  type AppSettings,
+  type LanguagePreference,
+} from '@/domain/models/appSettings';
 import type { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import {
   asyncData,
@@ -14,6 +18,7 @@ export interface SettingsStoreState {
   state: AsyncState<AppSettings>;
   load: () => Promise<void>;
   setDefaultStackingMode: (mode: BockStackingMode) => Promise<void>;
+  setLanguage: (language: LanguagePreference) => Promise<void>;
 }
 
 export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
@@ -33,6 +38,14 @@ export const useSettingsStore = create<SettingsStoreState>((set, get) => ({
     const cur = get().state;
     const current = cur.status === 'data' ? cur.value : appSettingsFallback;
     const next: AppSettings = { ...current, defaultStackingMode: mode };
+    set({ state: asyncData(next) });
+    await repositories.settings().save(next);
+  },
+
+  async setLanguage(language) {
+    const cur = get().state;
+    const current = cur.status === 'data' ? cur.value : appSettingsFallback;
+    const next: AppSettings = { ...current, language };
     set({ state: asyncData(next) });
     await repositories.settings().save(next);
   },
