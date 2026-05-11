@@ -2,14 +2,10 @@ import { type Game, WinnerSide } from '@/domain/models/game';
 import { allGames, gamesPerRound, type GameSheet } from '@/domain/models/gameSheet';
 import { BockLevel } from '@/domain/scoring/bockLevel';
 import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
+import { contraAnnounced, reAnnounced } from '@/domain/scoring/scoringRules';
 
-/**
- * Bis M2d (`scoringRules.ts`) erscheint, definieren wir die Flag-Codes hier
- * lokal. Werte muessen string-identisch zu denen in `scoringRules.ts` bleiben;
- * dort wird `reAnnounced` / `contraAnnounced` mit denselben Codes definiert.
- */
-const RE_ANNOUNCED_CODE = 'reAnnounced';
-const CONTRA_ANNOUNCED_CODE = 'contraAnnounced';
+const RE_ANNOUNCED_CODE = reAnnounced.code;
+const CONTRA_ANNOUNCED_CODE = contraAnnounced.code;
 
 /**
  * Snapshot des aktuellen Bock-Zustands eines Spielbogens — bezogen auf das
