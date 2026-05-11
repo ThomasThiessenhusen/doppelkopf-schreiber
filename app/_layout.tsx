@@ -1,41 +1,82 @@
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
-import { IconButton, PaperProvider } from 'react-native-paper';
+import { useEffect, useState } from 'react';
+import { useColorScheme, View } from 'react-native';
+import { ActivityIndicator, IconButton, PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { appSettingsFallback } from '@/domain/models/appSettings';
+import { useSettingsStore } from '@/application/stores/settingsStore';
+import { initI18n } from '@/presentation/i18n';
+import { useTranslation } from '@/presentation/i18n/useTranslation';
 import { darkTheme, lightTheme } from '@/presentation/theme/theme';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
 
+  const settingsState = useSettingsStore((s) => s.state);
+  const loadSettings = useSettingsStore((s) => s.load);
+  const [i18nReady, setI18nReady] = useState(false);
+
+  useEffect(() => {
+    void loadSettings();
+  }, [loadSettings]);
+
+  useEffect(() => {
+    if (settingsState.status !== 'data' && settingsState.status !== 'error') return;
+    const pref =
+      settingsState.status === 'data'
+        ? settingsState.value.language
+        : appSettingsFallback.language;
+    void initI18n(pref).then(() => setI18nReady(true));
+  }, [settingsState]);
+
+  if (!i18nReady) {
+    return (
+      <SafeAreaProvider>
+        <PaperProvider theme={theme}>
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <ActivityIndicator />
+          </View>
+        </PaperProvider>
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
-        <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: theme.colors.primaryContainer },
-            headerTintColor: theme.colors.onPrimaryContainer,
-            headerTitleStyle: { fontWeight: '600' },
-            contentStyle: { backgroundColor: theme.colors.background },
-          }}
-        >
-          <Stack.Screen
-            name="index"
-            options={{ title: 'Bockzettel', headerRight: HomeHeaderRight }}
-          />
-          <Stack.Screen name="sheets/new" options={{ title: 'Neuer Spielbogen' }} />
-          <Stack.Screen name="sheets/[sheetId]/index" options={{ title: 'Spielbogen' }} />
-          <Stack.Screen name="sheets/[sheetId]/add-game" options={{ title: 'Spiel eintragen' }} />
-          <Stack.Screen name="groups/index" options={{ title: 'Gruppen' }} />
-          <Stack.Screen name="groups/[groupId]/rankings" options={{ title: 'Rangliste' }} />
-          <Stack.Screen name="players" options={{ title: 'Spieler' }} />
-          <Stack.Screen name="settings" options={{ title: 'Einstellungen' }} />
-        </Stack>
+        <LocalizedStack theme={theme} />
         <StatusBar style="auto" />
       </PaperProvider>
     </SafeAreaProvider>
+  );
+}
+
+function LocalizedStack({ theme }: { theme: typeof lightTheme }) {
+  const { t } = useTranslation();
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: theme.colors.primaryContainer },
+        headerTintColor: theme.colors.onPrimaryContainer,
+        headerTitleStyle: { fontWeight: '600' },
+        contentStyle: { backgroundColor: theme.colors.background },
+      }}
+    >
+      <Stack.Screen
+        name="index"
+        options={{ title: t('nav.home'), headerRight: HomeHeaderRight }}
+      />
+      <Stack.Screen name="sheets/new" options={{ title: t('nav.newSheet') }} />
+      <Stack.Screen name="sheets/[sheetId]/index" options={{ title: t('nav.sheet') }} />
+      <Stack.Screen name="sheets/[sheetId]/add-game" options={{ title: t('nav.addGame') }} />
+      <Stack.Screen name="groups/index" options={{ title: t('nav.groups') }} />
+      <Stack.Screen name="groups/[groupId]/rankings" options={{ title: t('nav.rankings') }} />
+      <Stack.Screen name="players" options={{ title: t('nav.players') }} />
+      <Stack.Screen name="settings" options={{ title: t('nav.settings') }} />
+    </Stack>
   );
 }
 
