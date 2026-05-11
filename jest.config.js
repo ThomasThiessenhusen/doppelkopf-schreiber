@@ -3,6 +3,7 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^expo-crypto$': '<rootDir>/__mocks__/expo-crypto.ts',
   },
   transform: {
     '^.+\\.(t|j)sx?$': 'babel-jest',
