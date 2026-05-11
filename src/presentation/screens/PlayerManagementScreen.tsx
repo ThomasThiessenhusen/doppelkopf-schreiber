@@ -241,7 +241,7 @@ function EmptyView() {
       <List.Icon icon="account-group-outline" />
       <Text variant="headlineSmall">Noch keine Spieler</Text>
       <Text variant="bodyMedium" style={{ textAlign: 'center' }}>
-        Tippe unten auf „Spieler", um den ersten Spieler anzulegen.
+        Tippe unten auf {'„'}Spieler{'“'}, um den ersten Spieler anzulegen.
       </Text>
     </View>
   );
