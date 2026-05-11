@@ -29,6 +29,25 @@ export const de = {
     languageDe: 'Deutsch',
     languageEn: 'Englisch',
   },
+  home: {
+    filterAll: 'Alle Spielboegen',
+    filterGroupSummary: '{{name}} ({{type}})',
+    rankings: 'Rangliste',
+    open: 'Oeffnen',
+    deleteMenu: 'Loeschen',
+    newSheet: 'Neuer Spielbogen',
+    managementGroups: 'Gruppen verwalten',
+    deleteTitle: 'Spielbogen loeschen?',
+    deleteBody: 'Der Spielbogen „{{title}}" wird endgueltig geloescht.',
+    metaLine: '{{playerCount}} Spieler  ·  {{gameCount}} Spiele  ·  {{time}}',
+    defaultTitle: 'Spielbogen {{date}}',
+    emptyFiltered: 'Keine Spielbogen in „{{groupName}}"',
+    emptyAll: 'Noch keine Spielbogen',
+    emptyHintFiltered:
+      'Lege einen neuen Spielbogen in dieser Gruppe an oder hebe den Filter auf, um alle Spielbogen zu sehen.',
+    emptyHintAll: 'Tippe auf „Neuer Spielbogen", um den ersten Spielbogen anzulegen.',
+    clearFilter: 'Filter aufheben',
+  },
 } as const;
 
 /** Shape-compatible type: same keys as `de`, but string values (allows other locales). */
