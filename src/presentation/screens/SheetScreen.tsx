@@ -12,6 +12,7 @@ import {
   Menu,
   Portal,
   RadioButton,
+  SegmentedButtons,
   Text,
   TextInput,
   useTheme,
@@ -20,6 +21,8 @@ import {
 import type { Game } from '@/domain/models/game';
 import { allGames, type GameSheet } from '@/domain/models/gameSheet';
 import { appSettingsFallback } from '@/domain/models/appSettings';
+import { GroupType, groupTypeLabel } from '@/domain/models/groupType';
+import type { SheetGroup } from '@/domain/models/sheetGroup';
 import { BockLevel } from '@/domain/scoring/bockLevel';
 import {
   bockStateEmpty,
@@ -30,6 +33,7 @@ import {
 import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import { scoreFor, totalsFor } from '@/domain/scoring/scoreCalculator';
 import { useSettingsStore } from '@/application/stores/settingsStore';
+import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
 import { useSheetStore } from '@/application/stores/sheetStore';
 import { Scoreboard } from '@/presentation/widgets/Scoreboard';
 import { RoundSection } from '@/presentation/widgets/RoundSection';
@@ -67,12 +71,20 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
   const renameSheet = useSheetStore((s) => s.renameSheet);
   const setStackingModeOverride = useSheetStore((s) => s.setStackingModeOverride);
   const deleteGame = useSheetStore((s) => s.deleteGame);
+  const setGroup = useSheetStore((s) => s.setGroup);
 
   const settingsState = useSettingsStore((s) => s.state);
   const loadSettings = useSettingsStore((s) => s.load);
   useEffect(() => {
     void loadSettings();
   }, [loadSettings]);
+
+  const groups = useSheetGroupListStore((s) => s.groups);
+  const refreshGroups = useSheetGroupListStore((s) => s.refresh);
+  const createGroup = useSheetGroupListStore((s) => s.create);
+  useEffect(() => {
+    void refreshGroups();
+  }, [refreshGroups]);
 
   const settings =
     settingsState.status === 'data' ? settingsState.value : appSettingsFallback;
@@ -117,6 +129,32 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
   const [stackingChoice, setStackingChoice] = useState<'default' | BockStackingMode>(
     sheet.stackingModeOverride ?? 'default',
   );
+
+  const [groupPickerOpen, setGroupPickerOpen] = useState(false);
+  const [groupNewOpen, setGroupNewOpen] = useState(false);
+  const [groupNewName, setGroupNewName] = useState('');
+  const [groupNewType, setGroupNewType] = useState<GroupType>(GroupType.season);
+
+  async function pickExistingGroup(g: SheetGroup | null) {
+    setGroupPickerOpen(false);
+    await setGroup(g?.id ?? null);
+  }
+  function startCreateGroup() {
+    setGroupPickerOpen(false);
+    setGroupNewName('');
+    setGroupNewType(GroupType.season);
+    setGroupNewOpen(true);
+  }
+  async function submitCreateGroup() {
+    const name = groupNewName.trim();
+    if (name === '') {
+      setGroupNewOpen(false);
+      return;
+    }
+    const created = await createGroup({ name, type: groupNewType });
+    setGroupNewOpen(false);
+    await setGroup(created.id);
+  }
 
   function openRename() {
     setRenameValue(sheet.title ?? '');
@@ -177,6 +215,13 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
               onPress={() => {
                 setMenuOpen(false);
                 openStackingDialog();
+              }}
+            />
+            <Menu.Item
+              title="Gruppe zuordnen..."
+              onPress={() => {
+                setMenuOpen(false);
+                setGroupPickerOpen(true);
               }}
             />
           </Menu>
@@ -266,6 +311,67 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
             <Button onPress={() => setStackingDialogOpen(false)}>Abbrechen</Button>
             <Button mode="contained" onPress={() => void submitStacking()}>
               Uebernehmen
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+
+        <Dialog visible={groupPickerOpen} onDismiss={() => setGroupPickerOpen(false)}>
+          <Dialog.Title>Gruppe zuordnen</Dialog.Title>
+          <Dialog.Content>
+            <RadioButton.Group
+              value={sheet.groupId ?? '__none__'}
+              onValueChange={(v) => {
+                if (v === '__none__') {
+                  void pickExistingGroup(null);
+                } else if (v === '__new__') {
+                  startCreateGroup();
+                } else {
+                  const g = groups.find((x) => x.id === v);
+                  void pickExistingGroup(g ?? null);
+                }
+              }}
+            >
+              <RadioButton.Item label="Keine Gruppe" value="__none__" />
+              {groups.map((g) => (
+                <RadioButton.Item
+                  key={g.id}
+                  label={`${g.name}  (${groupTypeLabel(g.type)})`}
+                  value={g.id}
+                />
+              ))}
+              <RadioButton.Item label="Neue Gruppe..." value="__new__" />
+            </RadioButton.Group>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setGroupPickerOpen(false)}>Schliessen</Button>
+          </Dialog.Actions>
+        </Dialog>
+
+        <Dialog visible={groupNewOpen} onDismiss={() => setGroupNewOpen(false)}>
+          <Dialog.Title>Neue Gruppe</Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              mode="outlined"
+              label="Name"
+              value={groupNewName}
+              onChangeText={setGroupNewName}
+              autoFocus
+            />
+            <View style={{ marginTop: 12 }}>
+              <SegmentedButtons
+                value={groupNewType}
+                onValueChange={(v) => setGroupNewType(v as GroupType)}
+                buttons={[
+                  { value: GroupType.season, label: 'Saison' },
+                  { value: GroupType.tournament, label: 'Turnier' },
+                ]}
+              />
+            </View>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setGroupNewOpen(false)}>Abbrechen</Button>
+            <Button mode="contained" onPress={() => void submitCreateGroup()}>
+              Anlegen
             </Button>
           </Dialog.Actions>
         </Dialog>

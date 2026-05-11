@@ -8,12 +8,16 @@ import {
   Dialog,
   FAB,
   IconButton,
+  List,
   Menu,
+  Modal,
   Portal,
   Text,
 } from 'react-native-paper';
 
+import { groupTypeLabel } from '@/domain/models/groupType';
 import type { GameSheet } from '@/domain/models/gameSheet';
+import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
 import { useSheetListStore } from '@/application/stores/sheetListStore';
 
 function pad2(n: number): string {
@@ -45,12 +49,30 @@ export function HomeScreen() {
   const refresh = useSheetListStore((s) => s.refresh);
   const deleteSheet = useSheetListStore((s) => s.deleteSheet);
 
+  const groups = useSheetGroupListStore((s) => s.groups);
+  const refreshGroups = useSheetGroupListStore((s) => s.refresh);
+
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+    void refreshGroups();
+  }, [refresh, refreshGroups]);
 
+  const [filterGroupId, setFilterGroupId] = useState<string | null>(null);
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<GameSheet | null>(null);
   const [menuForId, setMenuForId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (filterGroupId !== null && !groups.some((g) => g.id === filterGroupId)) {
+      setFilterGroupId(null);
+    }
+  }, [filterGroupId, groups]);
+
+  const activeGroup =
+    filterGroupId === null ? null : groups.find((g) => g.id === filterGroupId) ?? null;
+  const visibleSheets =
+    filterGroupId === null ? sheets : sheets.filter((s) => s.groupId === filterGroupId);
+  const groupNameById = new Map(groups.map((g) => [g.id, g.name] as const));
 
   async function confirmDelete() {
     if (deleteTarget === null) return;
@@ -60,18 +82,58 @@ export function HomeScreen() {
 
   return (
     <View style={{ flex: 1 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+        }}
+      >
+        <Button
+          mode="outlined"
+          icon="filter-variant"
+          style={{ flex: 1 }}
+          onPress={() => setFilterSheetOpen(true)}
+        >
+          {activeGroup === null
+            ? 'Alle Spielboegen'
+            : `${activeGroup.name} (${groupTypeLabel(activeGroup.type)})`}
+        </Button>
+        {activeGroup !== null && (
+          <Button
+            mode="contained-tonal"
+            icon="podium"
+            onPress={() =>
+              router.push({
+                pathname: '/groups/[groupId]/rankings',
+                params: { groupId: activeGroup.id },
+              })
+            }
+          >
+            Rangliste
+          </Button>
+        )}
+      </View>
+
       {loading && sheets.length === 0 ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator />
         </View>
       ) : error !== null && sheets.length === 0 ? (
         <ErrorView error={error} onRetry={() => void refresh()} />
-      ) : sheets.length === 0 ? (
-        <EmptyView />
+      ) : visibleSheets.length === 0 ? (
+        <EmptyView
+          activeGroupName={activeGroup?.name ?? null}
+          onClearFilter={
+            filterGroupId === null ? undefined : () => setFilterGroupId(null)
+          }
+        />
       ) : (
         <FlatList
           contentContainerStyle={{ paddingTop: 8, paddingBottom: 96 }}
-          data={sheets}
+          data={visibleSheets}
           keyExtractor={(s) => s.id}
           refreshControl={
             <RefreshControl refreshing={loading} onRefresh={() => void refresh()} />
@@ -81,13 +143,19 @@ export function HomeScreen() {
               `${sheet.players.length} Spieler  ·  ` +
               `${totalGamesOf(sheet)} Spiele  ·  ` +
               `${formatDateTime(sheet.updatedAt)}`;
+            const groupName =
+              sheet.groupId === null ? null : groupNameById.get(sheet.groupId) ?? null;
             return (
               <Card style={{ marginHorizontal: 12, marginVertical: 4 }}>
                 <Card.Title
                   title={sheet.title ?? defaultTitle(sheet)}
                   titleNumberOfLines={1}
-                  subtitle={metaLine}
-                  subtitleNumberOfLines={2}
+                  subtitle={
+                    groupName === null
+                      ? metaLine
+                      : `📁 ${groupName}\n${metaLine}`
+                  }
+                  subtitleNumberOfLines={3}
                   right={() => (
                     <Menu
                       visible={menuForId === sheet.id}
@@ -136,13 +204,53 @@ export function HomeScreen() {
       />
 
       <Portal>
+        <Modal
+          visible={filterSheetOpen}
+          onDismiss={() => setFilterSheetOpen(false)}
+          contentContainerStyle={{
+            backgroundColor: 'white',
+            margin: 16,
+            borderRadius: 12,
+            padding: 8,
+          }}
+        >
+          <List.Item
+            title="Alle Spielboegen"
+            left={(p) => <List.Icon {...p} icon="format-list-bulleted" />}
+            onPress={() => {
+              setFilterGroupId(null);
+              setFilterSheetOpen(false);
+            }}
+          />
+          {groups.map((g) => (
+            <List.Item
+              key={g.id}
+              title={g.name}
+              description={groupTypeLabel(g.type)}
+              left={(p) => <List.Icon {...p} icon="folder-outline" />}
+              onPress={() => {
+                setFilterGroupId(g.id);
+                setFilterSheetOpen(false);
+              }}
+            />
+          ))}
+          <List.Item
+            title="Gruppen verwalten"
+            left={(p) => <List.Icon {...p} icon="tune" />}
+            onPress={() => {
+              setFilterSheetOpen(false);
+              router.push('/groups');
+            }}
+          />
+        </Modal>
+
         <Dialog visible={deleteTarget !== null} onDismiss={() => setDeleteTarget(null)}>
           <Dialog.Title>Spielbogen loeschen?</Dialog.Title>
           <Dialog.Content>
             <Text variant="bodyMedium">
               Der Spielbogen {'„'}
               {deleteTarget?.title ?? (deleteTarget !== null ? defaultTitle(deleteTarget) : '')}
-              {'“'} wird endgueltig geloescht.
+              {'"'} wird endgueltig geloescht.
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
@@ -157,15 +265,31 @@ export function HomeScreen() {
   );
 }
 
-function EmptyView() {
+function EmptyView({
+  activeGroupName,
+  onClearFilter,
+}: {
+  activeGroupName: string | null;
+  onClearFilter?: () => void;
+}) {
+  const filtered = activeGroupName !== null;
   return (
     <View
       style={{ flex: 1, padding: 32, alignItems: 'center', justifyContent: 'center', gap: 16 }}
     >
-      <Text variant="headlineSmall">Noch keine Spielbogen</Text>
-      <Text variant="bodyMedium" style={{ textAlign: 'center' }}>
-        Tippe auf {'„'}Neuer Spielbogen{'“'}, um den ersten Spielbogen anzulegen.
+      <Text variant="headlineSmall">
+        {filtered ? `Keine Spielbogen in ${'„'}${activeGroupName}${'"'}` : 'Noch keine Spielbogen'}
       </Text>
+      <Text variant="bodyMedium" style={{ textAlign: 'center' }}>
+        {filtered
+          ? 'Lege einen neuen Spielbogen in dieser Gruppe an oder hebe den Filter auf, um alle Spielbogen zu sehen.'
+          : `Tippe auf ${'„'}Neuer Spielbogen${'"'}, um den ersten Spielbogen anzulegen.`}
+      </Text>
+      {onClearFilter !== undefined && (
+        <Button mode="contained-tonal" icon="filter-off" onPress={onClearFilter}>
+          Filter aufheben
+        </Button>
+      )}
     </View>
   );
 }
