@@ -1,7 +1,7 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
-import { PaperProvider } from 'react-native-paper';
+import { IconButton, PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { darkTheme, lightTheme } from '@/presentation/theme/theme';
@@ -21,7 +21,10 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: theme.colors.background },
           }}
         >
-          <Stack.Screen name="index" options={{ title: 'Bockzettel' }} />
+          <Stack.Screen
+            name="index"
+            options={{ title: 'Bockzettel', headerRight: HomeHeaderRight }}
+          />
           <Stack.Screen name="sheets/new" options={{ title: 'Neuer Spielbogen' }} />
           <Stack.Screen name="sheets/[sheetId]/index" options={{ title: 'Spielbogen' }} />
           <Stack.Screen name="sheets/[sheetId]/add-game" options={{ title: 'Spiel eintragen' }} />
@@ -33,5 +36,15 @@ export default function RootLayout() {
         <StatusBar style="auto" />
       </PaperProvider>
     </SafeAreaProvider>
+  );
+}
+
+function HomeHeaderRight() {
+  const router = useRouter();
+  return (
+    <>
+      <IconButton icon="account-group-outline" onPress={() => router.push('/players')} />
+      <IconButton icon="cog-outline" onPress={() => router.push('/settings')} />
+    </>
   );
 }
