@@ -3,6 +3,7 @@ import { Card, Icon, Text, useTheme } from 'react-native-paper';
 
 import type { Player } from '@/domain/models/player';
 import { playerDisplayName } from '@/domain/models/player';
+import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 const ROW_HEIGHT = 28;
 const VISIBLE_ROWS = 8;
@@ -29,6 +30,7 @@ function formatPoints(points: number): string {
 }
 
 export function Scoreboard({ players, totalsByPlayerId, pointsByGame }: ScoreboardProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
 
   let crossSum = 0;
@@ -46,7 +48,7 @@ export function Scoreboard({ players, totalsByPlayerId, pointsByGame }: Scoreboa
       <Card.Content>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
           <Text variant="titleMedium" style={{ flex: 1 }}>
-            Punktestand
+            {t('sheet.scoreboardTitle')}
           </Text>
           <View
             style={{
@@ -76,7 +78,7 @@ export function Scoreboard({ players, totalsByPlayerId, pointsByGame }: Scoreboa
                   : theme.colors.onErrorContainer,
               }}
             >
-              Quersumme {crossSum}
+              {t('sheet.scoreboardCrossSum', { sum: crossSum })}
             </Text>
           </View>
         </View>

@@ -2,7 +2,7 @@ import { FlagGroup, FlagTarget, type ScoreFlag } from '@/domain/models/scoreFlag
 
 interface FlagInput {
   code: string;
-  label: string;
+  labelKey: string;
   value: number;
   target: FlagTarget;
   description?: string;
@@ -13,7 +13,7 @@ interface FlagInput {
 function flag(input: FlagInput): ScoreFlag {
   const base: ScoreFlag = {
     code: input.code,
-    label: input.label,
+    labelKey: input.labelKey,
     value: input.value,
     target: input.target,
     group: input.group ?? FlagGroup.general,
@@ -24,7 +24,7 @@ function flag(input: FlagInput): ScoreFlag {
 
 export const reWon = flag({
   code: 'reWon',
-  label: 'Re hat gewonnen',
+  labelKey: 'scoringFlags.reWon',
   value: 1,
   target: FlagTarget.reSide,
   isBaseFlag: true,
@@ -32,7 +32,7 @@ export const reWon = flag({
 
 export const contraWon = flag({
   code: 'contraWon',
-  label: 'Kontra hat gewonnen',
+  labelKey: 'scoringFlags.contraWon',
   value: 2,
   target: FlagTarget.contraSide,
   isBaseFlag: true,
@@ -40,7 +40,7 @@ export const contraWon = flag({
 
 export const reAnnounced = flag({
   code: 'reAnnounced',
-  label: 'Re angesagt',
+  labelKey: 'scoringFlags.reAnnounced',
   value: 2,
   target: FlagTarget.winner,
   group: FlagGroup.reParty,
@@ -49,7 +49,7 @@ export const reAnnounced = flag({
 
 export const reKarlchen = flag({
   code: 'reKarlchen',
-  label: 'Karlchen',
+  labelKey: 'scoringFlags.reKarlchen',
   value: 1,
   target: FlagTarget.reSide,
   group: FlagGroup.reParty,
@@ -60,7 +60,7 @@ export const reKarlchen = flag({
 
 export const reKarlchenGefangen = flag({
   code: 'reKarlchenGefangen',
-  label: 'Karlchen gefangen',
+  labelKey: 'scoringFlags.reKarlchenGefangen',
   value: 1,
   target: FlagTarget.reSide,
   group: FlagGroup.reParty,
@@ -71,7 +71,7 @@ export const reKarlchenGefangen = flag({
 
 export const reDulleGefangen = flag({
   code: 'reDulleGefangen',
-  label: 'Dulle gefangen',
+  labelKey: 'scoringFlags.reDulleGefangen',
   value: 1,
   target: FlagTarget.reSide,
   group: FlagGroup.reParty,
@@ -82,7 +82,7 @@ export const reDulleGefangen = flag({
 
 export const reFuchsLetzterStich = flag({
   code: 'reFuchsLetzterStich',
-  label: 'Fuchs letzter Stich',
+  labelKey: 'scoringFlags.reFuchsLetzterStich',
   value: 1,
   target: FlagTarget.reSide,
   group: FlagGroup.reParty,
@@ -93,7 +93,7 @@ export const reFuchsLetzterStich = flag({
 
 export const reFuchs1 = flag({
   code: 'reFuchs1',
-  label: 'Fuchs gefangen',
+  labelKey: 'scoringFlags.reFuchs1',
   value: 1,
   target: FlagTarget.reSide,
   group: FlagGroup.reParty,
@@ -101,7 +101,7 @@ export const reFuchs1 = flag({
 
 export const reFuchs2 = flag({
   code: 'reFuchs2',
-  label: 'Fuchs gefangen ×2',
+  labelKey: 'scoringFlags.reFuchs2',
   value: 1,
   target: FlagTarget.reSide,
   group: FlagGroup.reParty,
@@ -109,7 +109,7 @@ export const reFuchs2 = flag({
 
 export const reDoppelkopf1 = flag({
   code: 'reDoppelkopf1',
-  label: 'Doppelkopf',
+  labelKey: 'scoringFlags.reDoppelkopf1',
   value: 1,
   target: FlagTarget.reSide,
   group: FlagGroup.reParty,
@@ -117,7 +117,7 @@ export const reDoppelkopf1 = flag({
 
 export const reDoppelkopf2 = flag({
   code: 'reDoppelkopf2',
-  label: 'Doppelkopf ×2',
+  labelKey: 'scoringFlags.reDoppelkopf2',
   value: 1,
   target: FlagTarget.reSide,
   group: FlagGroup.reParty,
@@ -125,7 +125,7 @@ export const reDoppelkopf2 = flag({
 
 export const reDoppelkopf3 = flag({
   code: 'reDoppelkopf3',
-  label: 'Doppelkopf ×3',
+  labelKey: 'scoringFlags.reDoppelkopf3',
   value: 1,
   target: FlagTarget.reSide,
   group: FlagGroup.reParty,
@@ -133,7 +133,7 @@ export const reDoppelkopf3 = flag({
 
 export const reDoppelkopf4 = flag({
   code: 'reDoppelkopf4',
-  label: 'Doppelkopf ×4',
+  labelKey: 'scoringFlags.reDoppelkopf4',
   value: 1,
   target: FlagTarget.reSide,
   group: FlagGroup.reParty,
@@ -141,7 +141,7 @@ export const reDoppelkopf4 = flag({
 
 export const reAnnouncedUnder90 = flag({
   code: 'reAnnouncedUnder90',
-  label: 'Unter 90 angesagt (Re)',
+  labelKey: 'scoringFlags.reAnnouncedUnder90',
   value: 1,
   target: FlagTarget.winner,
   group: FlagGroup.reParty,
@@ -149,7 +149,7 @@ export const reAnnouncedUnder90 = flag({
 
 export const reAnnouncedUnder60 = flag({
   code: 'reAnnouncedUnder60',
-  label: 'Unter 60 angesagt (Re)',
+  labelKey: 'scoringFlags.reAnnouncedUnder60',
   value: 1,
   target: FlagTarget.winner,
   group: FlagGroup.reParty,
@@ -157,7 +157,7 @@ export const reAnnouncedUnder60 = flag({
 
 export const reAnnouncedUnder30 = flag({
   code: 'reAnnouncedUnder30',
-  label: 'Unter 30 angesagt (Re)',
+  labelKey: 'scoringFlags.reAnnouncedUnder30',
   value: 1,
   target: FlagTarget.winner,
   group: FlagGroup.reParty,
@@ -165,7 +165,7 @@ export const reAnnouncedUnder30 = flag({
 
 export const reAnnouncedSchwarz = flag({
   code: 'reAnnouncedSchwarz',
-  label: 'Schwarz angesagt (Re)',
+  labelKey: 'scoringFlags.reAnnouncedSchwarz',
   value: 1,
   target: FlagTarget.winner,
   group: FlagGroup.reParty,
@@ -173,7 +173,7 @@ export const reAnnouncedSchwarz = flag({
 
 export const contraAnnounced = flag({
   code: 'contraAnnounced',
-  label: 'Kontra angesagt',
+  labelKey: 'scoringFlags.contraAnnounced',
   value: 2,
   target: FlagTarget.winner,
   group: FlagGroup.contraParty,
@@ -182,7 +182,7 @@ export const contraAnnounced = flag({
 
 export const contraKarlchen = flag({
   code: 'contraKarlchen',
-  label: 'Karlchen',
+  labelKey: 'scoringFlags.contraKarlchen',
   value: 1,
   target: FlagTarget.contraSide,
   group: FlagGroup.contraParty,
@@ -193,7 +193,7 @@ export const contraKarlchen = flag({
 
 export const contraKarlchenGefangen = flag({
   code: 'contraKarlchenGefangen',
-  label: 'Karlchen gefangen',
+  labelKey: 'scoringFlags.contraKarlchenGefangen',
   value: 1,
   target: FlagTarget.contraSide,
   group: FlagGroup.contraParty,
@@ -204,7 +204,7 @@ export const contraKarlchenGefangen = flag({
 
 export const contraDulleGefangen = flag({
   code: 'contraDulleGefangen',
-  label: 'Dulle gefangen',
+  labelKey: 'scoringFlags.contraDulleGefangen',
   value: 1,
   target: FlagTarget.contraSide,
   group: FlagGroup.contraParty,
@@ -215,7 +215,7 @@ export const contraDulleGefangen = flag({
 
 export const contraFuchsLetzterStich = flag({
   code: 'contraFuchsLetzterStich',
-  label: 'Fuchs letzter Stich',
+  labelKey: 'scoringFlags.contraFuchsLetzterStich',
   value: 1,
   target: FlagTarget.contraSide,
   group: FlagGroup.contraParty,
@@ -226,7 +226,7 @@ export const contraFuchsLetzterStich = flag({
 
 export const contraFuchs1 = flag({
   code: 'contraFuchs1',
-  label: 'Fuchs gefangen',
+  labelKey: 'scoringFlags.contraFuchs1',
   value: 1,
   target: FlagTarget.contraSide,
   group: FlagGroup.contraParty,
@@ -234,7 +234,7 @@ export const contraFuchs1 = flag({
 
 export const contraFuchs2 = flag({
   code: 'contraFuchs2',
-  label: 'Fuchs gefangen ×2',
+  labelKey: 'scoringFlags.contraFuchs2',
   value: 1,
   target: FlagTarget.contraSide,
   group: FlagGroup.contraParty,
@@ -242,7 +242,7 @@ export const contraFuchs2 = flag({
 
 export const contraDoppelkopf1 = flag({
   code: 'contraDoppelkopf1',
-  label: 'Doppelkopf',
+  labelKey: 'scoringFlags.contraDoppelkopf1',
   value: 1,
   target: FlagTarget.contraSide,
   group: FlagGroup.contraParty,
@@ -250,7 +250,7 @@ export const contraDoppelkopf1 = flag({
 
 export const contraDoppelkopf2 = flag({
   code: 'contraDoppelkopf2',
-  label: 'Doppelkopf ×2',
+  labelKey: 'scoringFlags.contraDoppelkopf2',
   value: 1,
   target: FlagTarget.contraSide,
   group: FlagGroup.contraParty,
@@ -258,7 +258,7 @@ export const contraDoppelkopf2 = flag({
 
 export const contraDoppelkopf3 = flag({
   code: 'contraDoppelkopf3',
-  label: 'Doppelkopf ×3',
+  labelKey: 'scoringFlags.contraDoppelkopf3',
   value: 1,
   target: FlagTarget.contraSide,
   group: FlagGroup.contraParty,
@@ -266,7 +266,7 @@ export const contraDoppelkopf3 = flag({
 
 export const contraDoppelkopf4 = flag({
   code: 'contraDoppelkopf4',
-  label: 'Doppelkopf ×4',
+  labelKey: 'scoringFlags.contraDoppelkopf4',
   value: 1,
   target: FlagTarget.contraSide,
   group: FlagGroup.contraParty,
@@ -274,7 +274,7 @@ export const contraDoppelkopf4 = flag({
 
 export const contraAnnouncedUnder90 = flag({
   code: 'contraAnnouncedUnder90',
-  label: 'Unter 90 angesagt (Kontra)',
+  labelKey: 'scoringFlags.contraAnnouncedUnder90',
   value: 1,
   target: FlagTarget.winner,
   group: FlagGroup.contraParty,
@@ -282,7 +282,7 @@ export const contraAnnouncedUnder90 = flag({
 
 export const contraAnnouncedUnder60 = flag({
   code: 'contraAnnouncedUnder60',
-  label: 'Unter 60 angesagt (Kontra)',
+  labelKey: 'scoringFlags.contraAnnouncedUnder60',
   value: 1,
   target: FlagTarget.winner,
   group: FlagGroup.contraParty,
@@ -290,7 +290,7 @@ export const contraAnnouncedUnder60 = flag({
 
 export const contraAnnouncedUnder30 = flag({
   code: 'contraAnnouncedUnder30',
-  label: 'Unter 30 angesagt (Kontra)',
+  labelKey: 'scoringFlags.contraAnnouncedUnder30',
   value: 1,
   target: FlagTarget.winner,
   group: FlagGroup.contraParty,
@@ -298,7 +298,7 @@ export const contraAnnouncedUnder30 = flag({
 
 export const contraAnnouncedSchwarz = flag({
   code: 'contraAnnouncedSchwarz',
-  label: 'Schwarz angesagt (Kontra)',
+  labelKey: 'scoringFlags.contraAnnouncedSchwarz',
   value: 1,
   target: FlagTarget.winner,
   group: FlagGroup.contraParty,
@@ -306,28 +306,28 @@ export const contraAnnouncedSchwarz = flag({
 
 export const under90 = flag({
   code: 'under90',
-  label: 'Unter 90',
+  labelKey: 'scoringFlags.under90',
   value: 1,
   target: FlagTarget.winner,
 });
 
 export const under60 = flag({
   code: 'under60',
-  label: 'Unter 60',
+  labelKey: 'scoringFlags.under60',
   value: 1,
   target: FlagTarget.winner,
 });
 
 export const under30 = flag({
   code: 'under30',
-  label: 'Unter 30',
+  labelKey: 'scoringFlags.under30',
   value: 1,
   target: FlagTarget.winner,
 });
 
 export const schwarz = flag({
   code: 'schwarz',
-  label: 'Schwarz',
+  labelKey: 'scoringFlags.schwarz',
   value: 1,
   target: FlagTarget.winner,
 });

@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from '@/presentation/i18n/useTranslation';
 import { ScrollView, View } from 'react-native';
 import {
   Button,
@@ -91,6 +92,7 @@ export function AddGameScreen({ sheetId, gameId }: AddGameScreenProps) {
 }
 
 function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const theme = useTheme();
   const addGame = useSheetStore((s) => s.addGame);
@@ -398,14 +400,14 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
             trailingChips={[
               <StackingCounterChip
                 key="reFuchs"
-                label={fuchsSpec.label}
+                label={t(fuchsSpec.labelKey)}
                 count={stackingCount(fuchsSpec, true)}
                 sign={winner === WinnerSide.re ? 1 : -1}
                 onTap={() => cycleStacking(fuchsSpec, true)}
               />,
               <StackingCounterChip
                 key="reDoko"
-                label={doppelkopfSpec.label}
+                label={t(doppelkopfSpec.labelKey)}
                 count={stackingCount(doppelkopfSpec, true)}
                 sign={winner === WinnerSide.re ? 1 : -1}
                 onTap={() => cycleStacking(doppelkopfSpec, true)}
@@ -435,14 +437,14 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
             trailingChips={[
               <StackingCounterChip
                 key="contraFuchs"
-                label={fuchsSpec.label}
+                label={t(fuchsSpec.labelKey)}
                 count={stackingCount(fuchsSpec, false)}
                 sign={winner === WinnerSide.contra ? 1 : -1}
                 onTap={() => cycleStacking(fuchsSpec, false)}
               />,
               <StackingCounterChip
                 key="contraDoko"
-                label={doppelkopfSpec.label}
+                label={t(doppelkopfSpec.labelKey)}
                 count={stackingCount(doppelkopfSpec, false)}
                 sign={winner === WinnerSide.contra ? 1 : -1}
                 onTap={() => cycleStacking(doppelkopfSpec, false)}

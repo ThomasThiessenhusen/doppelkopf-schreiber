@@ -40,6 +40,7 @@ import { Scoreboard } from '@/presentation/widgets/Scoreboard';
 import { RoundSection } from '@/presentation/widgets/RoundSection';
 
 export function SheetScreen({ sheetId }: { sheetId: string }) {
+  const { t } = useTranslation();
   const state = useSheetStore((s) => s.state);
   const load = useSheetStore((s) => s.load);
 
@@ -58,7 +59,7 @@ export function SheetScreen({ sheetId }: { sheetId: string }) {
   if (state.status === 'error') {
     return (
       <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
-        <Text variant="bodyMedium">Fehler: {state.error.message}</Text>
+        <Text variant="bodyMedium">{`${t('sheet.errorPrefix')}: ${state.error.message}`}</Text>
       </View>
     );
   }
@@ -195,7 +196,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
     <View style={{ flex: 1 }}>
       <Stack.Screen
         options={{
-          title: sheet.title ?? 'Spielbogen',
+          title: sheet.title ?? t('sheet.titleFallback'),
           headerRight: () => (
             <View style={{ flexDirection: 'row' }}>
               <IconButton icon="pencil-outline" onPress={openRename} />
@@ -210,14 +211,14 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
                 }
               >
                 <Menu.Item
-                  title="Bockrunden-Stapelung..."
+                  title={t('sheet.menuStacking')}
                   onPress={() => {
                     setMenuOpen(false);
                     openStackingDialog();
                   }}
                 />
                 <Menu.Item
-                  title="Gruppe zuordnen..."
+                  title={t('sheet.menuGroup')}
                   onPress={() => {
                     setMenuOpen(false);
                     setGroupPickerOpen(true);
@@ -240,9 +241,9 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
         {sheet.rounds.length === 0 ? (
           <View style={{ padding: 32, alignItems: 'center', gap: 8 }}>
             <Icon source="chart-line" size={56} color={theme.colors.primary} />
-            <Text variant="titleMedium">Noch keine Spiele eingetragen</Text>
+            <Text variant="titleMedium">{t('sheet.emptyTitle')}</Text>
             <Text variant="bodyMedium" style={{ textAlign: 'center' }}>
-              Tippe auf {'„'}Neues Spiel{'“'}, um das erste Spiel zu erfassen.
+              {t('sheet.emptyHint')}
             </Text>
           </View>
         ) : (
@@ -263,7 +264,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
       {canAddGame && (
         <FAB
           icon="plus"
-          label="Neues Spiel"
+          label={t('sheet.addGameFab')}
           style={{ position: 'absolute', right: 16, bottom: 16 }}
           onPress={openAddGame}
         />
@@ -271,26 +272,26 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
 
       <Portal>
         <Dialog visible={renameOpen} onDismiss={() => setRenameOpen(false)}>
-          <Dialog.Title>Titel</Dialog.Title>
+          <Dialog.Title>{t('sheet.titleDialogTitle')}</Dialog.Title>
           <Dialog.Content>
             <TextInput
               mode="outlined"
               value={renameValue}
               onChangeText={setRenameValue}
-              placeholder="Titel des Spielbogens"
+              placeholder={t('sheet.titlePlaceholder')}
               autoFocus
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setRenameOpen(false)}>Abbrechen</Button>
+            <Button onPress={() => setRenameOpen(false)}>{t('common.cancel')}</Button>
             <Button mode="contained" onPress={() => void submitRename()}>
-              Speichern
+              {t('common.save')}
             </Button>
           </Dialog.Actions>
         </Dialog>
 
         <Dialog visible={stackingDialogOpen} onDismiss={() => setStackingDialogOpen(false)}>
-          <Dialog.Title>Bockrunden-Stapelung</Dialog.Title>
+          <Dialog.Title>{t('sheet.stackingTitle')}</Dialog.Title>
           <Dialog.Content>
             <RadioButton.Group
               value={stackingChoice}
@@ -304,21 +305,21 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
                 )
               }
             >
-              <RadioButton.Item label="App-Default verwenden" value="default" />
-              <RadioButton.Item label="Sequenziell" value={BockStackingMode.sequential} />
-              <RadioButton.Item label="Doppelbock" value={BockStackingMode.doppelbock} />
+              <RadioButton.Item label={t('sheet.stackingUseDefault')} value="default" />
+              <RadioButton.Item label={t('sheet.stackingSequential')} value={BockStackingMode.sequential} />
+              <RadioButton.Item label={t('sheet.stackingDoppelbock')} value={BockStackingMode.doppelbock} />
             </RadioButton.Group>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setStackingDialogOpen(false)}>Abbrechen</Button>
+            <Button onPress={() => setStackingDialogOpen(false)}>{t('common.cancel')}</Button>
             <Button mode="contained" onPress={() => void submitStacking()}>
-              Uebernehmen
+              {t('sheet.apply')}
             </Button>
           </Dialog.Actions>
         </Dialog>
 
         <Dialog visible={groupPickerOpen} onDismiss={() => setGroupPickerOpen(false)}>
-          <Dialog.Title>Gruppe zuordnen</Dialog.Title>
+          <Dialog.Title>{t('sheet.groupTitle')}</Dialog.Title>
           <Dialog.Content>
             <RadioButton.Group
               value={sheet.groupId ?? '__none__'}
@@ -333,28 +334,28 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
                 }
               }}
             >
-              <RadioButton.Item label="Keine Gruppe" value="__none__" />
+              <RadioButton.Item label={t('sheet.groupNone')} value="__none__" />
               {groups.map((g) => (
                 <RadioButton.Item
                   key={g.id}
-                  label={`${g.name}  (${t(groupTypeLabelKey(g.type))})`}
+                  label={t('sheet.groupOptionWithType', { name: g.name, type: t(groupTypeLabelKey(g.type)) })}
                   value={g.id}
                 />
               ))}
-              <RadioButton.Item label="Neue Gruppe..." value="__new__" />
+              <RadioButton.Item label={t('sheet.groupNewOption')} value="__new__" />
             </RadioButton.Group>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setGroupPickerOpen(false)}>Schliessen</Button>
+            <Button onPress={() => setGroupPickerOpen(false)}>{t('common.close')}</Button>
           </Dialog.Actions>
         </Dialog>
 
         <Dialog visible={groupNewOpen} onDismiss={() => setGroupNewOpen(false)}>
-          <Dialog.Title>Neue Gruppe</Dialog.Title>
+          <Dialog.Title>{t('sheet.groupNewTitle')}</Dialog.Title>
           <Dialog.Content>
             <TextInput
               mode="outlined"
-              label="Name"
+              label={t('sheet.groupNewName')}
               value={groupNewName}
               onChangeText={setGroupNewName}
               autoFocus
@@ -364,16 +365,16 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
                 value={groupNewType}
                 onValueChange={(v) => setGroupNewType(v as GroupType)}
                 buttons={[
-                  { value: GroupType.season, label: 'Saison' },
-                  { value: GroupType.tournament, label: 'Turnier' },
+                  { value: GroupType.season, label: t('sheet.groupTypeSeason') },
+                  { value: GroupType.tournament, label: t('sheet.groupTypeTournament') },
                 ]}
               />
             </View>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setGroupNewOpen(false)}>Abbrechen</Button>
+            <Button onPress={() => setGroupNewOpen(false)}>{t('common.cancel')}</Button>
             <Button mode="contained" onPress={() => void submitCreateGroup()}>
-              Anlegen
+              {t('sheet.groupCreate')}
             </Button>
           </Dialog.Actions>
         </Dialog>
@@ -383,14 +384,18 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
 }
 
 function BockBanner({ bockState }: { bockState: ReturnType<typeof currentBockState> }) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const lines: string[] = [];
   if (bockState.remainingDouble > 0) {
-    lines.push(`Doppelbock — noch ${bockState.remainingDouble} Spiele`);
+    lines.push(t('sheet.bockDoubleRemaining', { count: bockState.remainingDouble }));
   }
   if (bockState.remainingSingle > 0) {
-    const prefix = bockState.remainingDouble > 0 ? 'danach Bock' : 'Bockrunde aktiv';
-    lines.push(`${prefix} — ${bockState.remainingSingle} Spiele`);
+    if (bockState.remainingDouble > 0) {
+      lines.push(t('sheet.bockAfterDouble', { count: bockState.remainingSingle }));
+    } else {
+      lines.push(t('sheet.bockSingleActive', { count: bockState.remainingSingle }));
+    }
   }
   return (
     <Card
