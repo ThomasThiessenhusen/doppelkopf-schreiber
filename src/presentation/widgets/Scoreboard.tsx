@@ -1,8 +1,11 @@
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { Card, Icon, Text, useTheme } from 'react-native-paper';
 
 import type { Player } from '@/domain/models/player';
 import { playerDisplayName } from '@/domain/models/player';
+
+const ROW_HEIGHT = 28;
+const VISIBLE_ROWS = 8;
 
 export interface ScoreboardProps {
   players: ReadonlyArray<Player>;
@@ -95,46 +98,51 @@ export function Scoreboard({ players, totalsByPlayerId, pointsByGame }: Scoreboa
         </View>
         <View style={{ height: 1, backgroundColor: 'rgba(0,0,0,0.08)' }} />
 
-        {/* Game rows */}
-        {pointsByGame.map((row, idx) => (
-          <View
-            key={row.gameId}
-            style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4 }}
-          >
-            <View style={{ width: 32 }}>
-              <Text
-                variant="bodySmall"
-                style={{
-                  textAlign: 'right',
-                  color: theme.colors.onSurfaceVariant,
-                  fontVariant: ['tabular-nums'],
-                }}
-              >
-                {idx + 1}
-              </Text>
+        {/* Game rows — internal scroll fuer lange Spielbogen */}
+        <ScrollView
+          style={{ maxHeight: ROW_HEIGHT * VISIBLE_ROWS }}
+          nestedScrollEnabled
+        >
+          {pointsByGame.map((row, idx) => (
+            <View
+              key={row.gameId}
+              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4 }}
+            >
+              <View style={{ width: 32 }}>
+                <Text
+                  variant="bodySmall"
+                  style={{
+                    textAlign: 'right',
+                    color: theme.colors.onSurfaceVariant,
+                    fontVariant: ['tabular-nums'],
+                  }}
+                >
+                  {idx + 1}
+                </Text>
+              </View>
+              {players.map((p) => {
+                const isSittingOut = p.id === row.sittingOutPlayerId;
+                const points = row.pointsByPlayerId.get(p.id) ?? 0;
+                return (
+                  <View key={p.id} style={{ flex: 1 }}>
+                    <Text
+                      variant="bodyMedium"
+                      style={{
+                        textAlign: 'center',
+                        fontVariant: ['tabular-nums'],
+                        color: isSittingOut
+                          ? theme.colors.onSurfaceVariant
+                          : colorForPoints(points),
+                      }}
+                    >
+                      {isSittingOut ? '—' : formatPoints(points)}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
-            {players.map((p) => {
-              const isSittingOut = p.id === row.sittingOutPlayerId;
-              const points = row.pointsByPlayerId.get(p.id) ?? 0;
-              return (
-                <View key={p.id} style={{ flex: 1 }}>
-                  <Text
-                    variant="bodyMedium"
-                    style={{
-                      textAlign: 'center',
-                      fontVariant: ['tabular-nums'],
-                      color: isSittingOut
-                        ? theme.colors.onSurfaceVariant
-                        : colorForPoints(points),
-                    }}
-                  >
-                    {isSittingOut ? '—' : formatPoints(points)}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        ))}
+          ))}
+        </ScrollView>
 
         {pointsByGame.length > 0 && (
           <View style={{ height: 1, backgroundColor: 'rgba(0,0,0,0.08)', marginTop: 4 }} />

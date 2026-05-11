@@ -200,7 +200,16 @@ export function HomeScreen() {
         icon="plus"
         label="Neuer Spielbogen"
         style={{ position: 'absolute', right: 16, bottom: 16 }}
-        onPress={() => router.push('/sheets/new')}
+        onPress={() => {
+          if (filterGroupId !== null) {
+            router.push({
+              pathname: '/sheets/new',
+              params: { groupId: filterGroupId },
+            });
+          } else {
+            router.push('/sheets/new');
+          }
+        }}
       />
 
       <Portal>

@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import {
@@ -191,42 +191,42 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
 
   return (
     <View style={{ flex: 1 }}>
+      <Stack.Screen
+        options={{
+          title: sheet.title ?? 'Spielbogen',
+          headerRight: () => (
+            <View style={{ flexDirection: 'row' }}>
+              <IconButton icon="pencil-outline" onPress={openRename} />
+              <Menu
+                visible={menuOpen}
+                onDismiss={() => setMenuOpen(false)}
+                anchor={
+                  <IconButton
+                    icon="dots-vertical"
+                    onPress={() => setMenuOpen(true)}
+                  />
+                }
+              >
+                <Menu.Item
+                  title="Bockrunden-Stapelung..."
+                  onPress={() => {
+                    setMenuOpen(false);
+                    openStackingDialog();
+                  }}
+                />
+                <Menu.Item
+                  title="Gruppe zuordnen..."
+                  onPress={() => {
+                    setMenuOpen(false);
+                    setGroupPickerOpen(true);
+                  }}
+                />
+              </Menu>
+            </View>
+          ),
+        }}
+      />
       <ScrollView contentContainerStyle={{ paddingBottom: 96 }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: 12,
-            paddingTop: 8,
-            gap: 4,
-          }}
-        >
-          <Text variant="titleLarge" style={{ flex: 1 }} numberOfLines={1}>
-            {sheet.title ?? 'Spielbogen'}
-          </Text>
-          <IconButton icon="pencil-outline" onPress={openRename} />
-          <Menu
-            visible={menuOpen}
-            onDismiss={() => setMenuOpen(false)}
-            anchor={<IconButton icon="dots-vertical" onPress={() => setMenuOpen(true)} />}
-          >
-            <Menu.Item
-              title="Bockrunden-Stapelung..."
-              onPress={() => {
-                setMenuOpen(false);
-                openStackingDialog();
-              }}
-            />
-            <Menu.Item
-              title="Gruppe zuordnen..."
-              onPress={() => {
-                setMenuOpen(false);
-                setGroupPickerOpen(true);
-              }}
-            />
-          </Menu>
-        </View>
-
         <Scoreboard
           players={sheet.players}
           totalsByPlayerId={totals.totalsByPlayerId}
