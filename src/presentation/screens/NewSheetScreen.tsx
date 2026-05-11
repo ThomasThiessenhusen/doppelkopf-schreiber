@@ -25,6 +25,7 @@ import { usePlayerListStore } from '@/application/stores/playerListStore';
 import { useSettingsStore } from '@/application/stores/settingsStore';
 import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
 import { useSheetListStore } from '@/application/stores/sheetListStore';
+import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 export interface NewSheetScreenProps {
   /** Wenn gesetzt, wird die Gruppe vorausgewaehlt (z. B. aus Home-Filter). */
@@ -32,6 +33,7 @@ export interface NewSheetScreenProps {
 }
 
 export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
+  const { t } = useTranslation();
   const router = useRouter();
 
   const playersLoading = usePlayerListStore((s) => s.loading);
@@ -163,49 +165,49 @@ export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
     <>
     <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
       <TextInput
-        label="Titel (optional)"
-        placeholder="z. B. Stammtisch Mai"
+        label={t('newSheet.titleLabel')}
+        placeholder={t('newSheet.titlePlaceholder')}
         mode="outlined"
         value={title}
         onChangeText={setTitle}
       />
 
       <View style={{ gap: 8 }}>
-        <Text variant="titleMedium">Gruppe</Text>
+        <Text variant="titleMedium">{t('newSheet.groupSection')}</Text>
         <Button
           mode="outlined"
           icon={selectedGroup === null ? 'folder-outline' : 'folder'}
           onPress={() => setGroupPickerOpen(true)}
         >
           {selectedGroup === null
-            ? 'Keine Gruppe'
-            : `${selectedGroup.name} (${groupTypeLabel(selectedGroup.type)})`}
+            ? t('newSheet.groupNone')
+            : t('newSheet.groupSummary', { name: selectedGroup.name, type: groupTypeLabel(selectedGroup.type) })}
         </Button>
       </View>
 
       <View style={{ gap: 8 }}>
-        <Text variant="titleMedium">Anzahl Spieler</Text>
+        <Text variant="titleMedium">{t('newSheet.playerCountSection')}</Text>
         <SegmentedButtons
           value={String(playerCount)}
           onValueChange={(v) => onPlayerCountChanged(v === '5' ? 5 : 4)}
           buttons={[
-            { value: '4', label: '4 Spieler' },
-            { value: '5', label: '5 Spieler' },
+            { value: '4', label: t('newSheet.playerCount4') },
+            { value: '5', label: t('newSheet.playerCount5') },
           ]}
         />
       </View>
 
       <View style={{ gap: 8 }}>
-        <Text variant="titleMedium">Bockrunden-Stapelung</Text>
+        <Text variant="titleMedium">{t('newSheet.stackingSection')}</Text>
         <Text variant="bodySmall">
-          Vorausgewaehlt ist der App-Default — fuer diesen Bogen aenderbar.
+          {t('newSheet.stackingHint')}
         </Text>
         <SegmentedButtons
           value={selectedMode}
           onValueChange={(v) => setStackingOverride(v as BockStackingMode)}
           buttons={[
-            { value: BockStackingMode.sequential, label: 'Sequenziell' },
-            { value: BockStackingMode.doppelbock, label: 'Doppelbock' },
+            { value: BockStackingMode.sequential, label: t('newSheet.stackingSequential') },
+            { value: BockStackingMode.doppelbock, label: t('newSheet.stackingDoppelbock') },
           ]}
         />
       </View>
@@ -213,10 +215,10 @@ export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
       <View style={{ gap: 8 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text variant="titleMedium" style={{ flex: 1 }}>
-            Spieler auswaehlen
+            {t('newSheet.pickPlayers')}
           </Text>
           <Text variant="bodySmall">
-            {selected.length} / {playerCount}
+            {t('newSheet.pickCount', { selected: selected.length, total: playerCount })}
           </Text>
         </View>
 
@@ -227,12 +229,12 @@ export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
         ) : players.length === 0 ? (
           <Card>
             <Card.Content style={{ gap: 8 }}>
-              <Text variant="titleSmall">Noch keine Spieler im Pool</Text>
+              <Text variant="titleSmall">{t('newSheet.noPlayersTitle')}</Text>
               <Text variant="bodySmall">
-                Lege zuerst in der Spielerverwaltung Spieler an.
+                {t('newSheet.noPlayersHint')}
               </Text>
               <Button mode="contained-tonal" onPress={() => router.push('/players')}>
-                Spielerverwaltung oeffnen
+                {t('newSheet.openPlayerMgmt')}
               </Button>
             </Card.Content>
           </Card>
@@ -261,9 +263,9 @@ export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
 
       {selected.length > 0 && (
         <View style={{ gap: 8 }}>
-          <Text variant="titleMedium">Reihenfolge</Text>
+          <Text variant="titleMedium">{t('newSheet.orderSection')}</Text>
           <Text variant="bodySmall">
-            Position 1 ist der erste Aussetzer/Kartengeber. Mit den Pfeilen umsortieren.
+            {t('newSheet.orderHint')}
           </Text>
           {selected.map((p, index) => {
             const isFirst = index === 0;
@@ -282,7 +284,7 @@ export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
                   <View style={{ flex: 1, paddingVertical: 12 }}>
                     <Text variant="bodyLarge">{playerDisplayName(p)}</Text>
                     {isFirst && (
-                      <Text variant="bodySmall">Erster Aussetzer/Kartengeber</Text>
+                      <Text variant="bodySmall">{t('newSheet.firstDealer')}</Text>
                     )}
                   </View>
                   <IconButton
@@ -308,12 +310,12 @@ export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
         disabled={!canSubmit}
         onPress={() => void create()}
       >
-        Spielbogen erstellen
+        {t('newSheet.create')}
       </Button>
     </ScrollView>
     <Portal>
       <Dialog visible={groupPickerOpen} onDismiss={() => setGroupPickerOpen(false)}>
-        <Dialog.Title>Gruppe waehlen</Dialog.Title>
+        <Dialog.Title>{t('newSheet.groupPickerTitle')}</Dialog.Title>
         <Dialog.Content>
           <RadioButton.Group
             value={groupId ?? '__none__'}
@@ -328,28 +330,28 @@ export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
               }
             }}
           >
-            <RadioButton.Item label="Keine Gruppe" value="__none__" />
+            <RadioButton.Item label={t('newSheet.groupNone')} value="__none__" />
             {groups.map((g) => (
               <RadioButton.Item
                 key={g.id}
-                label={`${g.name}  (${groupTypeLabel(g.type)})`}
+                label={t('newSheet.groupOptionWithType', { name: g.name, type: groupTypeLabel(g.type) })}
                 value={g.id}
               />
             ))}
-            <RadioButton.Item label="Neue Gruppe..." value="__new__" />
+            <RadioButton.Item label={t('newSheet.groupOptionNew')} value="__new__" />
           </RadioButton.Group>
         </Dialog.Content>
         <Dialog.Actions>
-          <Button onPress={() => setGroupPickerOpen(false)}>Schliessen</Button>
+          <Button onPress={() => setGroupPickerOpen(false)}>{t('common.close')}</Button>
         </Dialog.Actions>
       </Dialog>
 
       <Dialog visible={groupNewOpen} onDismiss={() => setGroupNewOpen(false)}>
-        <Dialog.Title>Neue Gruppe</Dialog.Title>
+        <Dialog.Title>{t('newSheet.groupNewTitle')}</Dialog.Title>
         <Dialog.Content>
           <TextInput
             mode="outlined"
-            label="Name"
+            label={t('newSheet.groupNewName')}
             value={groupNewName}
             onChangeText={setGroupNewName}
             autoFocus
@@ -359,16 +361,16 @@ export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
               value={groupNewType}
               onValueChange={(v) => setGroupNewType(v as GroupType)}
               buttons={[
-                { value: GroupType.season, label: 'Saison' },
-                { value: GroupType.tournament, label: 'Turnier' },
+                { value: GroupType.season, label: t('newSheet.groupTypeSeason') },
+                { value: GroupType.tournament, label: t('newSheet.groupTypeTournament') },
               ]}
             />
           </View>
         </Dialog.Content>
         <Dialog.Actions>
-          <Button onPress={() => setGroupNewOpen(false)}>Abbrechen</Button>
+          <Button onPress={() => setGroupNewOpen(false)}>{t('common.cancel')}</Button>
           <Button mode="contained" onPress={() => void submitCreateGroup()}>
-            Anlegen
+            {t('newSheet.groupCreate')}
           </Button>
         </Dialog.Actions>
       </Dialog>
