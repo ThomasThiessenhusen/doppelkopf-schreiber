@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { Chip, Menu, Text } from 'react-native-paper';
 
 import { playerDisplayName, type Player } from '@/domain/models/player';
+import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 export interface TeamPickerProps {
   players: ReadonlyArray<Player>;
@@ -23,6 +24,7 @@ export function TeamPicker({
   onChanged,
   onSittingOutChanged,
 }: TeamPickerProps) {
+  const { t } = useTranslation();
   const activePlayers = players.filter((p) => p.id !== sittingOutPlayerId);
   const reCount = selectedRePlayerIds.size;
   const hasPreview = reCount === 1 || reCount === 2;
@@ -42,11 +44,11 @@ export function TeamPicker({
     .filter((p) => !selectedRePlayerIds.has(p.id))
     .map(playerDisplayName)
     .join(' & ');
-  const modeLabel = reCount === 1 ? 'Solo-Spiel' : 'Normales Spiel';
+  const modeLabel = reCount === 1 ? t('teamPicker.modeSolo') : t('teamPicker.modeNormal');
 
   return (
     <View style={{ gap: 6 }}>
-      <Text variant="titleSmall">Re-Partei (1 oder 2 Spieler)</Text>
+      <Text variant="titleSmall">{t('teamPicker.sectionTitle')}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {activePlayers.map((p) => {
           const isSelected = selectedRePlayerIds.has(p.id);
@@ -77,7 +79,7 @@ export function TeamPicker({
           <View style={{ flex: 1 }}>
             {hasPreview && (
               <Text variant="bodySmall">
-                {modeLabel} · Kontra: {contraNames}
+                {t('teamPicker.summary', { mode: modeLabel, names: contraNames })}
               </Text>
             )}
           </View>
