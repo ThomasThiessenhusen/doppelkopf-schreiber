@@ -47,8 +47,7 @@ export function playerFullName(p: Player): string {
 
 /**
  * Aktualisiert ausgewaehlte Felder. `null` in `lastName` / `nickname` loescht
- * das Feld; Auslassen behaelt den bisherigen Wert. Spiegelt das Sentinel-
- * Pattern aus dem Dart-Original wider.
+ * das Feld; Auslassen behaelt den bisherigen Wert.
  */
 export interface PlayerPatch {
   firstName?: string;
