@@ -79,6 +79,24 @@ export const de = {
     groupTypeTournament: 'Turnier',
     groupCreate: 'Anlegen',
   },
+  players: {
+    errorFirstNameRequired: 'Vorname ist erforderlich',
+    errorLastNameRequired: 'Nachname ist erforderlich',
+    addFab: 'Spieler',
+    editMenu: 'Bearbeiten',
+    deleteMenu: 'Loeschen',
+    newTitle: 'Neuer Spieler',
+    editTitle: 'Spieler bearbeiten',
+    firstNameLabel: 'Vorname',
+    lastNameLabel: 'Nachname',
+    nicknameLabel: 'Spitzname (optional)',
+    createButton: 'Anlegen',
+    saveButton: 'Speichern',
+    deleteTitle: 'Spieler loeschen?',
+    deleteBody: '{{name}} wird aus der Spielerverwaltung entfernt. Bestehende Spielboegen bleiben unveraendert.',
+    emptyTitle: 'Noch keine Spieler',
+    emptyHint: 'Tippe unten auf „Spieler", um den ersten Spieler anzulegen.',
+  },
 } as const;
 
 /** Shape-compatible type: same keys as `de`, but string values (allows other locales). */

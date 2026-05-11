@@ -20,6 +20,7 @@ import {
   type Player,
 } from '@/domain/models/player';
 import { usePlayerListStore } from '@/application/stores/playerListStore';
+import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 interface FormState {
   firstName: string;
@@ -38,6 +39,7 @@ const emptyForm: FormState = {
 };
 
 export function PlayerManagementScreen() {
+  const { t } = useTranslation();
   const loading = usePlayerListStore((s) => s.loading);
   const players = usePlayerListStore((s) => s.players);
   const error = usePlayerListStore((s) => s.error);
@@ -80,8 +82,8 @@ export function PlayerManagementScreen() {
     const firstName = form.firstName.trim();
     const lastName = form.lastName.trim();
     const nickname = form.nickname.trim();
-    const firstNameError = firstName === '' ? 'Vorname ist erforderlich' : null;
-    const lastNameError = lastName === '' ? 'Nachname ist erforderlich' : null;
+    const firstNameError = firstName === '' ? t('players.errorFirstNameRequired') : null;
+    const lastNameError = lastName === '' ? t('players.errorLastNameRequired') : null;
     if (firstNameError !== null || lastNameError !== null) {
       setForm({ ...form, firstNameError, lastNameError });
       return;
@@ -110,11 +112,11 @@ export function PlayerManagementScreen() {
     <View style={{ flex: 1 }}>
       {loading && players.length === 0 ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Text variant="bodyMedium">Laedt …</Text>
+          <Text variant="bodyMedium">{t('common.loading')}</Text>
         </View>
       ) : error !== null && players.length === 0 ? (
         <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
-          <Text variant="bodyMedium">Fehler beim Laden: {error.message}</Text>
+          <Text variant="bodyMedium">{t('common.errorLoading')}: {error.message}</Text>
         </View>
       ) : players.length === 0 ? (
         <EmptyView />
@@ -146,14 +148,14 @@ export function PlayerManagementScreen() {
                     }
                   >
                     <Menu.Item
-                      title="Bearbeiten"
+                      title={t('players.editMenu')}
                       onPress={() => {
                         setMenuForId(null);
                         openEdit(p);
                       }}
                     />
                     <Menu.Item
-                      title="Loeschen"
+                      title={t('players.deleteMenu')}
                       onPress={() => {
                         setMenuForId(null);
                         setDeleteTarget(p);
@@ -169,17 +171,17 @@ export function PlayerManagementScreen() {
 
       <FAB
         icon="account-plus"
-        label="Spieler"
+        label={t('players.addFab')}
         style={{ position: 'absolute', right: 16, bottom: 16 }}
         onPress={openNew}
       />
 
       <Portal>
         <Dialog visible={editorOpen} onDismiss={() => setEditorOpen(false)}>
-          <Dialog.Title>{editing === null ? 'Neuer Spieler' : 'Spieler bearbeiten'}</Dialog.Title>
+          <Dialog.Title>{editing === null ? t('players.newTitle') : t('players.editTitle')}</Dialog.Title>
           <Dialog.Content>
             <TextInput
-              label="Vorname"
+              label={t('players.firstNameLabel')}
               value={form.firstName}
               onChangeText={(v) => setForm({ ...form, firstName: v, firstNameError: null })}
               mode="outlined"
@@ -190,7 +192,7 @@ export function PlayerManagementScreen() {
               {form.firstNameError ?? ''}
             </HelperText>
             <TextInput
-              label="Nachname"
+              label={t('players.lastNameLabel')}
               value={form.lastName}
               onChangeText={(v) => setForm({ ...form, lastName: v, lastNameError: null })}
               mode="outlined"
@@ -200,7 +202,7 @@ export function PlayerManagementScreen() {
               {form.lastNameError ?? ''}
             </HelperText>
             <TextInput
-              label="Spitzname (optional)"
+              label={t('players.nicknameLabel')}
               value={form.nickname}
               onChangeText={(v) => setForm({ ...form, nickname: v })}
               mode="outlined"
@@ -208,25 +210,24 @@ export function PlayerManagementScreen() {
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setEditorOpen(false)}>Abbrechen</Button>
+            <Button onPress={() => setEditorOpen(false)}>{t('common.cancel')}</Button>
             <Button mode="contained" onPress={() => void submit()}>
-              {editing === null ? 'Anlegen' : 'Speichern'}
+              {editing === null ? t('players.createButton') : t('players.saveButton')}
             </Button>
           </Dialog.Actions>
         </Dialog>
 
         <Dialog visible={deleteTarget !== null} onDismiss={() => setDeleteTarget(null)}>
-          <Dialog.Title>Spieler loeschen?</Dialog.Title>
+          <Dialog.Title>{t('players.deleteTitle')}</Dialog.Title>
           <Dialog.Content>
             <Text variant="bodyMedium">
-              {deleteTarget !== null ? playerDisplayName(deleteTarget) : ''} wird aus der
-              Spielerverwaltung entfernt. Bestehende Spielboegen bleiben unveraendert.
+              {t('players.deleteBody', { name: deleteTarget !== null ? playerDisplayName(deleteTarget) : '' })}
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setDeleteTarget(null)}>Abbrechen</Button>
+            <Button onPress={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
             <Button mode="contained-tonal" onPress={() => void confirmDelete()}>
-              Loeschen
+              {t('common.delete')}
             </Button>
           </Dialog.Actions>
         </Dialog>
@@ -236,12 +237,13 @@ export function PlayerManagementScreen() {
 }
 
 function EmptyView() {
+  const { t } = useTranslation();
   return (
     <View style={{ flex: 1, padding: 32, alignItems: 'center', justifyContent: 'center', gap: 16 }}>
       <List.Icon icon="account-group-outline" />
-      <Text variant="headlineSmall">Noch keine Spieler</Text>
+      <Text variant="headlineSmall">{t('players.emptyTitle')}</Text>
       <Text variant="bodyMedium" style={{ textAlign: 'center' }}>
-        Tippe unten auf {'„'}Spieler{'“'}, um den ersten Spieler anzulegen.
+        {t('players.emptyHint')}
       </Text>
     </View>
   );
