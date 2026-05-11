@@ -1,9 +1,13 @@
+import * as Crypto from 'expo-crypto';
+
 /**
  * Generiert eine neue eindeutige ID (UUID v4).
  *
- * Nutzt `globalThis.crypto.randomUUID()` (Node 19+, RN 0.76+, alle modernen
- * Browser) — kein zusaetzliches npm-Paket noetig.
+ * Nutzt `expo-crypto.randomUUID()` — funktioniert cross-platform (Node fuer
+ * Jest-Tests, React Native Hermes/JSC fuer App-Runtime, Web). `globalThis.crypto`
+ * ist im RN-JS-Engine nicht garantiert vorhanden, deshalb gehen wir ueber
+ * Expo's Polyfill-Wrapper.
  */
 export function newId(): string {
-  return globalThis.crypto.randomUUID();
+  return Crypto.randomUUID();
 }
