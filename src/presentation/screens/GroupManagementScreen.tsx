@@ -15,10 +15,11 @@ import {
   TextInput,
 } from 'react-native-paper';
 
-import { GroupType, groupTypeLabel } from '@/domain/models/groupType';
+import { GroupType, groupTypeLabelKey } from '@/domain/models/groupType';
 import type { SheetGroup } from '@/domain/models/sheetGroup';
 import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
 import { useSheetListStore } from '@/application/stores/sheetListStore';
+import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 interface EditorState {
   open: boolean;
@@ -39,6 +40,7 @@ const editorClosed: EditorState = {
 };
 
 export function GroupManagementScreen() {
+  const { t } = useTranslation();
   const loading = useSheetGroupListStore((s) => s.loading);
   const groups = useSheetGroupListStore((s) => s.groups);
   const refresh = useSheetGroupListStore((s) => s.refresh);
@@ -125,7 +127,7 @@ export function GroupManagementScreen() {
             return (
               <List.Item
                 title={g.name}
-                description={`${groupTypeLabel(g.type)}  ·  ${count} Spielbogen`}
+                description={t('groups.descriptionLine', { type: t(groupTypeLabelKey(g.type)), count })}
                 right={() => (
                   <Menu
                     visible={menuForId === g.id}
@@ -135,21 +137,21 @@ export function GroupManagementScreen() {
                     }
                   >
                     <Menu.Item
-                      title="Umbenennen"
+                      title={t('groups.menuRename')}
                       onPress={() => {
                         setMenuForId(null);
                         openRename(g);
                       }}
                     />
                     <Menu.Item
-                      title="Typ aendern"
+                      title={t('groups.menuChangeType')}
                       onPress={() => {
                         setMenuForId(null);
                         setTypeDialog(g);
                       }}
                     />
                     <Menu.Item
-                      title="Loeschen"
+                      title={t('groups.menuDelete')}
                       onPress={() => {
                         setMenuForId(null);
                         setDeleteTarget(g);
@@ -165,7 +167,7 @@ export function GroupManagementScreen() {
 
       <FAB
         icon="folder-plus"
-        label="Neue Gruppe"
+        label={t('groups.fabNew')}
         style={{ position: 'absolute', right: 16, bottom: 16 }}
         onPress={openNew}
       />
@@ -173,11 +175,11 @@ export function GroupManagementScreen() {
       <Portal>
         <Dialog visible={editor.open} onDismiss={() => setEditor(editorClosed)}>
           <Dialog.Title>
-            {editor.editing === null ? 'Neue Gruppe' : 'Gruppe umbenennen'}
+            {editor.editing === null ? t('groups.editorTitleNew') : t('groups.editorTitleRename')}
           </Dialog.Title>
           <Dialog.Content>
             <TextInput
-              label="Name"
+              label={t('groups.nameLabel')}
               mode="outlined"
               value={editor.name}
               autoFocus
@@ -189,52 +191,50 @@ export function GroupManagementScreen() {
                   value={editor.type}
                   onValueChange={(v) => setEditor({ ...editor, type: v as GroupType })}
                   buttons={[
-                    { value: GroupType.season, label: 'Saison' },
-                    { value: GroupType.tournament, label: 'Turnier' },
+                    { value: GroupType.season, label: t('groups.typeSeason') },
+                    { value: GroupType.tournament, label: t('groups.typeTournament') },
                   ]}
                 />
               </View>
             )}
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setEditor(editorClosed)}>Abbrechen</Button>
+            <Button onPress={() => setEditor(editorClosed)}>{t('common.cancel')}</Button>
             <Button mode="contained" onPress={() => void submitEditor()}>
-              {editor.editing === null ? 'Anlegen' : 'Speichern'}
+              {editor.editing === null ? t('groups.editorCreate') : t('groups.editorSave')}
             </Button>
           </Dialog.Actions>
         </Dialog>
 
         <Dialog visible={typeDialog !== null} onDismiss={() => setTypeDialog(null)}>
-          <Dialog.Title>Typ aendern</Dialog.Title>
+          <Dialog.Title>{t('groups.changeTypeTitle')}</Dialog.Title>
           <Dialog.Content>
             <RadioButton.Group
               value={typeDialog?.type ?? GroupType.season}
               onValueChange={(v) => void submitTypeChange(v as GroupType)}
             >
-              <RadioButton.Item label="Saison" value={GroupType.season} />
-              <RadioButton.Item label="Turnier" value={GroupType.tournament} />
+              <RadioButton.Item label={t('groups.typeSeason')} value={GroupType.season} />
+              <RadioButton.Item label={t('groups.typeTournament')} value={GroupType.tournament} />
             </RadioButton.Group>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setTypeDialog(null)}>Abbrechen</Button>
+            <Button onPress={() => setTypeDialog(null)}>{t('common.cancel')}</Button>
           </Dialog.Actions>
         </Dialog>
 
         <Dialog visible={deleteTarget !== null} onDismiss={() => setDeleteTarget(null)}>
           <Dialog.Title>
-            Gruppe {deleteTarget !== null ? deleteTarget.name : ''} loeschen?
+            {t('groups.deleteTitle', { name: deleteTarget?.name ?? '' })}
           </Dialog.Title>
           <Dialog.Content>
             <Text variant="bodyMedium">
               {deleteTarget !== null && deleteSheetCount(deleteTarget) === 0
-                ? 'Diese Gruppe enthaelt keine Spielboegen.'
-                : `Diese Gruppe enthaelt ${
-                    deleteTarget !== null ? deleteSheetCount(deleteTarget) : 0
-                  } Spielbogen. Sollen die Spielboegen mitgeloescht oder nur entkoppelt werden?`}
+                ? t('groups.deleteBodyEmpty')
+                : t('groups.deleteBodyWithSheets', { count: deleteTarget !== null ? deleteSheetCount(deleteTarget) : 0 })}
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setDeleteTarget(null)}>Abbrechen</Button>
+            <Button onPress={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
             {deleteTarget !== null && deleteSheetCount(deleteTarget) > 0 && (
               <Button
                 mode="contained-tonal"
@@ -244,7 +244,7 @@ export function GroupManagementScreen() {
                   await deleteWithSheetsDecoupled(target.id);
                 }}
               >
-                Spielboegen behalten
+                {t('groups.deleteKeepSheets')}
               </Button>
             )}
             <Button
@@ -261,8 +261,8 @@ export function GroupManagementScreen() {
               }}
             >
               {deleteTarget !== null && deleteSheetCount(deleteTarget) > 0
-                ? 'Mit loeschen'
-                : 'Loeschen'}
+                ? t('groups.deleteCascade')
+                : t('common.delete')}
             </Button>
           </Dialog.Actions>
         </Dialog>
@@ -272,13 +272,14 @@ export function GroupManagementScreen() {
 }
 
 function EmptyView() {
+  const { t } = useTranslation();
   return (
     <View
       style={{ flex: 1, padding: 32, alignItems: 'center', justifyContent: 'center', gap: 16 }}
     >
-      <Text variant="headlineSmall">Noch keine Gruppen angelegt.</Text>
+      <Text variant="headlineSmall">{t('groups.emptyTitle')}</Text>
       <Text variant="bodyMedium" style={{ textAlign: 'center' }}>
-        Tippe auf {'„'}Neue Gruppe{'"'}, um eine Saison oder ein Turnier zu starten.
+        {t('groups.emptyHint')}
       </Text>
     </View>
   );

@@ -15,7 +15,7 @@ import {
   Text,
 } from 'react-native-paper';
 
-import { groupTypeLabel } from '@/domain/models/groupType';
+import { groupTypeLabelKey } from '@/domain/models/groupType';
 import type { GameSheet } from '@/domain/models/gameSheet';
 import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
 import { useSheetListStore } from '@/application/stores/sheetListStore';
@@ -105,7 +105,7 @@ export function HomeScreen() {
             ? t('home.filterAll')
             : t('home.filterGroupSummary', {
                 name: activeGroup.name,
-                type: groupTypeLabel(activeGroup.type),
+                type: t(groupTypeLabelKey(activeGroup.type)),
               })}
         </Button>
         {activeGroup !== null && (
@@ -243,7 +243,7 @@ export function HomeScreen() {
             <List.Item
               key={g.id}
               title={g.name}
-              description={groupTypeLabel(g.type)}
+              description={t(groupTypeLabelKey(g.type))}
               left={(p) => <List.Icon {...p} icon="folder-outline" />}
               onPress={() => {
                 setFilterGroupId(g.id);

@@ -21,7 +21,7 @@ import {
 import type { Game } from '@/domain/models/game';
 import { allGames, type GameSheet } from '@/domain/models/gameSheet';
 import { appSettingsFallback } from '@/domain/models/appSettings';
-import { GroupType, groupTypeLabel } from '@/domain/models/groupType';
+import { GroupType, groupTypeLabelKey } from '@/domain/models/groupType';
 import type { SheetGroup } from '@/domain/models/sheetGroup';
 import { BockLevel } from '@/domain/scoring/bockLevel';
 import {
@@ -35,6 +35,7 @@ import { scoreFor, totalsFor } from '@/domain/scoring/scoreCalculator';
 import { useSettingsStore } from '@/application/stores/settingsStore';
 import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
 import { useSheetStore } from '@/application/stores/sheetStore';
+import { useTranslation } from '@/presentation/i18n/useTranslation';
 import { Scoreboard } from '@/presentation/widgets/Scoreboard';
 import { RoundSection } from '@/presentation/widgets/RoundSection';
 
@@ -66,6 +67,7 @@ export function SheetScreen({ sheetId }: { sheetId: string }) {
 }
 
 function Loaded({ sheet }: { sheet: GameSheet }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const theme = useTheme();
   const renameSheet = useSheetStore((s) => s.renameSheet);
@@ -335,7 +337,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
               {groups.map((g) => (
                 <RadioButton.Item
                   key={g.id}
-                  label={`${g.name}  (${groupTypeLabel(g.type)})`}
+                  label={`${g.name}  (${t(groupTypeLabelKey(g.type))})`}
                   value={g.id}
                 />
               ))}
