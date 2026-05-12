@@ -15,11 +15,11 @@ import type { Player } from '@/domain/models/player';
 import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 
 const players5: ReadonlyArray<Player> = [
-  { id: 'a', firstName: 'Anna', lastName: null, nickname: null },
-  { id: 'b', firstName: 'Ben', lastName: null, nickname: null },
-  { id: 'c', firstName: 'Carla', lastName: null, nickname: null },
-  { id: 'd', firstName: 'Dirk', lastName: null, nickname: null },
-  { id: 'e', firstName: 'Eva', lastName: null, nickname: null },
+  { id: 'a', playerName: 'Anna', firstName: null, lastName: null },
+  { id: 'b', playerName: 'Ben', firstName: null, lastName: null },
+  { id: 'c', playerName: 'Carla', firstName: null, lastName: null },
+  { id: 'd', playerName: 'Dirk', firstName: null, lastName: null },
+  { id: 'e', playerName: 'Eva', firstName: null, lastName: null },
 ];
 
 const players4: ReadonlyArray<Player> = players5.slice(0, 4);
@@ -105,7 +105,7 @@ describe('GameSheet', () => {
 
     expect(restored.id).toBe(sheet.id);
     expect(restored.title).toBe('Stammtisch');
-    expect(restored.players.map((p) => p.firstName)).toEqual([
+    expect(restored.players.map((p) => p.playerName)).toEqual([
       'Anna',
       'Ben',
       'Carla',

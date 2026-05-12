@@ -14,13 +14,13 @@ const CONTRA_ANNOUNCED = 'contraAnnounced';
 
 function makeSheet(playerCount = 4): GameSheet {
   const players: Player[] = [
-    { id: 'a', firstName: 'Anna', lastName: null, nickname: null },
-    { id: 'b', firstName: 'Ben', lastName: null, nickname: null },
-    { id: 'c', firstName: 'Carla', lastName: null, nickname: null },
-    { id: 'd', firstName: 'Dirk', lastName: null, nickname: null },
+    { id: 'a', playerName: 'Anna', firstName: null, lastName: null },
+    { id: 'b', playerName: 'Ben', firstName: null, lastName: null },
+    { id: 'c', playerName: 'Carla', firstName: null, lastName: null },
+    { id: 'd', playerName: 'Dirk', firstName: null, lastName: null },
   ];
   if (playerCount === 5) {
-    players.push({ id: 'e', firstName: 'Eva', lastName: null, nickname: null });
+    players.push({ id: 'e', playerName: 'Eva', firstName: null, lastName: null });
   }
   return createGameSheet({ players });
 }

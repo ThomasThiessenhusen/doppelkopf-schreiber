@@ -369,10 +369,10 @@ describe('scoreFor', () => {
 
 describe('totalsFor', () => {
   const players4: ReadonlyArray<Player> = [
-    { id: 'a', firstName: 'Anna', lastName: null, nickname: null },
-    { id: 'b', firstName: 'Ben', lastName: null, nickname: null },
-    { id: 'c', firstName: 'Carla', lastName: null, nickname: null },
-    { id: 'd', firstName: 'Dirk', lastName: null, nickname: null },
+    { id: 'a', playerName: 'Anna', firstName: null, lastName: null },
+    { id: 'b', playerName: 'Ben', firstName: null, lastName: null },
+    { id: 'c', playerName: 'Carla', firstName: null, lastName: null },
+    { id: 'd', playerName: 'Dirk', firstName: null, lastName: null },
   ];
 
   test('aggregiert Punkte ueber mehrere Spiele und bleibt zero-sum', () => {
@@ -424,7 +424,7 @@ describe('totalsFor', () => {
   test('aussetzender Spieler erhaelt 0 Punkte', () => {
     const players5: ReadonlyArray<Player> = [
       ...players4,
-      { id: 'e', firstName: 'Eva', lastName: null, nickname: null },
+      { id: 'e', playerName: 'Eva', firstName: null, lastName: null },
     ];
     let sheet = createGameSheet({ players: players5 });
     sheet = sheetWithGame(

@@ -13,9 +13,9 @@ export interface PlayerListState {
   error: Error | null;
   refresh: () => Promise<void>;
   add: (input: {
-    firstName: string;
-    lastName: string;
-    nickname?: string | null;
+    playerName: string;
+    firstName?: string | null;
+    lastName?: string | null;
   }) => Promise<Player>;
   update: (updated: Player) => Promise<void>;
   remove: (id: string) => Promise<void>;
@@ -46,11 +46,7 @@ export const usePlayerListStore = create<PlayerListState>((set, get) => ({
   },
 
   async add(input) {
-    const player = createPlayer({
-      firstName: input.firstName,
-      lastName: input.lastName,
-      nickname: input.nickname ?? null,
-    });
+    const player = createPlayer(input);
     await repositories.player().save(player);
     set({ players: sortByDisplayName([...get().players, player]) });
     return player;

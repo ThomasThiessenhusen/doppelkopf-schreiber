@@ -23,19 +23,17 @@ import { usePlayerListStore } from '@/application/stores/playerListStore';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 interface FormState {
+  playerName: string;
   firstName: string;
   lastName: string;
-  nickname: string;
-  firstNameError: string | null;
-  lastNameError: string | null;
+  playerNameError: string | null;
 }
 
 const emptyForm: FormState = {
+  playerName: '',
   firstName: '',
   lastName: '',
-  nickname: '',
-  firstNameError: null,
-  lastNameError: null,
+  playerNameError: null,
 };
 
 export function PlayerManagementScreen() {
@@ -69,35 +67,33 @@ export function PlayerManagementScreen() {
   function openEdit(p: Player) {
     setEditing(p);
     setForm({
-      firstName: p.firstName,
+      playerName: p.playerName,
+      firstName: p.firstName ?? '',
       lastName: p.lastName ?? '',
-      nickname: p.nickname ?? '',
-      firstNameError: null,
-      lastNameError: null,
+      playerNameError: null,
     });
     setEditorOpen(true);
   }
 
   async function submit() {
+    const playerName = form.playerName.trim();
     const firstName = form.firstName.trim();
     const lastName = form.lastName.trim();
-    const nickname = form.nickname.trim();
-    const firstNameError = firstName === '' ? t('players.errorFirstNameRequired') : null;
-    const lastNameError = lastName === '' ? t('players.errorLastNameRequired') : null;
-    if (firstNameError !== null || lastNameError !== null) {
-      setForm({ ...form, firstNameError, lastNameError });
+    const playerNameError =
+      playerName === '' ? t('players.errorPlayerNameRequired') : null;
+    if (playerNameError !== null) {
+      setForm({ ...form, playerNameError });
       return;
     }
+    const patch = {
+      playerName,
+      firstName: firstName === '' ? null : firstName,
+      lastName: lastName === '' ? null : lastName,
+    };
     if (editing === null) {
-      await add({ firstName, lastName, nickname: nickname === '' ? null : nickname });
+      await add(patch);
     } else {
-      await update(
-        copyPlayer(editing, {
-          firstName,
-          lastName,
-          nickname: nickname === '' ? null : nickname,
-        }),
-      );
+      await update(copyPlayer(editing, patch));
     }
     setEditorOpen(false);
   }
@@ -116,7 +112,9 @@ export function PlayerManagementScreen() {
         </View>
       ) : error !== null && players.length === 0 ? (
         <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
-          <Text variant="bodyMedium">{t('common.errorLoading')}: {error.message}</Text>
+          <Text variant="bodyMedium">
+            {t('common.errorLoading')}: {error.message}
+          </Text>
         </View>
       ) : players.length === 0 ? (
         <EmptyView />
@@ -129,11 +127,11 @@ export function PlayerManagementScreen() {
             <View style={{ height: 1, backgroundColor: 'rgba(0,0,0,0.08)' }} />
           )}
           renderItem={({ item: p }) => {
-            const hasNickname = p.nickname !== null && p.nickname !== '';
+            const fullName = playerFullName(p);
             return (
               <List.Item
                 title={playerDisplayName(p)}
-                description={hasNickname ? playerFullName(p) : undefined}
+                description={fullName !== '' ? fullName : undefined}
                 left={(props) => <List.Icon {...props} icon="account-outline" />}
                 onPress={() => openEdit(p)}
                 right={() => (
@@ -178,54 +176,65 @@ export function PlayerManagementScreen() {
 
       <Portal>
         <Dialog visible={editorOpen} onDismiss={() => setEditorOpen(false)}>
-          <Dialog.Title>{editing === null ? t('players.newTitle') : t('players.editTitle')}</Dialog.Title>
+          <Dialog.Title>
+            {editing === null ? t('players.newTitle') : t('players.editTitle')}
+          </Dialog.Title>
           <Dialog.Content>
+            <TextInput
+              label={t('players.playerNameLabel')}
+              value={form.playerName}
+              onChangeText={(v) =>
+                setForm({ ...form, playerName: v, playerNameError: null })
+              }
+              mode="outlined"
+              autoFocus
+              error={form.playerNameError !== null}
+            />
+            <HelperText type="error" visible={form.playerNameError !== null}>
+              {form.playerNameError ?? ''}
+            </HelperText>
             <TextInput
               label={t('players.firstNameLabel')}
               value={form.firstName}
-              onChangeText={(v) => setForm({ ...form, firstName: v, firstNameError: null })}
+              onChangeText={(v) => setForm({ ...form, firstName: v })}
               mode="outlined"
-              autoFocus
-              error={form.firstNameError !== null}
             />
-            <HelperText type="error" visible={form.firstNameError !== null}>
-              {form.firstNameError ?? ''}
-            </HelperText>
             <TextInput
               label={t('players.lastNameLabel')}
               value={form.lastName}
-              onChangeText={(v) => setForm({ ...form, lastName: v, lastNameError: null })}
-              mode="outlined"
-              error={form.lastNameError !== null}
-            />
-            <HelperText type="error" visible={form.lastNameError !== null}>
-              {form.lastNameError ?? ''}
-            </HelperText>
-            <TextInput
-              label={t('players.nicknameLabel')}
-              value={form.nickname}
-              onChangeText={(v) => setForm({ ...form, nickname: v })}
+              onChangeText={(v) => setForm({ ...form, lastName: v })}
               mode="outlined"
               onSubmitEditing={() => void submit()}
             />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setEditorOpen(false)}>{t('common.cancel')}</Button>
+            <Button onPress={() => setEditorOpen(false)}>
+              {t('common.cancel')}
+            </Button>
             <Button mode="contained" onPress={() => void submit()}>
-              {editing === null ? t('players.createButton') : t('players.saveButton')}
+              {editing === null
+                ? t('players.createButton')
+                : t('players.saveButton')}
             </Button>
           </Dialog.Actions>
         </Dialog>
 
-        <Dialog visible={deleteTarget !== null} onDismiss={() => setDeleteTarget(null)}>
+        <Dialog
+          visible={deleteTarget !== null}
+          onDismiss={() => setDeleteTarget(null)}
+        >
           <Dialog.Title>{t('players.deleteTitle')}</Dialog.Title>
           <Dialog.Content>
             <Text variant="bodyMedium">
-              {t('players.deleteBody', { name: deleteTarget !== null ? playerDisplayName(deleteTarget) : '' })}
+              {t('players.deleteBody', {
+                name: deleteTarget !== null ? playerDisplayName(deleteTarget) : '',
+              })}
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setDeleteTarget(null)}>{t('common.cancel')}</Button>
+            <Button onPress={() => setDeleteTarget(null)}>
+              {t('common.cancel')}
+            </Button>
             <Button mode="contained-tonal" onPress={() => void confirmDelete()}>
               {t('common.delete')}
             </Button>
@@ -239,7 +248,15 @@ export function PlayerManagementScreen() {
 function EmptyView() {
   const { t } = useTranslation();
   return (
-    <View style={{ flex: 1, padding: 32, alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+    <View
+      style={{
+        flex: 1,
+        padding: 32,
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 16,
+      }}
+    >
       <List.Icon icon="account-group-outline" />
       <Text variant="headlineSmall">{t('players.emptyTitle')}</Text>
       <Text variant="bodyMedium" style={{ textAlign: 'center' }}>
