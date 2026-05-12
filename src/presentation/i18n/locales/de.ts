@@ -81,6 +81,7 @@ export const de = {
   },
   players: {
     errorPlayerNameRequired: 'Spielername ist erforderlich',
+    errorDeleteReferenced: 'Spieler ist in mindestens einem Spielbogen eingetragen.',
     addFab: 'Spieler',
     editMenu: 'Bearbeiten',
     deleteMenu: 'Löschen',
