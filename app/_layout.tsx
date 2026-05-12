@@ -24,9 +24,16 @@ export default function RootLayout() {
 
   useEffect(() => {
     let cancelled = false;
-    void runV2Migration(repositories.storage()).then(() => {
-      if (!cancelled) setMigrationReady(true);
-    });
+    void runV2Migration(repositories.storage())
+      .catch((e) => {
+        // Migration ist best-effort; bei Fehler kommt der defensive Fallback in
+        // gameSheetFromJson zum Einsatz. UI wird trotzdem freigegeben, damit
+        // der Nutzer nicht auf dem Spinner haengen bleibt.
+        console.error('v2 migration failed', e);
+      })
+      .finally(() => {
+        if (!cancelled) setMigrationReady(true);
+      });
     return () => {
       cancelled = true;
     };
