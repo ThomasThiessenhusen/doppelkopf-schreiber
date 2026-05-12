@@ -20,15 +20,19 @@ import {
   replaceGame,
   sheetWithGame,
 } from '@/domain/models/gameSheet';
-import { type Player } from '@/domain/models/player';
 import { FlagGroup, type ScoreFlag, FlagTarget } from '@/domain/models/scoreFlag';
 import { appSettingsFallback } from '@/domain/models/appSettings';
 import { BockLevel } from '@/domain/scoring/bockLevel';
 import { effectiveStackingMode, resolveBock } from '@/domain/scoring/bockResolver';
 import { scoreFor } from '@/domain/scoring/scoreCalculator';
 import { selectableFlags } from '@/domain/scoring/scoringRules';
+import { usePlayerListStore } from '@/application/stores/playerListStore';
 import { useSettingsStore } from '@/application/stores/settingsStore';
 import { useSheetStore } from '@/application/stores/sheetStore';
+import {
+  createPlayerLookup,
+  resolveSheetPlayers,
+} from '@/domain/models/playerLookup';
 import { FlagChip } from '@/presentation/widgets/FlagChip';
 import { TeamPicker } from '@/presentation/widgets/TeamPicker';
 import {
@@ -48,12 +52,12 @@ import {
   mutuallyExclusiveCounterparts,
 } from '@/presentation/screens/addGame/flagConflicts';
 
-function nextSittingOutOfSheet(sheet: GameSheet): Player | null {
-  if (sheet.players.length !== 5) return null;
+function nextSittingOutOfSheet(sheet: GameSheet): string | null {
+  if (sheet.playerIds.length !== 5) return null;
   let totalGames = 0;
   for (const r of sheet.rounds) totalGames += r.games.length;
-  const idx = totalGames % sheet.players.length;
-  return sheet.players[idx] ?? null;
+  const idx = totalGames % sheet.playerIds.length;
+  return sheet.playerIds[idx] ?? null;
 }
 
 export interface AddGameScreenProps {
@@ -115,6 +119,15 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
     void loadSettings();
   }, [loadSettings]);
 
+  const pool = usePlayerListStore((s) => s.players);
+  const refreshPool = usePlayerListStore((s) => s.refresh);
+  useEffect(() => {
+    void refreshPool();
+  }, [refreshPool]);
+
+  const lookup = useMemo(() => createPlayerLookup(pool), [pool]);
+  const players = useMemo(() => resolveSheetPlayers(sheet, lookup), [sheet, lookup]);
+
   const existing = useMemo<Game | null>(() => {
     if (gameId === undefined) return null;
     for (const g of allGames(sheet)) {
@@ -123,13 +136,17 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
     return null;
   }, [sheet, gameId]);
 
-  const [sittingOut, setSittingOut] = useState<Player | null>(() => {
+  const [sittingOutId, setSittingOutId] = useState<string | null>(() => {
     if (existing !== null) {
-      if (existing.sittingOutPlayerId === null) return null;
-      return sheet.players.find((p) => p.id === existing.sittingOutPlayerId) ?? null;
+      return existing.sittingOutPlayerId;
     }
     return nextSittingOutOfSheet(sheet);
   });
+
+  const sittingOut = useMemo(() => {
+    if (sittingOutId === null) return null;
+    return lookup.byId(sittingOutId);
+  }, [sittingOutId, lookup]);
   const [rePlayerIds, setRePlayerIds] = useState<Set<string>>(
     () => new Set(existing?.rePlayerIds ?? []),
   );
@@ -142,7 +159,7 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
   );
 
   const isSolo = rePlayerIds.size === 1;
-  const activePlayers = sheet.players.filter((p) => p.id !== sittingOut?.id);
+  const activePlayers = players.filter((p) => p.id !== sittingOut?.id);
   const activeIds = new Set(activePlayers.map((p) => p.id));
   const canSubmit =
     (rePlayerIds.size === 1 || rePlayerIds.size === 2) &&
@@ -353,14 +370,14 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
       )}
 
       <TeamPicker
-        players={sheet.players}
-        sittingOutPlayerId={sittingOut?.id ?? null}
+        players={players}
+        sittingOutPlayerId={sittingOutId}
         selectedRePlayerIds={rePlayerIds}
         onChanged={(next) => setRePlayerIds(next)}
         onSittingOutChanged={
           existing === null
             ? (p) => {
-                setSittingOut(p);
+                setSittingOutId(p.id);
                 setRePlayerIds((prev) => {
                   const set = new Set(prev);
                   set.delete(p.id);

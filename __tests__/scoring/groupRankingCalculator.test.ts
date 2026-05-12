@@ -1,6 +1,7 @@
 import { createGame, WinnerSide, type Game } from '@/domain/models/game';
 import { type GameSheet } from '@/domain/models/gameSheet';
 import type { Player } from '@/domain/models/player';
+import { createPlayerLookup } from '@/domain/models/playerLookup';
 import type { Round } from '@/domain/models/round';
 import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import { calculateGroupRankings } from '@/domain/scoring/groupRankingCalculator';
@@ -10,6 +11,8 @@ const alice: Player = { id: 'a', playerName: 'Alice', firstName: null, lastName:
 const bob: Player = { id: 'b', playerName: 'Bob', firstName: null, lastName: null };
 const carol: Player = { id: 'c', playerName: 'Carol', firstName: null, lastName: null };
 const dave: Player = { id: 'd', playerName: 'Dave', firstName: null, lastName: null };
+
+const lookup = createPlayerLookup([alice, bob, carol, dave]);
 
 function sheetWith(opts: {
   id: string;
@@ -23,7 +26,7 @@ function sheetWith(opts: {
     title: null,
     createdAt: now,
     updatedAt: now,
-    players: opts.players,
+    playerIds: opts.players.map((p) => p.id),
     rounds: opts.games.length === 0 ? [] : [round],
     dirty: false,
     stackingModeOverride: null,
@@ -57,6 +60,7 @@ describe('calculateGroupRankings', () => {
     const result = calculateGroupRankings({
       sheets: [],
       defaultMode: BockStackingMode.sequential,
+      lookup,
     });
     expect(result.placementPoints).toEqual([]);
     expect(result.totalPoints).toEqual([]);
@@ -83,6 +87,7 @@ describe('calculateGroupRankings', () => {
     const result = calculateGroupRankings({
       sheets: [s1, s2, s3],
       defaultMode: BockStackingMode.sequential,
+      lookup,
     });
 
     const placement = byPlayer(result.placementPoints);
@@ -108,6 +113,7 @@ describe('calculateGroupRankings', () => {
     const result = calculateGroupRankings({
       sheets: [s],
       defaultMode: BockStackingMode.sequential,
+      lookup,
     });
 
     const ranks = ranksByPlayer(result.placementPoints);
@@ -134,6 +140,7 @@ describe('calculateGroupRankings', () => {
     const result = calculateGroupRankings({
       sheets: [s],
       defaultMode: BockStackingMode.sequential,
+      lookup,
     });
 
     const ids = new Set(result.totalPoints.map((e) => e.playerId));
@@ -150,6 +157,7 @@ describe('calculateGroupRankings', () => {
     const result = calculateGroupRankings({
       sheets: [s],
       defaultMode: BockStackingMode.sequential,
+      lookup,
     });
     expect(result.placementPoints).toEqual([]);
     expect(result.totalPoints).toEqual([]);
@@ -180,6 +188,7 @@ describe('calculateGroupRankings', () => {
       const result = calculateGroupRankings({
         sheets: [s],
         defaultMode: BockStackingMode.sequential,
+        lookup,
       });
       const soli = byPlayer(result.wonSoli);
       expect(soli['a']).toBe(1);
@@ -197,6 +206,7 @@ describe('calculateGroupRankings', () => {
       const result = calculateGroupRankings({
         sheets: [s],
         defaultMode: BockStackingMode.sequential,
+        lookup,
       });
       const soli = byPlayer(result.wonSoli);
       expect(soli['a']).toBe(0);
@@ -223,6 +233,7 @@ describe('calculateGroupRankings', () => {
       const result = calculateGroupRankings({
         sheets: [s1, s2],
         defaultMode: BockStackingMode.sequential,
+        lookup,
       });
       const soli = byPlayer(result.wonSoli);
       expect(soli['a']).toBe(2);
@@ -248,6 +259,7 @@ describe('calculateGroupRankings', () => {
     const result = calculateGroupRankings({
       sheets: [s1, s2],
       defaultMode: BockStackingMode.sequential,
+      lookup,
     });
 
     const pts = byPlayer(result.totalPoints);
