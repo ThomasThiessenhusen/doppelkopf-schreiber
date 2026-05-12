@@ -25,7 +25,15 @@ export function createLocalGameSheetRepository(
   return {
     async loadAll() {
       const raw = await storage.readAll(COLLECTION);
-      const sheets = raw.map(gameSheetFromJson);
+      const sheets: GameSheet[] = [];
+      for (const item of raw) {
+        try {
+          sheets.push(gameSheetFromJson(item));
+        } catch {
+          // Beschaedigter Bogen — defensiv ueberspringen, damit der Rest weiterhin
+          // geladen werden kann (gleiche Politik wie jsonFileStorage.readAll).
+        }
+      }
       sheets.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
       return sheets;
     },

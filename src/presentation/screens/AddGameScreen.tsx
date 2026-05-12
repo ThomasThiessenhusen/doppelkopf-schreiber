@@ -137,10 +137,6 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
     return nextSittingOutPlayerId(sheet);
   });
 
-  const sittingOut = useMemo(() => {
-    if (sittingOutId === null) return null;
-    return lookup.byId(sittingOutId);
-  }, [sittingOutId, lookup]);
   const [rePlayerIds, setRePlayerIds] = useState<Set<string>>(
     () => new Set(existing?.rePlayerIds ?? []),
   );
@@ -310,7 +306,7 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
         contraPlayerIds: contraIds,
         winner,
         flagCodes: [...selectedFlags],
-        sittingOutPlayerId: sittingOut?.id ?? null,
+        sittingOutPlayerId: sittingOutId,
         isSolo,
         triggersManualBock,
       });
