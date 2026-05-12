@@ -17,6 +17,7 @@ import { createGame, type Game, WinnerSide } from '@/domain/models/game';
 import {
   allGames,
   type GameSheet,
+  nextSittingOutPlayerId,
   replaceGame,
   sheetWithGame,
 } from '@/domain/models/gameSheet';
@@ -52,13 +53,6 @@ import {
   mutuallyExclusiveCounterparts,
 } from '@/presentation/screens/addGame/flagConflicts';
 
-function nextSittingOutOfSheet(sheet: GameSheet): string | null {
-  if (sheet.playerIds.length !== 5) return null;
-  let totalGames = 0;
-  for (const r of sheet.rounds) totalGames += r.games.length;
-  const idx = totalGames % sheet.playerIds.length;
-  return sheet.playerIds[idx] ?? null;
-}
 
 export interface AddGameScreenProps {
   sheetId: string;
@@ -140,7 +134,7 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
     if (existing !== null) {
       return existing.sittingOutPlayerId;
     }
-    return nextSittingOutOfSheet(sheet);
+    return nextSittingOutPlayerId(sheet);
   });
 
   const sittingOut = useMemo(() => {
@@ -159,7 +153,7 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
   );
 
   const isSolo = rePlayerIds.size === 1;
-  const activePlayers = players.filter((p) => p.id !== sittingOut?.id);
+  const activePlayers = players.filter((p) => p.id !== sittingOutId);
   const activeIds = new Set(activePlayers.map((p) => p.id));
   const canSubmit =
     (rePlayerIds.size === 1 || rePlayerIds.size === 2) &&
