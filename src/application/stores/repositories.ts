@@ -1,3 +1,4 @@
+import type { LocalStorage } from '@/data/local/localStorage';
 import { createJsonFileStorage } from '@/data/local/jsonFileStorage';
 import {
   createLocalGameSheetRepository,
@@ -21,18 +22,20 @@ import {
  * Instanz zu halten — so kann der Setup zentral ausgetauscht werden (z. B.
  * fuer In-Memory-Storage-Probe-Skripte).
  */
-const storage = createJsonFileStorage();
+const _initialStorage: LocalStorage = createJsonFileStorage();
 
-let _gameSheet = createLocalGameSheetRepository(storage);
-let _player = createLocalPlayerRepository(storage);
-let _settings = createLocalSettingsRepository(storage);
-let _sheetGroup = createLocalSheetGroupRepository(storage);
+let _storage: LocalStorage = _initialStorage;
+let _gameSheet: GameSheetRepository = createLocalGameSheetRepository(_initialStorage);
+let _player: PlayerRepository = createLocalPlayerRepository(_initialStorage);
+let _settings: SettingsRepository = createLocalSettingsRepository(_initialStorage);
+let _sheetGroup: SheetGroupRepository = createLocalSheetGroupRepository(_initialStorage);
 
 export const repositories = {
   gameSheet: (): GameSheetRepository => _gameSheet,
   player: (): PlayerRepository => _player,
   settings: (): SettingsRepository => _settings,
   sheetGroup: (): SheetGroupRepository => _sheetGroup,
+  storage: (): LocalStorage => _storage,
 };
 
 /**
@@ -45,10 +48,12 @@ export function _overrideRepositoriesForTest(
     player: PlayerRepository;
     settings: SettingsRepository;
     sheetGroup: SheetGroupRepository;
+    storage: LocalStorage;
   }>,
 ): void {
   if (overrides.gameSheet) _gameSheet = overrides.gameSheet;
   if (overrides.player) _player = overrides.player;
   if (overrides.settings) _settings = overrides.settings;
   if (overrides.sheetGroup) _sheetGroup = overrides.sheetGroup;
+  if (overrides.storage) _storage = overrides.storage;
 }
