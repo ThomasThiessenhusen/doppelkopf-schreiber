@@ -96,6 +96,10 @@ function LocalizedStack({ theme }: { theme: typeof lightTheme }) {
       <Stack.Screen name="groups/[groupId]/rankings" options={{ title: t('nav.rankings') }} />
       <Stack.Screen name="players" options={{ title: t('nav.players') }} />
       <Stack.Screen name="settings" options={{ title: t('nav.settings') }} />
+      <Stack.Screen
+        name="import/review"
+        options={{ title: t('exportImport.reviewTitle') }}
+      />
     </Stack>
   );
 }
