@@ -4,103 +4,112 @@ import { newId } from '@/core/id';
  * Ein Spieler — im app-weiten Spielerpool oder als Snapshot im Spielbogen.
  * Die ID ist stabil und wird in `Game` referenziert.
  *
- * `firstName` ist Pflicht; `lastName` und `nickname` optional. Die
- * Spielerverwaltung erzwingt zusaetzlich Nachname; das Modell erlaubt
- * `null`, damit aeltere Spielboegen mit nur einem Namen (Legacy-Schema)
- * weiterhin gelesen werden koennen.
+ * `playerName` ist Pflicht und wird in der UI als "Spielername" angezeigt.
+ * `firstName` und `lastName` sind optional.
  */
 export interface Player {
   readonly id: string;
-  readonly firstName: string;
+  readonly playerName: string;
+  readonly firstName: string | null;
   readonly lastName: string | null;
-  readonly nickname: string | null;
 }
 
 export interface CreatePlayerInput {
-  firstName: string;
+  playerName: string;
+  firstName?: string | null;
   lastName?: string | null;
-  nickname?: string | null;
 }
 
 export function createPlayer(input: CreatePlayerInput): Player {
   return {
     id: newId(),
-    firstName: input.firstName.trim(),
+    playerName: input.playerName.trim(),
+    firstName: emptyToNull(input.firstName),
     lastName: emptyToNull(input.lastName),
-    nickname: emptyToNull(input.nickname),
   };
 }
 
-/** Anzeigename — Spitzname falls vorhanden, sonst „Vorname Nachname". */
+/** Anzeigename — der Spielername. */
 export function playerDisplayName(p: Player): string {
-  const nick = p.nickname?.trim();
-  if (nick !== undefined && nick !== '') return nick;
-  return playerFullName(p);
+  return p.playerName;
 }
 
-/** Vollstaendiger Name ohne Spitzname. */
+/** Vor- und Nachname zusammengesetzt; leerer String falls beide fehlen. */
 export function playerFullName(p: Player): string {
-  const last = p.lastName?.trim();
-  if (last === undefined || last === '') return p.firstName;
-  return `${p.firstName} ${last}`;
+  const first = p.firstName?.trim() ?? '';
+  const last = p.lastName?.trim() ?? '';
+  if (first === '' && last === '') return '';
+  if (first === '') return last;
+  if (last === '') return first;
+  return `${first} ${last}`;
 }
 
 /**
- * Aktualisiert ausgewaehlte Felder. `null` in `lastName` / `nickname` loescht
- * das Feld; Auslassen behaelt den bisherigen Wert.
+ * Aktualisiert ausgewaehlte Felder. `null` in `firstName` / `lastName`
+ * loescht das Feld; Auslassen behaelt den bisherigen Wert. `playerName`
+ * kann nur ueberschrieben, nicht geloescht werden.
  */
 export interface PlayerPatch {
-  firstName?: string;
+  playerName?: string;
+  /** Auslassen = behalten; `null` = loeschen; String = setzen. */
+  firstName?: string | null;
   /** Auslassen = behalten; `null` = loeschen; String = setzen. */
   lastName?: string | null;
-  /** Auslassen = behalten; `null` = loeschen; String = setzen. */
-  nickname?: string | null;
 }
 
 export function copyPlayer(p: Player, patch: PlayerPatch): Player {
   return {
     id: p.id,
-    firstName: patch.firstName ?? p.firstName,
+    playerName: patch.playerName ?? p.playerName,
+    firstName: 'firstName' in patch ? (patch.firstName ?? null) : p.firstName,
     lastName: 'lastName' in patch ? (patch.lastName ?? null) : p.lastName,
-    nickname: 'nickname' in patch ? (patch.nickname ?? null) : p.nickname,
   };
 }
 
 export function playerToJson(p: Player): Record<string, unknown> {
   const out: Record<string, unknown> = {
     id: p.id,
-    firstName: p.firstName,
+    playerName: p.playerName,
   };
+  if (p.firstName !== null) out['firstName'] = p.firstName;
   if (p.lastName !== null) out['lastName'] = p.lastName;
-  if (p.nickname !== null) out['nickname'] = p.nickname;
   return out;
 }
 
 /**
- * Liest sowohl das neue Schema (firstName/lastName/nickname) als auch das
- * alte (nur `name`) — wichtig fuer bereits gespeicherte Spielboegen.
+ * Liest die aktuelle Form (`playerName` Pflicht). Defensives Lesen fuer
+ * alte Daten: erst `nickname`-Key, dann Komposition aus firstName +
+ * lastName, dann sehr alter Einzel-`name`-Key, sonst leerer String.
  */
 export function playerFromJson(json: Record<string, unknown>): Player {
   const id = json['id'];
   if (typeof id !== 'string') {
     throw new Error('Player.id fehlt oder ist kein String');
   }
-  const firstName = json['firstName'];
-  if (typeof firstName !== 'string') {
-    const legacyName = json['name'];
-    return {
-      id,
-      firstName: typeof legacyName === 'string' ? legacyName : '',
-      lastName: null,
-      nickname: null,
-    };
-  }
-  return {
-    id,
-    firstName,
-    lastName: typeof json['lastName'] === 'string' ? (json['lastName'] as string) : null,
-    nickname: typeof json['nickname'] === 'string' ? (json['nickname'] as string) : null,
-  };
+  const firstName =
+    typeof json['firstName'] === 'string' ? (json['firstName'] as string) : null;
+  const lastName =
+    typeof json['lastName'] === 'string' ? (json['lastName'] as string) : null;
+  const playerName = resolvePlayerName(json, firstName, lastName);
+  return { id, playerName, firstName, lastName };
+}
+
+function resolvePlayerName(
+  json: Record<string, unknown>,
+  firstName: string | null,
+  lastName: string | null,
+): string {
+  const direct = json['playerName'];
+  if (typeof direct === 'string') return direct;
+  const legacyNickname = json['nickname'];
+  if (typeof legacyNickname === 'string') return legacyNickname;
+  const parts = [firstName, lastName].filter(
+    (s): s is string => s !== null && s !== '',
+  );
+  if (parts.length > 0) return parts.join(' ');
+  const legacyName = json['name'];
+  if (typeof legacyName === 'string') return legacyName;
+  return '';
 }
 
 function emptyToNull(s: string | null | undefined): string | null {
