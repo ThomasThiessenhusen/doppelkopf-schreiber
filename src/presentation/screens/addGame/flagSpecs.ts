@@ -1,4 +1,5 @@
 import {
+  contraAnnounced,
   contraAnnouncedSchwarz,
   contraAnnouncedUnder30,
   contraAnnouncedUnder60,
@@ -9,6 +10,7 @@ import {
   contraDoppelkopf4,
   contraFuchs1,
   contraFuchs2,
+  reAnnounced,
   reAnnouncedSchwarz,
   reAnnouncedUnder30,
   reAnnouncedUnder60,
@@ -76,6 +78,7 @@ export const levelCodes: ReadonlyArray<string> = [
 ];
 
 export const reAnnouncementCodes: ReadonlyArray<string> = [
+  reAnnounced.code,
   reAnnouncedUnder90.code,
   reAnnouncedUnder60.code,
   reAnnouncedUnder30.code,
@@ -83,8 +86,49 @@ export const reAnnouncementCodes: ReadonlyArray<string> = [
 ];
 
 export const contraAnnouncementCodes: ReadonlyArray<string> = [
+  contraAnnounced.code,
   contraAnnouncedUnder90.code,
   contraAnnouncedUnder60.code,
   contraAnnouncedUnder30.code,
   contraAnnouncedSchwarz.code,
 ];
+
+export type AnnouncementSide = 're' | 'contra';
+
+export interface AnnouncementLabelSpec {
+  /** i18n key to feed into t(). */
+  key: string;
+  /** Cumulative game-value count used in the label, 0 when none. */
+  count: number;
+}
+
+/**
+ * Liefert i18n-Key und kumulierten Spielwert-Beitrag fuer den Zyklus-Chip
+ * der Ansagen (0..5). 0 = keine Ansage, 1 = nur Re/Kontra angesagt (+2),
+ * 2..5 = zusaetzlich Unter 90/60/30/Schwarz (+3..+6).
+ */
+export function announcementLabel(
+  count: number,
+  side: AnnouncementSide,
+): AnnouncementLabelSpec {
+  if (count <= 0) return { key: 'addGame.announcementChip.none', count: 0 };
+  const cumulative = count + 1;
+  switch (count) {
+    case 1:
+      return {
+        key:
+          side === 're'
+            ? 'addGame.announcementChip.reBase'
+            : 'addGame.announcementChip.contraBase',
+        count: cumulative,
+      };
+    case 2:
+      return { key: 'addGame.announcementChip.under90', count: cumulative };
+    case 3:
+      return { key: 'addGame.announcementChip.under60', count: cumulative };
+    case 4:
+      return { key: 'addGame.announcementChip.under30', count: cumulative };
+    default:
+      return { key: 'addGame.announcementChip.schwarz', count: cumulative };
+  }
+}
