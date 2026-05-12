@@ -155,7 +155,7 @@ export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
       }),
       stackingModeOverride: selectedMode,
     };
-    await createSheet(sheet);
+    await createSheet(sheet, selected);
     router.replace({ pathname: '/sheets/[sheetId]', params: { sheetId: sheet.id } });
   }
 

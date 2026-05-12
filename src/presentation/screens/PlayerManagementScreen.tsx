@@ -9,6 +9,7 @@ import {
   List,
   Menu,
   Portal,
+  Snackbar,
   Text,
   TextInput,
 } from 'react-native-paper';
@@ -21,6 +22,11 @@ import {
 } from '@/domain/models/player';
 import { usePlayerListStore } from '@/application/stores/playerListStore';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
+import { repositories } from '@/application/stores/repositories';
+import {
+  PlayerReferencedError,
+  referencedIdsFromSheets,
+} from '@/application/playerUsage';
 
 interface FormState {
   playerName: string;
@@ -49,6 +55,24 @@ export function PlayerManagementScreen() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  const [referencedIds, setReferencedIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void repositories
+      .gameSheet()
+      .loadAll()
+      .then((sheets) => {
+        if (!cancelled) setReferencedIds(referencedIdsFromSheets(sheets));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [players]);
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<Player | null>(null);
@@ -100,8 +124,18 @@ export function PlayerManagementScreen() {
 
   async function confirmDelete() {
     if (deleteTarget === null) return;
-    await remove(deleteTarget.id);
-    setDeleteTarget(null);
+    try {
+      await remove(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (e) {
+      if (e instanceof PlayerReferencedError) {
+        setSnackbarMessage(t('players.errorDeleteReferenced'));
+        setReferencedIds((prev) => new Set([...prev, e.playerId]));
+        setDeleteTarget(null);
+      } else {
+        throw e;
+      }
+    }
   }
 
   return (
@@ -154,6 +188,7 @@ export function PlayerManagementScreen() {
                     />
                     <Menu.Item
                       title={t('players.deleteMenu')}
+                      disabled={referencedIds.has(p.id)}
                       onPress={() => {
                         setMenuForId(null);
                         setDeleteTarget(p);
@@ -241,6 +276,13 @@ export function PlayerManagementScreen() {
           </Dialog.Actions>
         </Dialog>
       </Portal>
+      <Snackbar
+        visible={snackbarMessage !== null}
+        onDismiss={() => setSnackbarMessage(null)}
+        duration={3000}
+      >
+        {snackbarMessage ?? ''}
+      </Snackbar>
     </View>
   );
 }

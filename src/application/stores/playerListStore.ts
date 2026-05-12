@@ -6,6 +6,7 @@ import {
   type Player,
 } from '@/domain/models/player';
 import { repositories } from '@/application/stores/repositories';
+import { isPlayerReferenced, PlayerReferencedError } from '@/application/playerUsage';
 
 export interface PlayerListState {
   loading: boolean;
@@ -59,6 +60,9 @@ export const usePlayerListStore = create<PlayerListState>((set, get) => ({
   },
 
   async remove(id) {
+    if (await isPlayerReferenced(id)) {
+      throw new PlayerReferencedError(id);
+    }
     await repositories.player().delete(id);
     set({ players: get().players.filter((p) => p.id !== id) });
   },

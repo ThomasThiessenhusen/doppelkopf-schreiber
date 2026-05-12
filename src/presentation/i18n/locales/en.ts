@@ -83,6 +83,7 @@ export const en: Resources = {
   },
   players: {
     errorPlayerNameRequired: 'Player name is required',
+    errorDeleteReferenced: 'This player is used in at least one game sheet.',
     addFab: 'Player',
     editMenu: 'Edit',
     deleteMenu: 'Delete',

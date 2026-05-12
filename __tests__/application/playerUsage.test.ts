@@ -8,6 +8,7 @@ import {
   _overrideRepositoriesForTest,
   repositories,
 } from '@/application/stores/repositories';
+import { usePlayerListStore } from '@/application/stores/playerListStore';
 import { createLocalGameSheetRepository } from '@/data/repositories/gameSheetRepository';
 import { createLocalPlayerRepository } from '@/data/repositories/playerRepository';
 import { createInMemoryStorage } from '../data/_inMemoryStorage';
@@ -106,5 +107,38 @@ describe('PlayerReferencedError', () => {
     expect(err).toBeInstanceOf(Error);
     expect(err.playerId).toBe('a');
     expect(err.name).toBe('PlayerReferencedError');
+  });
+});
+
+describe('playerListStore.remove guard', () => {
+  test('throws PlayerReferencedError when player is in a sheet', async () => {
+    await repositories.player().save({
+      id: 'a',
+      playerName: 'Anna',
+      firstName: null,
+      lastName: null,
+    });
+    await repositories.gameSheet().save(sheet('s1', ['a', 'b', 'c', 'd']));
+    await usePlayerListStore.getState().refresh();
+
+    await expect(usePlayerListStore.getState().remove('a')).rejects.toThrow(
+      PlayerReferencedError,
+    );
+    const players = await repositories.player().loadAll();
+    expect(players.map((p) => p.id)).toEqual(['a']);
+  });
+
+  test('removes when not referenced', async () => {
+    await repositories.player().save({
+      id: 'a',
+      playerName: 'Anna',
+      firstName: null,
+      lastName: null,
+    });
+    await usePlayerListStore.getState().refresh();
+
+    await usePlayerListStore.getState().remove('a');
+    const players = await repositories.player().loadAll();
+    expect(players).toEqual([]);
   });
 });

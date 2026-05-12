@@ -2,13 +2,15 @@ import { create } from 'zustand';
 
 import type { GameSheet } from '@/domain/models/gameSheet';
 import { repositories } from '@/application/stores/repositories';
+import type { Player } from '@/domain/models/player';
+import { ensurePoolMembership } from '@/application/playerUsage';
 
 export interface SheetListState {
   loading: boolean;
   sheets: ReadonlyArray<GameSheet>;
   error: Error | null;
   refresh: () => Promise<void>;
-  createSheet: (sheet: GameSheet) => Promise<GameSheet>;
+  createSheet: (sheet: GameSheet, players: ReadonlyArray<Player>) => Promise<GameSheet>;
   deleteSheet: (id: string) => Promise<void>;
   /**
    * Vom `sheetStore` aufgerufen, wenn der einzelne Bogen aktualisiert wird —
@@ -35,7 +37,8 @@ export const useSheetListStore = create<SheetListState>((set, get) => ({
     }
   },
 
-  async createSheet(sheet) {
+  async createSheet(sheet, players) {
+    await ensurePoolMembership(players);
     await repositories.gameSheet().save(sheet);
     set({ sheets: [sheet, ...get().sheets] });
     return sheet;
