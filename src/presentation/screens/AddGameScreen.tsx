@@ -26,22 +26,20 @@ import { appSettingsFallback } from '@/domain/models/appSettings';
 import { BockLevel } from '@/domain/scoring/bockLevel';
 import { effectiveStackingMode, resolveBock } from '@/domain/scoring/bockResolver';
 import { scoreFor } from '@/domain/scoring/scoreCalculator';
-import {
-  contraAnnounced,
-  reAnnounced,
-  selectableFlags,
-} from '@/domain/scoring/scoringRules';
+import { selectableFlags } from '@/domain/scoring/scoringRules';
 import { useSettingsStore } from '@/application/stores/settingsStore';
 import { useSheetStore } from '@/application/stores/sheetStore';
 import { FlagChip } from '@/presentation/widgets/FlagChip';
 import { TeamPicker } from '@/presentation/widgets/TeamPicker';
 import {
+  announcementLabel,
   contraAnnouncementCodes,
   doppelkopfSpec,
   fuchsSpec,
   levelCodes,
   reAnnouncementCodes,
   stepsPerSide,
+  type AnnouncementSide,
   type StackingCounterSpec,
 } from '@/presentation/screens/addGame/flagSpecs';
 import {
@@ -101,12 +99,9 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
     return t('addGame.levelChipBase');
   }
 
-  function buildAnnouncementChipLabel(count: number): string {
-    if (count <= 0) return t('addGame.noLevelAnnounced');
-    if (count === 1) return t('addGame.announcementChip_one', { count });
-    if (count === 2) return t('addGame.announcementChip_two', { count });
-    if (count === 3) return t('addGame.announcementChip_three', { count });
-    return t('addGame.announcementChip_many', { count });
+  function buildAnnouncementChipLabel(count: number, side: AnnouncementSide): string {
+    const spec = announcementLabel(count, side);
+    return t(spec.key, { count: spec.count });
   }
 
   const router = useRouter();
@@ -398,21 +393,20 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
           <Text variant="bodyMedium" style={{ fontWeight: '600' }}>
             {t('addGame.rePoints')}
           </Text>
+          <View style={{ alignSelf: 'flex-start' }}>
+            <Chip
+              selected={announcementCount(true) > 0}
+              showSelectedCheck={false}
+              onPress={() => cycleAnnouncement(true)}
+            >
+              {buildAnnouncementChipLabel(announcementCount(true), 're')}
+            </Chip>
+          </View>
           <FlagGroupSection
             flags={flagsByGroup(FlagGroup.reParty)}
             selected={selectedFlags}
             onToggle={onFlagToggled}
             displayedValue={displayedValue}
-            pinnedFlagCode={reAnnounced.code}
-            belowPinnedFlag={
-              <Chip
-                selected={announcementCount(true) > 0}
-                showSelectedCheck={false}
-                onPress={() => cycleAnnouncement(true)}
-              >
-                {buildAnnouncementChipLabel(announcementCount(true))}
-              </Chip>
-            }
             trailingChips={[
               <StackingCounterChip
                 key="reFuchs"
@@ -435,21 +429,20 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
           <Text variant="bodyMedium" style={{ fontWeight: '600' }}>
             {t('addGame.kontraPoints')}
           </Text>
+          <View style={{ alignSelf: 'flex-start' }}>
+            <Chip
+              selected={announcementCount(false) > 0}
+              showSelectedCheck={false}
+              onPress={() => cycleAnnouncement(false)}
+            >
+              {buildAnnouncementChipLabel(announcementCount(false), 'contra')}
+            </Chip>
+          </View>
           <FlagGroupSection
             flags={flagsByGroup(FlagGroup.contraParty)}
             selected={selectedFlags}
             onToggle={onFlagToggled}
             displayedValue={displayedValue}
-            pinnedFlagCode={contraAnnounced.code}
-            belowPinnedFlag={
-              <Chip
-                selected={announcementCount(false) > 0}
-                showSelectedCheck={false}
-                onPress={() => cycleAnnouncement(false)}
-              >
-                {buildAnnouncementChipLabel(announcementCount(false))}
-              </Chip>
-            }
             trailingChips={[
               <StackingCounterChip
                 key="contraFuchs"
@@ -528,8 +521,6 @@ interface FlagGroupSectionProps {
   selected: ReadonlySet<string>;
   onToggle: (f: ScoreFlag, selected: boolean) => void;
   displayedValue: (f: ScoreFlag) => number;
-  pinnedFlagCode?: string;
-  belowPinnedFlag?: React.ReactNode;
   trailingChips?: ReadonlyArray<React.ReactNode>;
 }
 
@@ -538,14 +529,8 @@ function FlagGroupSection({
   selected,
   onToggle,
   displayedValue,
-  pinnedFlagCode,
-  belowPinnedFlag,
   trailingChips,
 }: FlagGroupSectionProps) {
-  const pinned =
-    pinnedFlagCode === undefined ? undefined : flags.find((f) => f.code === pinnedFlagCode);
-  const mainFlags = pinned === undefined ? flags : flags.filter((f) => f.code !== pinned.code);
-
   function chipFor(f: ScoreFlag) {
     return (
       <FlagChip
@@ -560,13 +545,9 @@ function FlagGroupSection({
   }
 
   return (
-    <View style={{ gap: 4 }}>
-      {pinned !== undefined && chipFor(pinned)}
-      {belowPinnedFlag}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-        {mainFlags.map((f) => chipFor(f))}
-        {trailingChips}
-      </View>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+      {flags.map((f) => chipFor(f))}
+      {trailingChips}
     </View>
   );
 }
