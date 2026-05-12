@@ -20,6 +20,10 @@ describe('createPlayerLookup', () => {
     const lookup = createPlayerLookup([anna]);
     expect(lookup.byId('zz')).toBe(null);
   });
+  test('empty pool: byId always returns null', () => {
+    const lookup = createPlayerLookup([]);
+    expect(lookup.byId('anything')).toBe(null);
+  });
 });
 
 describe('resolveSheetPlayers', () => {
