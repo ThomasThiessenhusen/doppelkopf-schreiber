@@ -6,6 +6,7 @@ module.exports = {
     '^expo-crypto$': '<rootDir>/__mocks__/expo-crypto.ts',
     '^expo-localization$': '<rootDir>/__mocks__/expo-localization.ts',
     '^expo-file-system/legacy$': '<rootDir>/__mocks__/expo-file-system-legacy.ts',
+    '^expo-constants$': '<rootDir>/__mocks__/expo-constants.ts',
   },
   transform: {
     '^.+\\.(t|j)sx?$': 'babel-jest',
