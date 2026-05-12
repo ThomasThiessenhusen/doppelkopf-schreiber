@@ -252,6 +252,15 @@ export const de = {
     contraPerPlayer: 'je Kontra: {{points}}',
     deleteGameTitle: 'Spiel löschen?',
   },
+  exportImport: {
+    exportSheetMenu: 'Bogen exportieren...',
+    exportGroupMenu: 'Gruppe exportieren...',
+    exportBackupButton: 'Backup exportieren',
+    importButton: 'Import...',
+    exportInProgress: 'Export wird vorbereitet...',
+    exportFailed: 'Export fehlgeschlagen',
+    shareDialogTitle: 'Bockzettel teilen',
+  },
 } as const;
 
 /** Shape-compatible type: same keys as `de`, but string values (allows other locales). */

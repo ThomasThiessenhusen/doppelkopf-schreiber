@@ -254,4 +254,13 @@ export const en: Resources = {
     contraPerPlayer: 'per Kontra: {{points}}',
     deleteGameTitle: 'Delete game?',
   },
+  exportImport: {
+    exportSheetMenu: 'Export sheet...',
+    exportGroupMenu: 'Export group...',
+    exportBackupButton: 'Export backup',
+    importButton: 'Import...',
+    exportInProgress: 'Preparing export...',
+    exportFailed: 'Export failed',
+    shareDialogTitle: 'Share Bockzettel',
+  },
 };

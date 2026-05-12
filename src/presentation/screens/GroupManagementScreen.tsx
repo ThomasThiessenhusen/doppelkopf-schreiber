@@ -15,6 +15,8 @@ import {
   TextInput,
 } from 'react-native-paper';
 
+import { exportGroup } from '@/application/export/exportService';
+import { shareExport } from '@/data/export/fileShare';
 import { GroupType, groupTypeLabelKey } from '@/domain/models/groupType';
 import type { SheetGroup } from '@/domain/models/sheetGroup';
 import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
@@ -148,6 +150,20 @@ export function GroupManagementScreen() {
                       onPress={() => {
                         setMenuForId(null);
                         setTypeDialog(g);
+                      }}
+                    />
+                    <Menu.Item
+                      title={t('exportImport.exportGroupMenu')}
+                      onPress={() => {
+                        setMenuForId(null);
+                        void (async () => {
+                          try {
+                            const file = await exportGroup(g.id);
+                            await shareExport(file);
+                          } catch (e) {
+                            console.error(t('exportImport.exportFailed'), e);
+                          }
+                        })();
                       }}
                     />
                     <Menu.Item

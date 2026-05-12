@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { ScrollView, View } from 'react-native';
-import { ActivityIndicator, SegmentedButtons, Text } from 'react-native-paper';
+import { ActivityIndicator, Button, SegmentedButtons, Text } from 'react-native-paper';
 
+import { exportBackup } from '@/application/export/exportService';
+import { shareExport } from '@/data/export/fileShare';
 import type { LanguagePreference } from '@/domain/models/appSettings';
 import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import { useSettingsStore } from '@/application/stores/settingsStore';
@@ -72,6 +74,26 @@ export function SettingsScreen() {
             { value: 'en', label: t('settings.languageEn') },
           ]}
         />
+      </View>
+
+      <View style={{ gap: 12 }}>
+        <Text variant="titleMedium">{t('exportImport.exportBackupButton')}</Text>
+        <Button
+          mode="contained-tonal"
+          icon="export"
+          onPress={() => {
+            void (async () => {
+              try {
+                const file = await exportBackup();
+                await shareExport(file);
+              } catch (e) {
+                console.error(t('exportImport.exportFailed'), e);
+              }
+            })();
+          }}
+        >
+          {t('exportImport.exportBackupButton')}
+        </Button>
       </View>
     </ScrollView>
   );

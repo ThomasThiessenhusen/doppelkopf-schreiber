@@ -34,6 +34,8 @@ import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import { scoreFor, totalsFor } from '@/domain/scoring/scoreCalculator';
 import { usePlayerListStore } from '@/application/stores/playerListStore';
 import { useSettingsStore } from '@/application/stores/settingsStore';
+import { exportSheet } from '@/application/export/exportService';
+import { shareExport } from '@/data/export/fileShare';
 import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
 import { useSheetStore } from '@/application/stores/sheetStore';
 import {
@@ -236,6 +238,20 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
                   onPress={() => {
                     setMenuOpen(false);
                     setGroupPickerOpen(true);
+                  }}
+                />
+                <Menu.Item
+                  title={t('exportImport.exportSheetMenu')}
+                  onPress={() => {
+                    setMenuOpen(false);
+                    void (async () => {
+                      try {
+                        const file = await exportSheet(sheet.id);
+                        await shareExport(file);
+                      } catch (e) {
+                        console.error(t('exportImport.exportFailed'), e);
+                      }
+                    })();
                   }}
                 />
               </Menu>
