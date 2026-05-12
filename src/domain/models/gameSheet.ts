@@ -1,6 +1,6 @@
 import { newId } from '@/core/id';
 import type { Game } from '@/domain/models/game';
-import { playerFromJson, playerToJson, type Player } from '@/domain/models/player';
+import type { Player } from '@/domain/models/player';
 import {
   roundFromJson,
   roundToJson,
@@ -16,23 +16,19 @@ import {
 /**
  * Ein Spielbogen — die Top-Level-Datenstruktur.
  *
- * Enthaelt eine fixe Spielerliste (4 oder 5) und beliebig viele Runden. Die
- * Struktur ist immutable; Aenderungen werden ueber `copyGameSheet`,
- * `sheetWithGame`, `replaceGame`, `removeGame` erzeugt und vom Repository
- * persistiert.
+ * Enthaelt eine fixe Liste von Spieler-IDs (4 oder 5) und beliebig viele Runden.
+ * Die Spielerdaten liegen ausschliesslich im app-weiten Pool; der Bogen
+ * referenziert sie ueber `playerIds`.
  */
 export interface GameSheet {
   readonly id: string;
   readonly title: string | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;
-  readonly players: ReadonlyArray<Player>;
+  readonly playerIds: ReadonlyArray<string>;
   readonly rounds: ReadonlyArray<Round>;
-  /** Nicht synchronisierte Aenderung — Marker fuer spaeteren Cloud-Sync. */
   readonly dirty: boolean;
-  /** Override fuer den Bock-Stapel-Modus dieses Spielbogens. `null` = Global. */
   readonly stackingModeOverride: BockStackingMode | null;
-  /** Optionale Zuordnung zu einer Gruppe (Saison/Turnier). `null` = ungruppiert. */
   readonly groupId: string | null;
 }
 
@@ -54,7 +50,7 @@ export function createGameSheet(input: CreateGameSheetInput): GameSheet {
     title: trimmedTitle === undefined || trimmedTitle === '' ? null : trimmedTitle,
     createdAt: now,
     updatedAt: now,
-    players: input.players,
+    playerIds: input.players.map((p) => p.id),
     rounds: [],
     dirty: true,
     stackingModeOverride: null,
@@ -63,20 +59,17 @@ export function createGameSheet(input: CreateGameSheetInput): GameSheet {
 }
 
 export function playerCount(sheet: GameSheet): number {
-  return sheet.players.length;
+  return sheet.playerIds.length;
 }
 
-/** Anzahl Spiele pro Runde — 5 bei 5 Spielern, sonst 4. */
 export function gamesPerRound(sheet: GameSheet): number {
-  return sheet.players.length === 5 ? 5 : 4;
+  return sheet.playerIds.length === 5 ? 5 : 4;
 }
 
-/** Gesamtanzahl der bereits gespielten Spiele. */
 export function totalGames(sheet: GameSheet): number {
   return sheet.rounds.reduce((sum, r) => sum + r.games.length, 0);
 }
 
-/** Iteriert durch alle Spiele in chronologischer Reihenfolge. */
 export function* allGames(sheet: GameSheet): Generator<Game> {
   for (const r of sheet.rounds) {
     for (const g of r.games) {
@@ -85,11 +78,6 @@ export function* allGames(sheet: GameSheet): Generator<Game> {
   }
 }
 
-/**
- * Liefert die laufende Runde — also die Runde, in der das naechste Spiel
- * einzutragen waere. Bei leerem Bogen oder abgeschlossener letzter Runde
- * wird eine neue, leere Runde zurueckgegeben.
- */
 export function currentOrNextRound(sheet: GameSheet): Round {
   if (sheet.rounds.length === 0) {
     return { index: 0, games: [] };
@@ -102,28 +90,25 @@ export function currentOrNextRound(sheet: GameSheet): Round {
 }
 
 /**
- * Berechnet, welcher Spieler bei 5 Spielern fuer das naechste Spiel
- * aussetzt (Kartengeber). Liefert `null` bei 4 Spielern.
+ * Liefert die ID des Spielers, der bei 5 Spielern fuer das naechste Spiel
+ * aussetzt. Liefert `null` bei 4 Spielern. Aufrufer aufloesen die ID via
+ * Pool-Lookup zu einem Player-Objekt.
  */
-export function nextSittingOutPlayer(sheet: GameSheet): Player | null {
-  if (sheet.players.length !== 5) return null;
+export function nextSittingOutPlayerId(sheet: GameSheet): string | null {
+  if (sheet.playerIds.length !== 5) return null;
   const round = currentOrNextRound(sheet);
   const gameIndex = round.games.length;
   const flatIndex = round.index * gamesPerRound(sheet) + gameIndex;
-  return sheet.players[flatIndex % sheet.players.length] ?? null;
+  return sheet.playerIds[flatIndex % sheet.playerIds.length] ?? null;
 }
 
 export interface GameSheetPatch {
   title?: string | null;
-  players?: ReadonlyArray<Player>;
+  playerIds?: ReadonlyArray<string>;
   rounds?: ReadonlyArray<Round>;
-  /** Auslassen = `new Date()` (jetzt). */
   updatedAt?: Date;
-  /** Auslassen = `true`. */
   dirty?: boolean;
-  /** Auslassen = behalten; `null` = clearen; Wert = setzen. */
   stackingModeOverride?: BockStackingMode | null;
-  /** Auslassen = behalten; `null` = clearen; String = setzen. */
   groupId?: string | null;
 }
 
@@ -133,7 +118,7 @@ export function copyGameSheet(sheet: GameSheet, patch: GameSheetPatch): GameShee
     title: 'title' in patch ? (patch.title ?? null) : sheet.title,
     createdAt: sheet.createdAt,
     updatedAt: patch.updatedAt ?? new Date(),
-    players: patch.players ?? sheet.players,
+    playerIds: patch.playerIds ?? sheet.playerIds,
     rounds: patch.rounds ?? sheet.rounds,
     dirty: patch.dirty ?? true,
     stackingModeOverride:
@@ -144,10 +129,6 @@ export function copyGameSheet(sheet: GameSheet, patch: GameSheetPatch): GameShee
   };
 }
 
-/**
- * Fuegt ein Spiel an die laufende Runde an und legt bei Bedarf eine neue
- * Runde an.
- */
 export function sheetWithGame(sheet: GameSheet, game: Game): GameSheet {
   const round = currentOrNextRound(sheet);
   const updatedRound = roundWithGame(round, game);
@@ -162,7 +143,6 @@ export function sheetWithGame(sheet: GameSheet, game: Game): GameSheet {
   return copyGameSheet(sheet, { rounds: nextRounds });
 }
 
-/** Aktualisiert ein bestehendes Spiel anhand seiner ID. */
 export function replaceGame(sheet: GameSheet, updated: Game): GameSheet {
   const nextRounds = sheet.rounds.map((r) => {
     if (r.games.some((g) => g.id === updated.id)) {
@@ -176,10 +156,6 @@ export function replaceGame(sheet: GameSheet, updated: Game): GameSheet {
   return copyGameSheet(sheet, { rounds: nextRounds });
 }
 
-/**
- * Entfernt ein Spiel und nummeriert die Runden neu, damit die Anzeige nicht
- * „Runde 3" springen zeigt, wenn Runde 1 entfernt wurde.
- */
 export function removeGame(sheet: GameSheet, gameId: string): GameSheet {
   const filtered = sheet.rounds
     .map((r) => ({ index: r.index, games: r.games.filter((g) => g.id !== gameId) }))
@@ -197,7 +173,7 @@ export function gameSheetToJson(sheet: GameSheet): Record<string, unknown> {
     title: sheet.title,
     createdAt: sheet.createdAt.toISOString(),
     updatedAt: sheet.updatedAt.toISOString(),
-    players: sheet.players.map((p) => playerToJson(p)),
+    playerIds: [...sheet.playerIds],
     rounds: sheet.rounds.map((r) => roundToJson(r)),
     dirty: sheet.dirty,
     stackingModeOverride:
@@ -206,28 +182,49 @@ export function gameSheetToJson(sheet: GameSheet): Record<string, unknown> {
   };
 }
 
+/**
+ * Liest die aktuelle Form (`playerIds`). Defensives Lesen fuer alte Daten:
+ * wenn `playerIds` fehlt aber das legacy `players`-Array vorhanden ist,
+ * werden die IDs daraus extrahiert. Die App-Migration (v2PoolReference)
+ * konvertiert solche Dateien beim ersten Start; dieser Fallback hier ist
+ * der zweite Verteidigungsring.
+ */
 export function gameSheetFromJson(json: Record<string, unknown>): GameSheet {
   const id = json['id'];
   const createdAt = json['createdAt'];
   const updatedAt = json['updatedAt'];
-  const players = json['players'];
   const rounds = json['rounds'];
   if (typeof id !== 'string') throw new Error('GameSheet.id fehlt');
   if (typeof createdAt !== 'string') throw new Error('GameSheet.createdAt fehlt');
   if (typeof updatedAt !== 'string') throw new Error('GameSheet.updatedAt fehlt');
-  if (!Array.isArray(players)) throw new Error('GameSheet.players fehlt');
   if (!Array.isArray(rounds)) throw new Error('GameSheet.rounds fehlt');
+
+  const playerIds = readPlayerIds(json);
   const rawStacking = json['stackingModeOverride'];
   return {
     id,
     title: typeof json['title'] === 'string' ? (json['title'] as string) : null,
     createdAt: new Date(createdAt),
     updatedAt: new Date(updatedAt),
-    players: players.map((p) => playerFromJson(p as Record<string, unknown>)),
+    playerIds,
     rounds: rounds.map((r) => roundFromJson(r as Record<string, unknown>)),
     dirty: json['dirty'] === true,
     stackingModeOverride:
       typeof rawStacking === 'string' ? bockStackingModeFromJson(rawStacking) : null,
     groupId: typeof json['groupId'] === 'string' ? (json['groupId'] as string) : null,
   };
+}
+
+function readPlayerIds(json: Record<string, unknown>): ReadonlyArray<string> {
+  const ids = json['playerIds'];
+  if (Array.isArray(ids)) {
+    return ids.filter((v): v is string => typeof v === 'string');
+  }
+  const legacy = json['players'];
+  if (Array.isArray(legacy)) {
+    return legacy
+      .map((p) => (p !== null && typeof p === 'object' ? (p as Record<string, unknown>)['id'] : null))
+      .filter((v): v is string => typeof v === 'string');
+  }
+  throw new Error('GameSheet.playerIds fehlt');
 }
