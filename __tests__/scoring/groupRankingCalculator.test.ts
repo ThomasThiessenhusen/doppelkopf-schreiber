@@ -6,10 +6,10 @@ import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import { calculateGroupRankings } from '@/domain/scoring/groupRankingCalculator';
 import type { RankingEntry } from '@/domain/scoring/groupRankings';
 
-const alice: Player = { id: 'a', firstName: 'Alice', lastName: null, nickname: null };
-const bob: Player = { id: 'b', firstName: 'Bob', lastName: null, nickname: null };
-const carol: Player = { id: 'c', firstName: 'Carol', lastName: null, nickname: null };
-const dave: Player = { id: 'd', firstName: 'Dave', lastName: null, nickname: null };
+const alice: Player = { id: 'a', playerName: 'Alice', firstName: null, lastName: null };
+const bob: Player = { id: 'b', playerName: 'Bob', firstName: null, lastName: null };
+const carol: Player = { id: 'c', playerName: 'Carol', firstName: null, lastName: null };
+const dave: Player = { id: 'd', playerName: 'Dave', firstName: null, lastName: null };
 
 function sheetWith(opts: {
   id: string;
@@ -124,7 +124,7 @@ describe('calculateGroupRankings', () => {
   });
 
   test('Spieler ohne Teilnahme erscheint nicht in der Rangliste', () => {
-    const erna: Player = { id: 'e', firstName: 'Erna', lastName: null, nickname: null };
+    const erna: Player = { id: 'e', playerName: 'Erna', firstName: null, lastName: null };
     const s = sheetWith({
       id: 's',
       players: [bob, carol, dave, erna],
@@ -238,7 +238,7 @@ describe('calculateGroupRankings', () => {
       players: [alice, bob, carol, dave],
       games: [classicReWin(['a', 'b'], ['c', 'd'])],
     });
-    const erna: Player = { id: 'e', firstName: 'Erna', lastName: null, nickname: null };
+    const erna: Player = { id: 'e', playerName: 'Erna', firstName: null, lastName: null };
     const s2 = sheetWith({
       id: 's2',
       players: [bob, carol, dave, erna],
