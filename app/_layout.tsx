@@ -7,6 +7,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { appSettingsFallback } from '@/domain/models/appSettings';
 import { useSettingsStore } from '@/application/stores/settingsStore';
+import { repositories } from '@/application/stores/repositories';
+import { runV2Migration } from '@/data/migrations/v2PoolReference';
 import { initI18n } from '@/presentation/i18n';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
 import { darkTheme, lightTheme } from '@/presentation/theme/theme';
@@ -18,6 +20,17 @@ export default function RootLayout() {
   const settingsState = useSettingsStore((s) => s.state);
   const loadSettings = useSettingsStore((s) => s.load);
   const [i18nReady, setI18nReady] = useState(false);
+  const [migrationReady, setMigrationReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void runV2Migration(repositories.storage()).then(() => {
+      if (!cancelled) setMigrationReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     void loadSettings();
@@ -32,7 +45,7 @@ export default function RootLayout() {
     void initI18n(pref).then(() => setI18nReady(true));
   }, [settingsState]);
 
-  if (!i18nReady) {
+  if (!i18nReady || !migrationReady) {
     return (
       <SafeAreaProvider>
         <PaperProvider theme={theme}>
