@@ -200,6 +200,9 @@ export function gameSheetFromJson(json: Record<string, unknown>): GameSheet {
   if (!Array.isArray(rounds)) throw new Error('GameSheet.rounds fehlt');
 
   const playerIds = readPlayerIds(json);
+  if (playerIds.length !== 4 && playerIds.length !== 5) {
+    throw new Error(`GameSheet.playerIds muss 4 oder 5 Eintraege haben, hat ${playerIds.length}`);
+  }
   const rawStacking = json['stackingModeOverride'];
   return {
     id,
