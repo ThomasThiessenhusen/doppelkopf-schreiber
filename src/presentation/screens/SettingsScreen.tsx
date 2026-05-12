@@ -2,6 +2,9 @@ import { useEffect } from 'react';
 import { ScrollView, View } from 'react-native';
 import { ActivityIndicator, Button, SegmentedButtons, Text } from 'react-native-paper';
 
+import * as DocumentPicker from 'expo-document-picker';
+import { useRouter } from 'expo-router';
+
 import { exportBackup } from '@/application/export/exportService';
 import { shareExport } from '@/data/export/fileShare';
 import type { LanguagePreference } from '@/domain/models/appSettings';
@@ -12,6 +15,7 @@ import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 export function SettingsScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const state = useSettingsStore((s) => s.state);
   const load = useSettingsStore((s) => s.load);
   const setDefaultStackingMode = useSettingsStore((s) => s.setDefaultStackingMode);
@@ -93,6 +97,28 @@ export function SettingsScreen() {
           }}
         >
           {t('exportImport.exportBackupButton')}
+        </Button>
+        <Button
+          mode="contained-tonal"
+          icon="import"
+          onPress={() => {
+            void (async () => {
+              const res = await DocumentPicker.getDocumentAsync({
+                type: 'application/json',
+                copyToCacheDirectory: true,
+                multiple: false,
+              });
+              if (res.canceled === true) return;
+              const uri = res.assets?.[0]?.uri;
+              if (typeof uri !== 'string') return;
+              router.push({
+                pathname: '/import/review',
+                params: { fileUri: uri },
+              });
+            })();
+          }}
+        >
+          {t('exportImport.importButton')}
         </Button>
       </View>
     </ScrollView>
