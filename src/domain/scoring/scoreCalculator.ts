@@ -134,8 +134,8 @@ export function totalsFor(
   mode: BockStackingMode = BockStackingMode.sequential,
 ): SheetScore {
   const totals = new Map<string, number>();
-  for (const p of sheet.players) {
-    totals.set(p.id, 0);
+  for (const id of sheet.playerIds) {
+    totals.set(id, 0);
   }
 
   const levels = resolveBock(sheet, mode);

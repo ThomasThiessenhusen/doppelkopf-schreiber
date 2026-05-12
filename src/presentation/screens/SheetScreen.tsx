@@ -32,9 +32,14 @@ import {
 } from '@/domain/scoring/bockResolver';
 import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import { scoreFor, totalsFor } from '@/domain/scoring/scoreCalculator';
+import { usePlayerListStore } from '@/application/stores/playerListStore';
 import { useSettingsStore } from '@/application/stores/settingsStore';
 import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
 import { useSheetStore } from '@/application/stores/sheetStore';
+import {
+  createPlayerLookup,
+  resolveSheetPlayers,
+} from '@/domain/models/playerLookup';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
 import { Scoreboard } from '@/presentation/widgets/Scoreboard';
 import { RoundSection } from '@/presentation/widgets/RoundSection';
@@ -89,6 +94,15 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
     void refreshGroups();
   }, [refreshGroups]);
 
+  const pool = usePlayerListStore((s) => s.players);
+  const refreshPool = usePlayerListStore((s) => s.refresh);
+  useEffect(() => {
+    void refreshPool();
+  }, [refreshPool]);
+
+  const lookup = useMemo(() => createPlayerLookup(pool), [pool]);
+  const players = useMemo(() => resolveSheetPlayers(sheet, lookup), [sheet, lookup]);
+
   const settings =
     settingsState.status === 'data' ? settingsState.value : appSettingsFallback;
   const mode = effectiveStackingMode(sheet, settings.defaultStackingMode);
@@ -108,7 +122,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
       const score = scoreFor(game, l.get(game.id) ?? BockLevel.none);
       sByGame.set(game.id, score);
       const points = new Map<string, number>();
-      for (const p of sheet.players) {
+      for (const p of players) {
         const isRe = game.rePlayerIds.includes(p.id);
         const isContra = game.contraPlayerIds.includes(p.id);
         points.set(p.id, isRe ? score.rePerPlayer : isContra ? score.contraPerPlayer : 0);
@@ -120,9 +134,9 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
       });
     }
     return { totals: t, levels: l, bockState: bs, perGameRows: rows, scoresByGame: sByGame };
-  }, [sheet, mode]);
+  }, [sheet, mode, players]);
 
-  const canAddGame = sheet.players.length >= 4;
+  const canAddGame = sheet.playerIds.length >= 4;
 
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
@@ -231,7 +245,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
       />
       <ScrollView contentContainerStyle={{ paddingBottom: 96 }}>
         <Scoreboard
-          players={sheet.players}
+          players={players}
           totalsByPlayerId={totals.totalsByPlayerId}
           pointsByGame={perGameRows}
         />
@@ -251,7 +265,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
             <RoundSection
               key={r.index}
               round={r}
-              players={sheet.players}
+              players={players}
               scoresByGame={scoresByGame}
               bockLevelByGame={levels}
               onEditGame={onEditGame}

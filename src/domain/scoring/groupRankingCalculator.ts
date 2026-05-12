@@ -1,6 +1,7 @@
 import { WinnerSide } from '@/domain/models/game';
 import { allGames, totalGames, type GameSheet } from '@/domain/models/gameSheet';
 import { playerDisplayName } from '@/domain/models/player';
+import type { PlayerLookup } from '@/domain/models/playerLookup';
 import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import { effectiveStackingMode } from '@/domain/scoring/bockResolver';
 import {
@@ -13,6 +14,7 @@ import { totalsFor } from '@/domain/scoring/scoreCalculator';
 export interface CalculateGroupRankingsInput {
   sheets: ReadonlyArray<GameSheet>;
   defaultMode: BockStackingMode;
+  lookup: PlayerLookup;
 }
 
 /**
@@ -22,10 +24,11 @@ export interface CalculateGroupRankingsInput {
  * `defaultMode` ist der App-Default fuer den Bockrunden-Stapelmodus. Pro
  * Sheet wird ueber `effectiveStackingMode` der Per-Sheet-Override (falls
  * gesetzt) aufgeloest — so liefert die Rangliste dieselben Punktestaende
- * wie die Einzel-Sheet-Ansicht.
+ * wie die Einzel-Sheet-Ansicht. `lookup` liefert die Anzeige-Namen aus
+ * dem app-weiten Spielerpool.
  */
 export function calculateGroupRankings(input: CalculateGroupRankingsInput): GroupRankings {
-  const { sheets, defaultMode } = input;
+  const { sheets, defaultMode, lookup } = input;
   if (sheets.length === 0) return groupRankingsEmpty;
 
   const placement = new Map<string, number>();
@@ -34,16 +37,16 @@ export function calculateGroupRankings(input: CalculateGroupRankingsInput): Grou
   const names = new Map<string, string>();
 
   for (const sheet of sheets) {
-    // Sheet ohne Spiele: leise ueberspringen.
     if (totalGames(sheet) === 0) continue;
 
     const mode = effectiveStackingMode(sheet, defaultMode);
     const totals = totalsFor(sheet, mode);
 
-    // Display-Namen aus dem ersten Bogen merken, in dem der Spieler auftaucht.
-    for (const player of sheet.players) {
-      if (!names.has(player.id)) {
-        names.set(player.id, playerDisplayName(player));
+    // Display-Namen aus dem Pool ueber den Lookup.
+    for (const playerId of sheet.playerIds) {
+      if (!names.has(playerId)) {
+        const player = lookup.byId(playerId);
+        names.set(playerId, player !== null ? playerDisplayName(player) : playerId);
       }
     }
 

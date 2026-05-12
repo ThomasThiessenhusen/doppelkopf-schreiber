@@ -5,9 +5,11 @@ import { ActivityIndicator, Card, Divider, List, Text, useTheme } from 'react-na
 import { appSettingsFallback } from '@/domain/models/appSettings';
 import { calculateGroupRankings } from '@/domain/scoring/groupRankingCalculator';
 import type { RankingEntry } from '@/domain/scoring/groupRankings';
+import { usePlayerListStore } from '@/application/stores/playerListStore';
 import { useSettingsStore } from '@/application/stores/settingsStore';
 import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
 import { useSheetListStore } from '@/application/stores/sheetListStore';
+import { createPlayerLookup } from '@/domain/models/playerLookup';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 export function GroupRankingsScreen({ groupId }: { groupId: string }) {
@@ -23,11 +25,15 @@ export function GroupRankingsScreen({ groupId }: { groupId: string }) {
   const settingsState = useSettingsStore((s) => s.state);
   const loadSettings = useSettingsStore((s) => s.load);
 
+  const pool = usePlayerListStore((s) => s.players);
+  const refreshPool = usePlayerListStore((s) => s.refresh);
+
   useEffect(() => {
     void refreshGroups();
     void refreshSheets();
     void loadSettings();
-  }, [refreshGroups, refreshSheets, loadSettings]);
+    void refreshPool();
+  }, [refreshGroups, refreshSheets, loadSettings, refreshPool]);
 
   const group = groups.find((g) => g.id === groupId);
   const settings =
@@ -35,11 +41,13 @@ export function GroupRankingsScreen({ groupId }: { groupId: string }) {
 
   const rankings = useMemo(() => {
     const inGroup = sheets.filter((s) => s.groupId === groupId);
+    const lookup = createPlayerLookup(pool);
     return calculateGroupRankings({
       sheets: inGroup,
       defaultMode: settings.defaultStackingMode,
+      lookup,
     });
-  }, [sheets, groupId, settings.defaultStackingMode]);
+  }, [sheets, groupId, settings.defaultStackingMode, pool]);
 
   if (groupsLoading || sheetsLoading) {
     return (

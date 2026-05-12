@@ -147,7 +147,7 @@ export function HomeScreen() {
           }
           renderItem={({ item: sheet }) => {
             const metaLine = t('home.metaLine', {
-              playerCount: sheet.players.length,
+              playerCount: sheet.playerIds.length,
               gameCount: totalGamesOf(sheet),
               time: formatDateTime(sheet.updatedAt),
             });
