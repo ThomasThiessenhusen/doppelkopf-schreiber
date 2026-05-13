@@ -1,6 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 
 import type { LocalStorage } from '@/data/local/localStorage';
+import { createPerKeyLock } from '@/data/local/perKeyLock';
 
 /**
  * Einfache, robuste Persistenz: pro Datensatz eine JSON-Datei in einem
@@ -26,6 +27,8 @@ export function createJsonFileStorage(opts: CreateJsonFileStorageOptions = {}): 
     opts.rootOverride !== undefined
       ? ensureTrailingSlash(opts.rootOverride)
       : `${FileSystem.documentDirectory ?? ''}doppelkopf_schreiber/`;
+
+  const lock = createPerKeyLock();
 
   async function ensureDir(path: string): Promise<void> {
     const info = await FileSystem.getInfoAsync(path);
@@ -80,20 +83,24 @@ export function createJsonFileStorage(opts: CreateJsonFileStorageOptions = {}): 
     },
 
     async write(collection, id, data) {
-      const dir = await collectionDir(collection);
-      const path = fileFor(dir, id);
-      const tmp = `${path}.tmp`;
-      await FileSystem.writeAsStringAsync(tmp, JSON.stringify(data, null, 2));
-      await FileSystem.moveAsync({ from: tmp, to: path });
+      return lock.run(`${collection}/${id}`, async () => {
+        const dir = await collectionDir(collection);
+        const path = fileFor(dir, id);
+        const tmp = `${path}.tmp`;
+        await FileSystem.writeAsStringAsync(tmp, JSON.stringify(data, null, 2));
+        await FileSystem.moveAsync({ from: tmp, to: path });
+      });
     },
 
     async delete(collection, id) {
-      const dir = await collectionDir(collection);
-      const path = fileFor(dir, id);
-      const info = await FileSystem.getInfoAsync(path);
-      if (info.exists) {
-        await FileSystem.deleteAsync(path, { idempotent: true });
-      }
+      return lock.run(`${collection}/${id}`, async () => {
+        const dir = await collectionDir(collection);
+        const path = fileFor(dir, id);
+        const info = await FileSystem.getInfoAsync(path);
+        if (info.exists) {
+          await FileSystem.deleteAsync(path, { idempotent: true });
+        }
+      });
     },
   };
 }
