@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Platform, ScrollView, View } from 'react-native';
 import { ActivityIndicator, Button, SegmentedButtons, Text } from 'react-native-paper';
 
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
 
 import { exportBackup } from '@/application/export/exportService';
-import { shareExport } from '@/data/export/fileShare';
+import { saveExportToFile, shareExport } from '@/data/export/fileShare';
 import type { LanguagePreference } from '@/domain/models/appSettings';
 import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import { useSettingsStore } from '@/application/stores/settingsStore';
@@ -96,8 +96,28 @@ export function SettingsScreen() {
             })();
           }}
         >
-          {t('exportImport.exportBackupButton')}
+          {Platform.OS === 'android'
+            ? t('exportImport.shareBackupButton')
+            : t('exportImport.exportBackupButton')}
         </Button>
+        {Platform.OS === 'android' && (
+          <Button
+            mode="contained-tonal"
+            icon="content-save"
+            onPress={() => {
+              void (async () => {
+                try {
+                  const file = await exportBackup();
+                  await saveExportToFile(file);
+                } catch (e) {
+                  console.error(t('exportImport.exportFailed'), e);
+                }
+              })();
+            }}
+          >
+            {t('exportImport.saveBackupButton')}
+          </Button>
+        )}
         <Button
           mode="contained-tonal"
           icon="import"
