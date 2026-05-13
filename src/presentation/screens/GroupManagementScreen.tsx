@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FlatList, View } from 'react-native';
+import { FlatList, Platform, View } from 'react-native';
 import {
   ActivityIndicator,
   Button,
@@ -16,7 +16,7 @@ import {
 } from 'react-native-paper';
 
 import { exportGroup } from '@/application/export/exportService';
-import { shareExport } from '@/data/export/fileShare';
+import { saveExportToFile, shareExport } from '@/data/export/fileShare';
 import { GroupType, groupTypeLabelKey } from '@/domain/models/groupType';
 import type { SheetGroup } from '@/domain/models/sheetGroup';
 import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
@@ -153,7 +153,11 @@ export function GroupManagementScreen() {
                       }}
                     />
                     <Menu.Item
-                      title={t('exportImport.exportGroupMenu')}
+                      title={
+                        Platform.OS === 'android'
+                          ? t('exportImport.shareGroupMenu')
+                          : t('exportImport.exportGroupMenu')
+                      }
                       onPress={() => {
                         setMenuForId(null);
                         void (async () => {
@@ -166,6 +170,22 @@ export function GroupManagementScreen() {
                         })();
                       }}
                     />
+                    {Platform.OS === 'android' && (
+                      <Menu.Item
+                        title={t('exportImport.saveGroupMenu')}
+                        onPress={() => {
+                          setMenuForId(null);
+                          void (async () => {
+                            try {
+                              const file = await exportGroup(g.id);
+                              await saveExportToFile(file);
+                            } catch (e) {
+                              console.error(t('exportImport.exportFailed'), e);
+                            }
+                          })();
+                        }}
+                      />
+                    )}
                     <Menu.Item
                       title={t('groups.menuDelete')}
                       onPress={() => {
