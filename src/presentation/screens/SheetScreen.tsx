@@ -1,6 +1,6 @@
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Platform, ScrollView, View } from 'react-native';
 import {
   ActivityIndicator,
   Button,
@@ -35,7 +35,7 @@ import { scoreFor, totalsFor } from '@/domain/scoring/scoreCalculator';
 import { usePlayerListStore } from '@/application/stores/playerListStore';
 import { useSettingsStore } from '@/application/stores/settingsStore';
 import { exportSheet } from '@/application/export/exportService';
-import { shareExport } from '@/data/export/fileShare';
+import { saveExportToFile, shareExport } from '@/data/export/fileShare';
 import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
 import { useSheetStore } from '@/application/stores/sheetStore';
 import {
@@ -241,7 +241,11 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
                   }}
                 />
                 <Menu.Item
-                  title={t('exportImport.exportSheetMenu')}
+                  title={
+                    Platform.OS === 'android'
+                      ? t('exportImport.shareSheetMenu')
+                      : t('exportImport.exportSheetMenu')
+                  }
                   onPress={() => {
                     setMenuOpen(false);
                     void (async () => {
@@ -254,6 +258,22 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
                     })();
                   }}
                 />
+                {Platform.OS === 'android' && (
+                  <Menu.Item
+                    title={t('exportImport.saveSheetMenu')}
+                    onPress={() => {
+                      setMenuOpen(false);
+                      void (async () => {
+                        try {
+                          const file = await exportSheet(sheet.id);
+                          await saveExportToFile(file);
+                        } catch (e) {
+                          console.error(t('exportImport.exportFailed'), e);
+                        }
+                      })();
+                    }}
+                  />
+                )}
               </Menu>
             </View>
           ),
