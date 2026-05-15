@@ -1,5 +1,8 @@
-import { Stack, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+
+import type { RootStackParamList } from '@/navigation/types';
 import { Platform, ScrollView, View } from 'react-native';
 import {
   ActivityIndicator,
@@ -76,7 +79,7 @@ export function SheetScreen({ sheetId }: { sheetId: string }) {
 
 function Loaded({ sheet }: { sheet: GameSheet }) {
   const { t } = useTranslation();
-  const router = useRouter();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Sheet'>>();
   const theme = useTheme();
   const renameSheet = useSheetStore((s) => s.renameSheet);
   const setStackingModeOverride = useSheetStore((s) => s.setStackingModeOverride);
@@ -175,10 +178,10 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
     await setGroup(created.id);
   }
 
-  function openRename() {
+  const openRename = useCallback(() => {
     setRenameValue(sheet.title ?? '');
     setRenameOpen(true);
-  }
+  }, [sheet.title]);
 
   async function submitRename() {
     const v = renameValue.trim();
@@ -186,10 +189,10 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
     setRenameOpen(false);
   }
 
-  function openStackingDialog() {
+  const openStackingDialog = useCallback(() => {
     setStackingChoice(sheet.stackingModeOverride ?? 'default');
     setStackingDialogOpen(true);
-  }
+  }, [sheet.stackingModeOverride]);
 
   async function submitStacking() {
     const v = stackingChoice === 'default' ? null : stackingChoice;
@@ -198,87 +201,85 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
   }
 
   function openAddGame() {
-    router.push({ pathname: '/sheets/[sheetId]/add-game', params: { sheetId: sheet.id } });
+    navigation.navigate('AddGame', { sheetId: sheet.id });
   }
 
   function onEditGame(game: Game) {
-    router.push({
-      pathname: '/sheets/[sheetId]/add-game',
-      params: { sheetId: sheet.id, gameId: game.id },
-    });
+    navigation.navigate('AddGame', { sheetId: sheet.id, gameId: game.id });
   }
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: sheet.title ?? t('sheet.titleFallback'),
+      headerRight: () => (
+        <View style={{ flexDirection: 'row' }}>
+          <IconButton icon="pencil-outline" onPress={openRename} />
+          <Menu
+            visible={menuOpen}
+            onDismiss={() => setMenuOpen(false)}
+            anchor={
+              <IconButton
+                icon="dots-vertical"
+                onPress={() => setMenuOpen(true)}
+              />
+            }
+          >
+            <Menu.Item
+              title={t('sheet.menuStacking')}
+              onPress={() => {
+                setMenuOpen(false);
+                openStackingDialog();
+              }}
+            />
+            <Menu.Item
+              title={t('sheet.menuGroup')}
+              onPress={() => {
+                setMenuOpen(false);
+                setGroupPickerOpen(true);
+              }}
+            />
+            <Menu.Item
+              title={
+                Platform.OS === 'android'
+                  ? t('exportImport.shareSheetMenu')
+                  : t('exportImport.exportSheetMenu')
+              }
+              onPress={() => {
+                setMenuOpen(false);
+                void (async () => {
+                  try {
+                    const file = await exportSheet(sheet.id);
+                    await shareExport(file);
+                  } catch (e) {
+                    console.error(t('exportImport.exportFailed'), e);
+                  }
+                })();
+              }}
+            />
+            {Platform.OS === 'android' && (
+              <Menu.Item
+                title={t('exportImport.saveSheetMenu')}
+                onPress={() => {
+                  setMenuOpen(false);
+                  void (async () => {
+                    try {
+                      const file = await exportSheet(sheet.id);
+                      await saveExportToFile(file);
+                    } catch (e) {
+                      console.error(t('exportImport.exportFailed'), e);
+                    }
+                  })();
+                }}
+              />
+            )}
+          </Menu>
+        </View>
+      ),
+    });
+  }, [navigation, sheet.title, sheet.id, t, menuOpen, openRename, openStackingDialog]);
 
   return (
     <View style={{ flex: 1 }}>
-      <Stack.Screen
-        options={{
-          title: sheet.title ?? t('sheet.titleFallback'),
-          headerRight: () => (
-            <View style={{ flexDirection: 'row' }}>
-              <IconButton icon="pencil-outline" onPress={openRename} />
-              <Menu
-                visible={menuOpen}
-                onDismiss={() => setMenuOpen(false)}
-                anchor={
-                  <IconButton
-                    icon="dots-vertical"
-                    onPress={() => setMenuOpen(true)}
-                  />
-                }
-              >
-                <Menu.Item
-                  title={t('sheet.menuStacking')}
-                  onPress={() => {
-                    setMenuOpen(false);
-                    openStackingDialog();
-                  }}
-                />
-                <Menu.Item
-                  title={t('sheet.menuGroup')}
-                  onPress={() => {
-                    setMenuOpen(false);
-                    setGroupPickerOpen(true);
-                  }}
-                />
-                <Menu.Item
-                  title={
-                    Platform.OS === 'android'
-                      ? t('exportImport.shareSheetMenu')
-                      : t('exportImport.exportSheetMenu')
-                  }
-                  onPress={() => {
-                    setMenuOpen(false);
-                    void (async () => {
-                      try {
-                        const file = await exportSheet(sheet.id);
-                        await shareExport(file);
-                      } catch (e) {
-                        console.error(t('exportImport.exportFailed'), e);
-                      }
-                    })();
-                  }}
-                />
-                {Platform.OS === 'android' && (
-                  <Menu.Item
-                    title={t('exportImport.saveSheetMenu')}
-                    onPress={() => {
-                      setMenuOpen(false);
-                      void (async () => {
-                        try {
-                          const file = await exportSheet(sheet.id);
-                          await saveExportToFile(file);
-                        } catch (e) {
-                          console.error(t('exportImport.exportFailed'), e);
-                        }
-                      })();
-                    }}
-                  />
-                )}
-              </Menu>
-            </View>
-          ),
-        }}
-      />
       <ScrollView contentContainerStyle={{ paddingBottom: 96 }}>
         <Scoreboard
           players={players}
