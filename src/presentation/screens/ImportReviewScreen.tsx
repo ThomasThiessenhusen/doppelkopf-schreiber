@@ -1,5 +1,8 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+import type { RootStackParamList } from '@/navigation/types';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import {
@@ -47,7 +50,7 @@ type TFunc = (k: string, p?: Record<string, unknown>) => string;
 
 export function ImportReviewScreen({ fileUri }: ImportReviewScreenProps) {
   const { t } = useTranslation();
-  const router = useRouter();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [prepared, setPrepared] = useState<PreparedState | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -114,7 +117,7 @@ export function ImportReviewScreen({ fileUri }: ImportReviewScreenProps) {
         <HelperText type="error" visible>
           {error}
         </HelperText>
-        <Button mode="contained-tonal" onPress={() => router.back()}>
+        <Button mode="contained-tonal" onPress={() => navigation.goBack()}>
           {t('exportImport.cancelButton')}
         </Button>
       </View>
@@ -154,7 +157,7 @@ export function ImportReviewScreen({ fileUri }: ImportReviewScreenProps) {
       await applyImportPlan(plan, {
         settings: prepared.parsed.envelope.payload.settings ?? undefined,
       });
-      router.replace('/');
+      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
     } catch (e) {
       setError(`${e}`);
     } finally {
@@ -262,7 +265,7 @@ export function ImportReviewScreen({ fileUri }: ImportReviewScreenProps) {
       )}
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <Button mode="outlined" style={{ flex: 1 }} onPress={() => router.back()}>
+        <Button mode="outlined" style={{ flex: 1 }} onPress={() => navigation.goBack()}>
           {t('exportImport.cancelButton')}
         </Button>
         <Button

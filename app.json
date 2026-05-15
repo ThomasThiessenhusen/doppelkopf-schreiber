@@ -8,6 +8,7 @@
     "scheme": "doppelkopf",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "router": false,
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "de.meinnaechsterurlaub.bockzettel"
@@ -28,7 +29,6 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
       [
         "expo-splash-screen",
         {
@@ -40,10 +40,15 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-font",
+      "expo-image",
+      "expo-localization",
+      "expo-sharing",
+      "expo-web-browser"
     ],
     "experiments": {
-      "typedRoutes": true,
+      "typedRoutes": false,
       "reactCompiler": true
     }
   }

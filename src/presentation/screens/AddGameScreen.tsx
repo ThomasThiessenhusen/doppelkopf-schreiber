@@ -1,4 +1,7 @@
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+import type { RootStackParamList } from '@/navigation/types';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
 import { ScrollView, View } from 'react-native';
@@ -102,7 +105,7 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
     return t(spec.key, { count: spec.count });
   }
 
-  const router = useRouter();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const theme = useTheme();
   const addGame = useSheetStore((s) => s.addGame);
   const updateGame = useSheetStore((s) => s.updateGame);
@@ -323,7 +326,7 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
       };
       await updateGame(updated);
     }
-    router.back();
+    navigation.goBack();
   }
 
   function displayedValue(f: ScoreFlag): number {

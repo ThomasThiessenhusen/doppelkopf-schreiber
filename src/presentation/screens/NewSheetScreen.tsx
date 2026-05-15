@@ -1,4 +1,7 @@
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+import type { RootStackParamList } from '@/navigation/types';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import {
@@ -34,7 +37,7 @@ export interface NewSheetScreenProps {
 
 export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
   const { t } = useTranslation();
-  const router = useRouter();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const playersLoading = usePlayerListStore((s) => s.loading);
   const players = usePlayerListStore((s) => s.players);
@@ -156,7 +159,7 @@ export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
       stackingModeOverride: selectedMode,
     };
     await createSheet(sheet, selected);
-    router.replace({ pathname: '/sheets/[sheetId]', params: { sheetId: sheet.id } });
+    navigation.replace('Sheet', { sheetId: sheet.id });
   }
 
   const selectedIds = useMemo(() => new Set(selected.map((p) => p.id)), [selected]);
@@ -233,7 +236,7 @@ export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
               <Text variant="bodySmall">
                 {t('newSheet.noPlayersHint')}
               </Text>
-              <Button mode="contained-tonal" onPress={() => router.push('/players')}>
+              <Button mode="contained-tonal" onPress={() => navigation.navigate('Players')}>
                 {t('newSheet.openPlayerMgmt')}
               </Button>
             </Card.Content>

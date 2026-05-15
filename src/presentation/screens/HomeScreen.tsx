@@ -1,4 +1,7 @@
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+import type { RootStackParamList } from '@/navigation/types';
 import { useEffect, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import {
@@ -46,7 +49,7 @@ function totalGamesOf(sheet: GameSheet): number {
 
 export function HomeScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const loading = useSheetListStore((s) => s.loading);
   const sheets = useSheetListStore((s) => s.sheets);
   const error = useSheetListStore((s) => s.error);
@@ -113,10 +116,7 @@ export function HomeScreen() {
             mode="contained-tonal"
             icon="podium"
             onPress={() =>
-              router.push({
-                pathname: '/groups/[groupId]/rankings',
-                params: { groupId: activeGroup.id },
-              })
+              navigation.navigate('GroupRankings', { groupId: activeGroup.id })
             }
           >
             {t('home.rankings')}
@@ -189,10 +189,7 @@ export function HomeScreen() {
                   <Button
                     mode="contained-tonal"
                     onPress={() =>
-                      router.push({
-                        pathname: '/sheets/[sheetId]',
-                        params: { sheetId: sheet.id },
-                      })
+                      navigation.navigate('Sheet', { sheetId: sheet.id })
                     }
                   >
                     {t('home.open')}
@@ -210,12 +207,9 @@ export function HomeScreen() {
         style={{ position: 'absolute', right: 16, bottom: 16 }}
         onPress={() => {
           if (filterGroupId !== null) {
-            router.push({
-              pathname: '/sheets/new',
-              params: { groupId: filterGroupId },
-            });
+            navigation.navigate('NewSheet', { groupId: filterGroupId });
           } else {
-            router.push('/sheets/new');
+            navigation.navigate('NewSheet');
           }
         }}
       />
@@ -256,7 +250,7 @@ export function HomeScreen() {
             left={(p) => <List.Icon {...p} icon="tune" />}
             onPress={() => {
               setFilterSheetOpen(false);
-              router.push('/groups');
+              navigation.navigate('Groups');
             }}
           />
         </Modal>
