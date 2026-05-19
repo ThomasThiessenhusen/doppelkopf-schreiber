@@ -39,6 +39,7 @@ import { usePlayerListStore } from '@/application/stores/playerListStore';
 import { useSettingsStore } from '@/application/stores/settingsStore';
 import { exportSheet } from '@/application/export/exportService';
 import { saveExportToFile, shareExport } from '@/data/export/fileShare';
+import { sharePdf } from '@/data/export/pdfShare';
 import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
 import { useSheetStore } from '@/application/stores/sheetStore';
 import {
@@ -250,6 +251,19 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
                   try {
                     const file = await exportSheet(sheet.id);
                     await shareExport(file);
+                  } catch (e) {
+                    console.error(t('exportImport.exportFailed'), e);
+                  }
+                })();
+              }}
+            />
+            <Menu.Item
+              title={t('exportImport.sharePdfMenu')}
+              onPress={() => {
+                setMenuOpen(false);
+                void (async () => {
+                  try {
+                    await sharePdf(sheet.id);
                   } catch (e) {
                     console.error(t('exportImport.exportFailed'), e);
                   }

@@ -257,6 +257,7 @@ export const de = {
     exportGroupMenu: 'Gruppe exportieren...',
     exportBackupButton: 'Backup exportieren',
     shareSheetMenu: 'Bogen teilen...',
+    sharePdfMenu: 'Als PDF teilen...',
     shareGroupMenu: 'Gruppe teilen...',
     shareBackupButton: 'Backup teilen',
     saveSheetMenu: 'Bogen speichern unter...',
