@@ -41,7 +41,8 @@ Cross-Environment-Details: [docs/build-environments.md](docs/build-environments.
 - Expo SDK 55 (Managed Workflow)
 - React Native 0.83.6 + React 19 + TypeScript (strict)
 - React Native Paper (Material 3)
-- @react-navigation/native-stack fuer Navigation
+- @react-navigation/native-stack + bottom-tabs fuer Navigation
 - Zustand fuer State Management
+- i18next + react-i18next fuer Uebersetzungen (DE/EN)
 - `expo-file-system/legacy` fuer JSON-Persistenz
 - Jest + babel-jest fuer Unit-Tests
