@@ -5,31 +5,36 @@ Mobile-App (Android & iOS) zur Unterstuetzung des Schreibers beim Doppelkopf-Kar
 ## Voraussetzungen
 
 - Node.js >= 20
-- pnpm >= 10
+- npm >= 10
 - Android Studio mit eingerichtetem Emulator (fuer Android-Lauf)
 - macOS + Xcode (fuer iOS-Simulator)
 
 ## Setup
 
 ```bash
-pnpm install
+npm ci
 ```
 
 ## Entwicklung
 
 ```bash
-pnpm start          # Metro-Bundler
-pnpm android        # In Android-Emulator starten
-pnpm ios            # In iOS-Simulator starten (nur macOS)
+npm start           # Metro-Bundler
+npm run android     # In Android-Emulator starten
+npm run ios         # In iOS-Simulator starten (nur macOS)
 ```
 
 ## Tests & Qualitaet
 
 ```bash
-pnpm test           # Jest
-pnpm typecheck      # tsc --noEmit
-pnpm lint           # ESLint
+npm test            # Jest
+npm run typecheck   # tsc --noEmit
+npm run lint        # ESLint
 ```
+
+## Build-Umgebungen
+
+Das Projekt wird in zwei Umgebungen entwickelt (Windows-PC für Android, macOS für iOS).
+Cross-Environment-Details: [docs/build-environments.md](docs/build-environments.md) und [CLAUDE.md](CLAUDE.md).
 
 ## Tech-Stack
 
