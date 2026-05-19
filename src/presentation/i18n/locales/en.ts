@@ -259,6 +259,7 @@ export const en: Resources = {
     exportGroupMenu: 'Export group...',
     exportBackupButton: 'Export backup',
     shareSheetMenu: 'Share sheet...',
+    sharePdfMenu: 'Share as PDF...',
     shareGroupMenu: 'Share group...',
     shareBackupButton: 'Share backup',
     saveSheetMenu: 'Save sheet...',
