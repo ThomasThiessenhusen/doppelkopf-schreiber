@@ -38,7 +38,7 @@ Beim ersten Start (oder nach Änderungen an `app.json` / nativen Plugins) führt
 
 ### Häufige Stolperfallen
 
-- Gradle-Builds laufen länger als iOS — ein Build-Log unter `android_build.log` ist normal.
+- Gradle-Builds laufen länger als iOS — das ist normal.
 - Bei Lockfile-Mismatch: `npm ci` neu ausführen, dann `npm run android` erneut.
 - Bei nativen Plugin-Änderungen: `/android` löschen und neu prebuilden (`npx expo prebuild -p android --clean`).
 
