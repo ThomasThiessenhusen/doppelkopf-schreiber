@@ -1,6 +1,8 @@
 # Bockzettel
 
-Mobile-App (Android & iOS) zur Unterstuetzung des Schreibers beim Doppelkopf-Kartenspiel.
+Mobile-App (Android, iOS & Web) zur Unterstuetzung des Schreibers beim Doppelkopf-Kartenspiel.
+
+Web-Version: **https://thomasthiessenhusen.github.io/doppelkopf-schreiber/**
 
 ## Voraussetzungen
 
@@ -18,9 +20,12 @@ npm ci
 ## Entwicklung
 
 ```bash
-npm start           # Metro-Bundler
 npm run android     # In Android-Emulator starten
-npm run ios         # In iOS-Simulator starten (nur macOS)
+npm run web         # Im Browser starten
+
+# iOS (zwei Schritte, da expo run:ios beim URL-Open fehlschlaegt):
+REACT_NATIVE_PACKAGER_HOSTNAME=localhost npx expo start --port 8081
+xcrun simctl launch <UDID> de.meinnaechsterurlaub.bockzettel
 ```
 
 ## Tests & Qualitaet
@@ -33,16 +38,18 @@ npm run lint        # ESLint
 
 ## Build-Umgebungen
 
-Das Projekt wird in zwei Umgebungen entwickelt (Windows-PC für Android, macOS für iOS).
+Das Projekt wird in zwei Umgebungen entwickelt (Windows-PC fuer Android, macOS fuer iOS).
 Cross-Environment-Details: [docs/build-environments.md](docs/build-environments.md) und [CLAUDE.md](CLAUDE.md).
+
+Die Web-Version wird automatisch bei jedem Push auf `main` via GitHub Actions nach GitHub Pages deployt.
 
 ## Tech-Stack
 
 - Expo SDK 55 (Managed Workflow)
 - React Native 0.83.6 + React 19 + TypeScript (strict)
 - React Native Paper (Material 3)
-- @react-navigation/native-stack + bottom-tabs fuer Navigation
+- @react-navigation/native-stack fuer Navigation
 - Zustand fuer State Management
 - i18next + react-i18next fuer Uebersetzungen (DE/EN)
-- `expo-file-system/legacy` fuer JSON-Persistenz
+- Persistenz: `expo-file-system/legacy` (nativ) · IndexedDB / localStorage (Web)
 - Jest + babel-jest fuer Unit-Tests
