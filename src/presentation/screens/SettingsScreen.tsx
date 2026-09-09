@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 import { Platform, ScrollView, View } from 'react-native';
 import { ActivityIndicator, Button, SegmentedButtons, Text } from 'react-native-paper';
 
-import * as DocumentPicker from 'expo-document-picker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '@/navigation/types';
+import { pickImportFile } from '@/data/import/pickImportFile';
 
 import { exportBackup } from '@/application/export/exportService';
 import { saveExportToFile, shareExport } from '@/data/export/fileShare';
@@ -129,15 +129,9 @@ export function SettingsScreen() {
           icon="import"
           onPress={() => {
             void (async () => {
-              const res = await DocumentPicker.getDocumentAsync({
-                type: 'application/json',
-                copyToCacheDirectory: true,
-                multiple: false,
-              });
-              if (res.canceled === true) return;
-              const uri = res.assets?.[0]?.uri;
-              if (typeof uri !== 'string') return;
-              navigation.navigate('ImportReview', { fileUri: uri });
+              const res = await pickImportFile();
+              if (res.status === 'cancelled') return;
+              navigation.navigate('ImportReview', { fileUri: res.uri });
             })();
           }}
         >
