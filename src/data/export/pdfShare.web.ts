@@ -7,6 +7,12 @@ import { renderSheetHtml } from '@/application/export/sheetHtml';
  *
  * Bewusst kein Blob-Download: der Nutzer soll das Ergebnis sehen, bevor er
  * es ablegt, und bekommt so auf jeder Plattform denselben Dialog.
+ *
+ * Zwei Faelle sind ein Kompromiss: wenn `print()` blockiert ist oder wirft
+ * (Browser, die Druck verhindern), wird das als abgelehnte Promise oberflaechen
+ * statt als uncaught Exception. Wenn das iframe niemals laeuft — ein seltenes
+ * Host-Problem — bleibt das Promise offen. Das ist derselbe Kompromiss, den
+ * der native Druckdialog mit einer abgebrochenen Activity hat.
  */
 export async function sharePdf(
   sheetId: string,
@@ -24,16 +30,21 @@ export async function sharePdf(
     frame.style.border = '0';
 
     frame.addEventListener('load', () => {
-      const fenster = frame.contentWindow;
-      if (fenster === null) {
+      try {
+        const fenster = frame.contentWindow;
+        if (fenster === null) {
+          frame.remove();
+          reject(new Error('Druckvorschau konnte nicht geoeffnet werden.'));
+          return;
+        }
+        fenster.focus();
+        fenster.print();
         frame.remove();
-        reject(new Error('Druckvorschau konnte nicht geoeffnet werden.'));
-        return;
+        resolve();
+      } catch (error) {
+        frame.remove();
+        reject(error instanceof Error ? error : new Error(String(error)));
       }
-      fenster.focus();
-      fenster.print();
-      frame.remove();
-      resolve();
     });
 
     frame.srcdoc = html;

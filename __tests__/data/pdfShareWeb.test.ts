@@ -82,4 +82,23 @@ describe('sharePdf (web)', () => {
 
     await expect(pending).rejects.toThrow();
   });
+
+  it('wirft und raeumt auf, wenn print() blockiert ist oder wirft', async () => {
+    const { doc, frame } = fakeDocument();
+    const remove = jest.fn();
+    frame.remove = remove;
+    const print = jest.fn(() => {
+      throw new Error('print() is blocked');
+    });
+    if (frame.contentWindow) {
+      frame.contentWindow.print = print;
+    }
+
+    const pending = sharePdf('sheet-1', doc);
+    await flush();
+    frame.fire('load');
+
+    await expect(pending).rejects.toThrow('print() is blocked');
+    expect(remove).toHaveBeenCalledTimes(1);
+  });
 });
