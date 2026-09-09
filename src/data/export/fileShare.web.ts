@@ -28,8 +28,11 @@ export async function shareExport(
     anchor.click();
     anchor.remove();
     // Der Download startet asynchron. Ein sofortiges revoke kann ihm die
-    // Quelle entziehen, darum erst einen Tick spaeter freigeben.
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Quelle entziehen, darum erst etwas spaeter freigeben. 0ms genuegt in
+    // Chromium (mit echtem Download geprueft), aber Firefox und Safari
+    // brauchen erfahrungsgemaess eine laengere Gnadenfrist vor
+    // revokeObjectURL bei Blob-Downloads; 250ms ist der ueblich genannte Wert.
+    await new Promise((resolve) => setTimeout(resolve, 250));
   } finally {
     URL.revokeObjectURL(url);
   }

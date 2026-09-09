@@ -9,15 +9,20 @@ import { renderSheetHtml } from '@/application/export/sheetHtml';
  * es ablegt, und bekommt so auf jeder Plattform denselben Dialog.
  *
  * Zwei Faelle sind ein Kompromiss: wenn `print()` blockiert ist oder wirft
- * (Browser, die Druck verhindern), wird das als abgelehnte Promise oberflaechen
- * statt als uncaught Exception. Wenn das iframe niemals laeuft — ein seltenes
- * Host-Problem — bleibt das Promise offen. Das ist derselbe Kompromiss, den
- * der native Druckdialog mit einer abgebrochenen Activity hat.
+ * (Browser, die Druck verhindern), wird das als abgelehntes Promise nach
+ * aussen gereicht statt als uncaught Exception. Wenn das iframe niemals
+ * laeuft — ein seltenes Host-Problem — bleibt das Promise offen. Das ist
+ * derselbe Kompromiss, den der native Druckdialog mit einer abgebrochenen
+ * Activity hat.
  */
 export async function sharePdf(
   sheetId: string,
   doc: Document = globalThis.document,
 ): Promise<void> {
+  // `filename` aus renderSheetHtml wird hier bewusst nicht verwendet: der
+  // Druckdialog leitet seinen Vorschlagsnamen aus dem `<title>` des
+  // Dokuments ab, das buildSheetHtml bereits auf den Bogentitel setzt — der
+  // Dateiname geht also nicht verloren, er kommt nur auf einem anderen Weg an.
   const { html } = await renderSheetHtml(sheetId);
 
   return new Promise<void>((resolve, reject) => {
