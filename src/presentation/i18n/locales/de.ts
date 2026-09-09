@@ -8,6 +8,17 @@ export const de = {
     loading: 'Lädt …',
     errorLoading: 'Fehler beim Laden',
   },
+  storage: {
+    title: 'Speicherort',
+    modeFile: 'Gerätespeicher der App.',
+    modeIndexeddb: 'Browser-Datenbank (IndexedDB). Bleibt nach dem Schließen erhalten.',
+    modeLocalstorage:
+      'Browser-Speicher. Bleibt zwar erhalten, ist aber auf etwa 5 MB begrenzt und wird bei Speicherdruck als Erstes gelöscht — exportiere wichtige Bögen.',
+    modeMemory: 'Nur diese Sitzung. Beim Schließen des Tabs sind alle Daten weg.',
+    modeUnknown: 'Unbekannt.',
+    memoryWarning:
+      'Dieser Browser speichert nichts dauerhaft. Beim Schließen des Tabs sind alle Bögen verloren — exportiere sie vorher.',
+  },
   nav: {
     home: 'Bockzettel',
     newSheet: 'Neuer Spielbogen',

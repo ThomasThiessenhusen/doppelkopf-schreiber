@@ -14,7 +14,9 @@ import type { LanguagePreference } from '@/domain/models/appSettings';
 import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import { useSettingsStore } from '@/application/stores/settingsStore';
 import { applyLanguage } from '@/presentation/i18n';
+import { storageModeKey } from '@/presentation/i18n/storageModeKey';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
+import { useStorageMode } from '@/presentation/hooks/useStorageMode';
 
 export function SettingsScreen() {
   const { t } = useTranslation();
@@ -23,6 +25,7 @@ export function SettingsScreen() {
   const load = useSettingsStore((s) => s.load);
   const setDefaultStackingMode = useSettingsStore((s) => s.setDefaultStackingMode);
   const setLanguage = useSettingsStore((s) => s.setLanguage);
+  const storageMode = useStorageMode();
 
   useEffect(() => {
     void load();
@@ -140,6 +143,13 @@ export function SettingsScreen() {
         >
           {t('exportImport.importButton')}
         </Button>
+      </View>
+
+      <View style={{ gap: 12 }}>
+        <Text variant="titleMedium">{t('storage.title')}</Text>
+        <Text variant="bodySmall">
+          {storageMode === null ? t('common.loading') : t(storageModeKey(storageMode))}
+        </Text>
       </View>
     </ScrollView>
   );

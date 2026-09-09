@@ -10,6 +10,17 @@ export const en: Resources = {
     loading: 'Loading …',
     errorLoading: 'Failed to load',
   },
+  storage: {
+    title: 'Storage location',
+    modeFile: "The app's device storage.",
+    modeIndexeddb: 'Browser database (IndexedDB). Survives closing the tab.',
+    modeLocalstorage:
+      'Browser storage. It does survive closing the tab, but is capped at roughly 5 MB and is the first thing a browser clears under pressure — export the sheets that matter.',
+    modeMemory: 'This session only. Everything is gone once you close the tab.',
+    modeUnknown: 'Unknown.',
+    memoryWarning:
+      'This browser stores nothing permanently. Closing the tab loses every sheet — export them first.',
+  },
   nav: {
     home: 'Bockzettel',
     newSheet: 'New sheet',
