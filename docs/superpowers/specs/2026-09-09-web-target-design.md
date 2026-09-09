@@ -22,6 +22,24 @@ The codebase is already well positioned for a browser target:
 Nine files touch platform APIs. Three need real web implementations, two are layering
 violations that need a seam first, and four already work on the web.
 
+### Verified baseline (2026-09-09)
+
+Measured on the Windows environment after `npm ci` (1199 packages, 31 s, gradle-plugin
+patch applied cleanly):
+
+- `npm run typecheck` — clean.
+- `npm run lint` — 0 errors, 101 warnings, all `@typescript-eslint/array-type` style
+  (`Array<T>` instead of `T[]`); 91 are auto-fixable and deliberately left alone so they
+  do not muddy this branch.
+- `npm test` — 27 suites, 196 tests, all passing in under 2 s.
+- Toolchain: Node 24.15.0, npm 11.12.1, JDK 21.0.10, adb 1.0.41, Android SDK platforms
+  35/36/36.1, AVD `Pixel_10` available.
+
+**Not yet verified:** neither `npm run android` nor `npm run ios` has been run from this
+clone, so there is no "before" snapshot of the native targets. That should happen before
+any code in this spec is implemented — otherwise a later native regression cannot be
+attributed.
+
 ## Goal
 
 Add **web** as a third build target on the same `main`, at full feature parity, producing
@@ -57,9 +75,11 @@ full-parity, single-codebase decision.
 
 - Any server, account or cross-device sync. The web app and the native apps are separate
   data silos, bridged by the existing JSON export/import round-trip.
-- Deleting the eleven stranded files under `app/` (leftovers of the expo-router to
-  react-navigation migration in `8297b25`, importing a package that is not installed and
-  hidden from typecheck by `tsconfig.json:23`). Worth doing, but as its own commit.
+- ~~Deleting the stranded files under `app/`~~ — **done before this spec's implementation**,
+  because it turned out to be the sole cause of `npm run lint` failing (six
+  `import/no-unresolved` errors). Ten files, leftovers of the expo-router to
+  react-navigation migration in `8297b25`. Removed in its own commit together with the
+  now-unnecessary `tsconfig.json` exclude.
 - Icon-font subsetting. Only if the single-file size measurement comes out badly.
 - Component rendering tests. The project has none today and this change does not need
   them.
@@ -224,11 +244,12 @@ lands badly, subsetting the icon font to the glyphs actually used is the lever.
 ### CI
 
 `.github/workflows/ci.yml` has failed on every push since 2026-05-19 (13–16 s per run) —
-`ci.yml:27` installs with `pnpm install --frozen-lockfile` while the repo tracks
+`ci.yml:27` installed with `pnpm install --frozen-lockfile` while the repo tracks
 `package-lock.json` and no `pnpm-lock.yaml` exists. Fixes and additions:
 
-1. Replace the pnpm setup and install with `npm ci`, per the binding rule in `CLAUDE.md`.
-   Remove the legacy `pnpm` block from `package.json` at the same time.
+1. ~~Replace the pnpm setup and install with `npm ci`~~ — **done**, per the binding rule in
+   `CLAUDE.md`, along with removing the legacy `pnpm` block from `package.json` and moving
+   Node from 20 to 24 to match the local Windows environment.
 2. New job `web-build`: `npx expo export -p web` on every PR. **This job is the
    enforcement of the three-target contract** — it stops the web target rotting while
    Android work continues.
@@ -240,8 +261,9 @@ lands badly, subsetting the icon font to the glyphs actually used is the lever.
 
 ## Tests
 
-The project runs `testEnvironment: 'node'` with hand-written mocks in `__mocks__/`, 23
-pure-logic suites, and no component rendering tests. This change stays inside that style.
+The project runs `testEnvironment: 'node'` with hand-written mocks in `__mocks__/`, 27
+pure-logic suites totalling 196 tests, and no component rendering tests. This change stays
+inside that style.
 
 ### Storage contract suite
 
