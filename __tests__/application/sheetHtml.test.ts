@@ -2,20 +2,19 @@ import { buildSheetHtml, type SheetHtmlInput } from '@/application/export/sheetH
 import { WinnerSide, type Game } from '@/domain/models/game';
 import type { GameSheet } from '@/domain/models/gameSheet';
 import type { Player } from '@/domain/models/player';
-import { initI18n } from '@/presentation/i18n';
 import { BockLevel } from '@/domain/scoring/bockLevel';
 import type { GameScore } from '@/domain/scoring/scoreCalculator';
 
-// `buildSheetHtml` ruft intern `i18n.t(...)` auf. Ohne Initialisierung liefert
-// i18next im Node-Testenvironment `undefined` statt eines Strings, was den
-// Aufbau abstuerzen laesst — daher hier einmalig initialisieren. Die
-// Assertions selbst pruefen bewusst nur HTML-Struktur, keine uebersetzten
-// Texte (siehe Testfaelle unten).
-beforeAll(async () => {
-  await initI18n('de');
-});
-
 const AT = new Date('2026-09-09T10:00:00.000Z');
+
+/**
+ * Fake-Uebersetzung fuer Tests: liefert den Schluessel unveraendert zurueck.
+ * `buildSheetHtml` ist dadurch unabhaengig vom globalen i18n-Zustand testbar —
+ * die Assertions pruefen bewusst nur HTML-Struktur, keine uebersetzten Texte.
+ */
+function fakeT(key: string): string {
+  return key;
+}
 
 function player(id: string, name: string): Player {
   return { id, playerName: name, firstName: null, lastName: null };
@@ -37,7 +36,7 @@ function game(overrides: Partial<Game> = {}): Game {
   };
 }
 
-function sheet(games: ReadonlyArray<Game>): GameSheet {
+function sheet(games: readonly Game[]): GameSheet {
   return {
     id: 's1',
     title: 'Mein erster',
@@ -89,6 +88,7 @@ function input(overrides: Partial<SheetHtmlInput> = {}): SheetHtmlInput {
     ],
     scoresByGame: new Map([['g1', score(1, -1)]]),
     bockLevelByGame: new Map([['g1', BockLevel.none]]),
+    t: fakeT,
     ...overrides,
   };
 }
@@ -161,10 +161,12 @@ describe('buildSheetHtml', () => {
       }),
     );
 
-    // Der Solist steht allein auf der Re-Seite (Label "Solo:" statt "Re:",
-    // nur Jan als Name), und der Gegenwert der Kontra-Partei wird als Zusatz
-    // ausgewiesen.
-    expect(html).toContain('<span class="re-label">Solo:</span> Jan</div>');
+    // Der Solist steht allein auf der Re-Seite (Label-Schluessel wechselt zu
+    // "sheet.soloLabel" statt "sheet.reLabel", nur Jan als Name), und der
+    // Gegenwert der Kontra-Partei wird als Zusatz ausgewiesen. Die Fake-
+    // Uebersetzung liefert den Schluessel unveraendert zurueck, daher wird
+    // hier gegen den Schluessel statt den echten Text geprueft.
+    expect(html).toContain('<span class="re-label">sheet.soloLabel:</span> Jan</div>');
     expect(html).toContain('class="muted">(');
   });
 
