@@ -46,3 +46,9 @@ app-example
 # Claude Code: maschinenspezifische Einstellungen.
 # .claude/settings.json bleibt getrackt, das ist die geteilte Projekt-Konfiguration.
 .claude/settings.local.json
+
+# Superpowers: SDD-Arbeitsverzeichnis (Ledger, Briefs, Review-Pakete)
+.superpowers/
+
+# Playwright MCP: Browser-Artefakte (Snapshots, Logs, Downloads)
+.playwright-mcp/
