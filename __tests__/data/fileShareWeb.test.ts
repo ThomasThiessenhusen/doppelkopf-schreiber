@@ -74,11 +74,11 @@ describe('shareExport (web)', () => {
     const text = await captured!.text();
     const parsed = JSON.parse(text);
     expect(parsed).toEqual(file.envelope);
-    // Verify pretty-printing with 2-space indent
+    // Prueft Pretty-Printing mit 2-Leerzeichen-Einrueckung
     expect(text).toContain('\n  ');
   });
 
-  it('gibt die Objekt-URL differed und nicht synchron frei', async () => {
+  it('gibt die Objekt-URL verzoegert und nicht synchron frei', async () => {
     URL.createObjectURL = jest.fn(() => 'blob:http://x/9') as typeof URL.createObjectURL;
     const revoke = jest.fn();
     URL.revokeObjectURL = revoke as typeof URL.revokeObjectURL;
@@ -96,9 +96,10 @@ describe('shareExport (web)', () => {
     });
 
     const pending = shareExport(exportFile(), doc);
-    // After click() and remove() and before the await completes, revoke should not have been called
+    // Nach click() und remove(), aber vor dem Abschluss des awaits, darf
+    // revoke noch nicht aufgerufen worden sein.
     expect(callOrder).toEqual(['click', 'remove']);
-    // After awaiting, revoke should be called, deferred after the tick
+    // Nach dem Warten muss revoke aufgerufen worden sein, verzoegert nach dem Tick.
     await pending;
     expect(callOrder).toEqual(['click', 'remove', 'revoke']);
     expect(revoke).toHaveBeenCalledWith('blob:http://x/9');

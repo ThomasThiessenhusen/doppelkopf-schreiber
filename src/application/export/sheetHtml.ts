@@ -11,13 +11,20 @@ import { effectiveStackingMode, resolveBock } from '@/domain/scoring/bockResolve
 import { scoreFor, totalsFor } from '@/domain/scoring/scoreCalculator';
 import type { GameScore } from '@/domain/scoring/scoreCalculator';
 import { flagByCode } from '@/domain/scoring/scoringRules';
+// Dieser Import bleibt trotz der Reinheits-Aussage unten bestehen:
+// `renderSheetHtml` (weiter unten in dieser Datei) ist die Composition-Root,
+// die `t` an die Adapter (sharePdf, etc.) weiterreicht. Die Alternative waere,
+// eine Uebersetzungsfunktion durch `sharePdf` und jeden Aufrufer durchzureichen.
 import { i18n } from '@/presentation/i18n';
 
 /**
  * Uebersetzungsfunktion wie i18next.t sie liefert. Wird injiziert statt aus
- * dem globalen `i18n`-Singleton gelesen, damit `buildSheetHtml` plattform-
- * neutral und pur bleibt (kein Presentation-Import, keine Abhaengigkeit vom
- * i18n-Initialisierungszustand).
+ * dem globalen `i18n`-Singleton gelesen, damit `buildSheetHtml` selbst
+ * plattform-neutral und pur bleibt (kein Presentation-Import, keine
+ * Abhaengigkeit vom i18n-Initialisierungszustand). Diese Aussage gilt nur
+ * fuer `buildSheetHtml` — nicht fuer diese Datei als Ganzes: `renderSheetHtml`
+ * weiter unten importiert `i18n` sehr wohl und haengt vom
+ * Initialisierungszustand ab.
  */
 export type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
 

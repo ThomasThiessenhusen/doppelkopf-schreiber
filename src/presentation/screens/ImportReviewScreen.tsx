@@ -64,7 +64,18 @@ export function ImportReviewScreen({ fileUri }: ImportReviewScreenProps) {
     let cancelled = false;
     void (async () => {
       try {
-        const text = await readTextFile(fileUri);
+        let text: string;
+        try {
+          text = await readTextFile(fileUri);
+        } finally {
+          // Im Web ist fileUri eine `blob:`-URL von pickImportFile.web.ts; sie
+          // muss freigegeben werden, sonst haelt das Dokument die Datei fuer
+          // immer im Speicher. Erst NACH dem Read revoken, sonst bricht der
+          // Read ab. Native URIs (file:// / content://) bleiben unberuehrt.
+          if (fileUri.startsWith('blob:')) {
+            URL.revokeObjectURL(fileUri);
+          }
+        }
         const parsed = parseExportFile(text);
         const local: LocalState = {
           players: await repositories.player().loadAll(),
