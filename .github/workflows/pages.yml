@@ -30,8 +30,6 @@ jobs:
 
       - name: Export web build
         run: npx expo export --platform web
-        env:
-          PUBLIC_URL: /doppelkopf-schreiber/
 
       - uses: actions/upload-pages-artifact@v3
         with:
