@@ -1,8 +1,8 @@
-import * as FileSystem from 'expo-file-system/legacy';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import type { RootStackParamList } from '@/navigation/types';
+import { readTextFile } from '@/data/local/readTextFile';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import {
@@ -64,7 +64,7 @@ export function ImportReviewScreen({ fileUri }: ImportReviewScreenProps) {
     let cancelled = false;
     void (async () => {
       try {
-        const text = await FileSystem.readAsStringAsync(fileUri);
+        const text = await readTextFile(fileUri);
         const parsed = parseExportFile(text);
         const local: LocalState = {
           players: await repositories.player().loadAll(),
