@@ -5,7 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { useColorScheme, View } from 'react-native';
-import { ActivityIndicator, IconButton, PaperProvider } from 'react-native-paper';
+import { ActivityIndicator, Banner, IconButton, PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { RouteProp } from '@react-navigation/native';
 
@@ -13,6 +13,9 @@ import { appSettingsFallback } from '@/domain/models/appSettings';
 import { useSettingsStore } from '@/application/stores/settingsStore';
 import { repositories } from '@/application/stores/repositories';
 import { runV2Migration } from '@/data/migrations/v2PoolReference';
+import { requestPersistence } from '@/data/local/requestPersistence';
+import { storageNotice } from '@/application/storage/storageNotice';
+import { useStorageMode } from '@/presentation/hooks/useStorageMode';
 import { initI18n } from '@/presentation/i18n';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
 import { darkTheme, lightTheme } from '@/presentation/theme/theme';
@@ -58,6 +61,26 @@ function HomeHeaderRight() {
       <IconButton icon="account-group-outline" onPress={() => navigation.navigate('Players')} />
       <IconButton icon="cog-outline" onPress={() => navigation.navigate('Settings')} />
     </>
+  );
+}
+
+/**
+ * Warnt nur dort, wo die Daten wirklich fluechtig sind. IndexedDB und
+ * localStorage ueberleben nachweislich einen Neustart und schweigen deshalb;
+ * ihre Feinheiten stehen in den Einstellungen.
+ */
+function StorageWarningBanner() {
+  const { t } = useTranslation();
+  const mode = useStorageMode();
+  // Bedingt gerendert statt ueber `visible={false}`: Paper laesst den Banner
+  // sonst gemountet und clippt ihn nur auf Hoehe 0. Im Browser nachgesehen —
+  // der `role="alert"` bleibt dann samt Warntext im Accessibility-Baum und
+  // wird vorgelesen, obwohl IndexedDB laengst gewonnen hat.
+  if (mode === null || storageNotice(mode) !== 'warning') return null;
+  return (
+    <Banner visible icon="alert-outline">
+      {t('storage.memoryWarning')}
+    </Banner>
   );
 }
 
@@ -148,6 +171,13 @@ export default function App() {
   }, [loadSettings]);
 
   useEffect(() => {
+    // Bewusst ohne await auf dem Ladepfad: der Browser darf hier nachfragen,
+    // und der Startbildschirm soll nicht an einem Dialog haengen. Das
+    // Ergebnis ist reine Information, kein Aufrufer haengt daran.
+    void requestPersistence();
+  }, []);
+
+  useEffect(() => {
     if (settingsState.status !== 'data' && settingsState.status !== 'error') return;
     const pref =
       settingsState.status === 'data'
@@ -171,6 +201,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
+        <StorageWarningBanner />
         <NavigationContainer>
           <LocalizedStack theme={theme} />
         </NavigationContainer>
