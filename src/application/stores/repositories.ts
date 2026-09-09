@@ -1,5 +1,5 @@
+import { createStorage } from '@/data/local/createStorage';
 import type { LocalStorage } from '@/data/local/localStorage';
-import { createJsonFileStorage } from '@/data/local/jsonFileStorage';
 import {
   createLocalGameSheetRepository,
   type GameSheetRepository,
@@ -22,7 +22,7 @@ import {
  * Instanz zu halten — so kann der Setup zentral ausgetauscht werden (z. B.
  * fuer In-Memory-Storage-Probe-Skripte).
  */
-const _initialStorage: LocalStorage = createJsonFileStorage();
+const _initialStorage: LocalStorage = createStorage();
 
 let _storage: LocalStorage = _initialStorage;
 let _gameSheet: GameSheetRepository = createLocalGameSheetRepository(_initialStorage);
