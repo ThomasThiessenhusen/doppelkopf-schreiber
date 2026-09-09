@@ -309,11 +309,30 @@ cheap.
 
 1. `npm ci`, then `npm run typecheck`, `npm run lint`, `npm test` all green.
 2. `npm run web` — every screen reachable, a sheet can be created and games entered.
+   **Verified 2026-09-09** (Windows environment, real Chromium browser, driving the
+   exported web bundle — `npx expo export -p web`, served over HTTP, not the dev
+   server). Zero console errors on boot; every screen was reached; a sheet was created
+   and a game was entered after the import step below.
 3. Reload the browser — data survives (IndexedDB path).
+   **Verified 2026-09-09** (same session as item 2). The settings screen reported
+   IndexedDB as the active storage mode; the sheet survived a reload.
 4. PDF export opens the browser print dialog with the correct sheet.
+   **Verified 2026-09-09** (same session as item 2). The PDF path created exactly one
+   iframe, called `print()` exactly once, removed the iframe afterwards, and its
+   `srcdoc` contained resolved translations rather than raw `sheet.` keys.
 5. JSON export downloads; re-importing it round-trips through the review screen.
+   **Verified 2026-09-09** (same session as item 2). Export produced
+   `bockzettel-backup-2026-09-09.json` with a correct envelope; import went file
+   chooser -> `blob:` URL -> review screen -> applied; a game could be entered
+   afterwards.
 6. `npx expo export -p web` succeeds; `dist/` deployed to Pages loads over the subpath.
 7. Offline: load the Pages URL, disable the network, reload — the app still starts.
 8. Open `bockzettel-offline.html` from disk in Chrome and Firefox — the app runs, the
    banner states session-only, JSON import and export both work.
 9. `npm run android` still builds and runs (the native target must not regress).
+   **Verified 2026-09-09** (Windows environment). `android/` was deleted,
+   `npx expo prebuild --clean --platform android` regenerated it, `npm run android`
+   reported `BUILD SUCCESSFUL in 1m 35s`, the APK installed on the `Pixel_10`
+   emulator, the app launched with its data intact, and the settings screen rendered
+   the new storage-mode line. Honest caveat: Gradle's build cache in `~/.gradle`
+   supplied 138 of 327 tasks, so this was a clean `android/` but not a cold cache.
