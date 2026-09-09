@@ -67,10 +67,5 @@
     "prettier": "^3.8.3",
     "typescript": "~5.9.2"
   },
-  "private": true,
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "unrs-resolver"
-    ]
-  }
+  "private": true
 }
