@@ -13,9 +13,13 @@ import type { GameScore } from '@/domain/scoring/scoreCalculator';
 import { flagByCode } from '@/domain/scoring/scoringRules';
 import { i18n } from '@/presentation/i18n';
 
-function t(key: string, options?: Record<string, unknown>): string {
-  return i18n.t(key, options);
-}
+/**
+ * Uebersetzungsfunktion wie i18next.t sie liefert. Wird injiziert statt aus
+ * dem globalen `i18n`-Singleton gelesen, damit `buildSheetHtml` plattform-
+ * neutral und pur bleibt (kein Presentation-Import, keine Abhaengigkeit vom
+ * i18n-Initialisierungszustand).
+ */
+export type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
 
 function formatPoints(p: number): string {
   return p > 0 ? `+${p}` : `${p}`;
@@ -51,15 +55,17 @@ function suggestPdfFilename(title: string | null, dateIso: string): string {
 
 export interface SheetHtmlInput {
   readonly sheet: GameSheet;
-  readonly players: ReadonlyArray<Player>;
+  readonly players: readonly Player[];
   readonly totalsByPlayerId: ReadonlyMap<string, number>;
-  readonly gameRows: ReadonlyArray<{
+  readonly gameRows: readonly {
     gameId: string;
     pointsByPlayerId: ReadonlyMap<string, number>;
     sittingOutPlayerId: string | null;
-  }>;
+  }[];
   readonly scoresByGame: ReadonlyMap<string, GameScore>;
   readonly bockLevelByGame: ReadonlyMap<string, BockLevel>;
+  /** Injizierte Uebersetzungsfunktion — siehe `TranslateFn`. */
+  readonly t: TranslateFn;
 }
 
 // ---------------------------------------------------------------------------
@@ -67,7 +73,7 @@ export interface SheetHtmlInput {
 // ---------------------------------------------------------------------------
 
 export function buildSheetHtml(input: SheetHtmlInput): string {
-  const { sheet, players, totalsByPlayerId, gameRows, scoresByGame, bockLevelByGame } = input;
+  const { sheet, players, totalsByPlayerId, gameRows, scoresByGame, bockLevelByGame, t } = input;
 
   const title = sheet.title ?? t('sheet.titleFallback');
   const dateStr = formatDate(sheet.createdAt);
@@ -282,6 +288,7 @@ export async function renderSheetHtml(
   const html = buildSheetHtml({
     sheet, players, totalsByPlayerId: totals.totalsByPlayerId,
     gameRows, scoresByGame, bockLevelByGame,
+    t: (key, options) => i18n.t(key, options),
   });
   const dateIso = new Date().toISOString().slice(0, 10);
   return { html, filename: suggestPdfFilename(sheet.title, dateIso) };
