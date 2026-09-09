@@ -42,3 +42,7 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Claude Code: maschinenspezifische Einstellungen.
+# .claude/settings.json bleibt getrackt, das ist die geteilte Projekt-Konfiguration.
+.claude/settings.local.json
