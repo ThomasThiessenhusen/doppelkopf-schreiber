@@ -21,7 +21,7 @@ import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 export interface RoundSectionProps {
   round: Round;
-  players: ReadonlyArray<Player>;
+  players: readonly Player[];
   scoresByGame: ReadonlyMap<string, GameScore>;
   bockLevelByGame: ReadonlyMap<string, BockLevel>;
   onEditGame: (game: Game) => void;
@@ -48,7 +48,7 @@ export function RoundSection({
     return players.find((p) => p.id === id);
   }
 
-  function names(ids: ReadonlyArray<string>): string {
+  function names(ids: readonly string[]): string {
     return ids
       .map((id) => byId(id))
       .filter((p): p is Player => p !== undefined)
@@ -56,7 +56,7 @@ export function RoundSection({
       .join(' & ');
   }
 
-  function flagsLabel(codes: ReadonlyArray<string>): string {
+  function flagsLabel(codes: readonly string[]): string {
     return codes
       .map((c) => flagByCode(c))
       .filter((f): f is NonNullable<typeof f> => f !== null)

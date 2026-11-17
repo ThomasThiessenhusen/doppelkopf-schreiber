@@ -368,7 +368,7 @@ describe('scoreFor', () => {
 });
 
 describe('totalsFor', () => {
-  const players4: ReadonlyArray<Player> = [
+  const players4: readonly Player[] = [
     { id: 'a', playerName: 'Anna', firstName: null, lastName: null },
     { id: 'b', playerName: 'Ben', firstName: null, lastName: null },
     { id: 'c', playerName: 'Carla', firstName: null, lastName: null },
@@ -422,7 +422,7 @@ describe('totalsFor', () => {
   });
 
   test('aussetzender Spieler erhaelt 0 Punkte', () => {
-    const players5: ReadonlyArray<Player> = [
+    const players5: readonly Player[] = [
       ...players4,
       { id: 'e', playerName: 'Eva', firstName: null, lastName: null },
     ];

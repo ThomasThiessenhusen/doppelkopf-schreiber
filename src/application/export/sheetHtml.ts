@@ -127,14 +127,14 @@ export function buildSheetHtml(input: SheetHtmlInput): string {
   function playerById(id: string) {
     return players.find((p) => p.id === id);
   }
-  function names(ids: ReadonlyArray<string>): string {
+  function names(ids: readonly string[]): string {
     return ids
       .map((id) => playerById(id))
       .filter((p): p is NonNullable<typeof p> => p !== undefined)
       .map((p) => esc(playerDisplayName(p)))
       .join(' &amp; ');
   }
-  function flagsLabel(codes: ReadonlyArray<string>): string {
+  function flagsLabel(codes: readonly string[]): string {
     return codes
       .map((c) => flagByCode(c))
       .filter((f): f is NonNullable<typeof f> => f !== null)
@@ -268,11 +268,11 @@ export async function renderSheetHtml(
   const bockLevelByGame = resolveBock(sheet, mode);
 
   // Pre-compute per-game score rows
-  const gameRows: Array<{
+  const gameRows: {
     gameId: string;
     pointsByPlayerId: Map<string, number>;
     sittingOutPlayerId: string | null;
-  }> = [];
+  }[] = [];
   const scoresByGame = new Map<string, GameScore>();
   for (const game of allGames(sheet)) {
     const level = bockLevelByGame.get(game.id) ?? BockLevel.none;

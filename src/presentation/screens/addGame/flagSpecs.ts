@@ -34,9 +34,9 @@ import {
 export interface StackingCounterSpec {
   labelKey: 'addGame.flags.fuchsCaught' | 'addGame.flags.doppelkopf';
   /** Codes der Stufen 1..N fuer die Re-Seite (Index 0 = Stufe 1). */
-  reCodes: ReadonlyArray<string>;
+  reCodes: readonly string[];
   /** Codes der Stufen 1..N fuer die Kontra-Seite (Index 0 = Stufe 1). */
-  contraCodes: ReadonlyArray<string>;
+  contraCodes: readonly string[];
   /** Maximaler Gesamtcount (Re + Kontra zusammen). */
   maxTotal: number;
 }
@@ -70,14 +70,14 @@ export const doppelkopfSpec: StackingCounterSpec = {
 };
 
 /** Stufe-Kette: Unter 90 → Unter 60 → Unter 30 → Schwarz. */
-export const levelCodes: ReadonlyArray<string> = [
+export const levelCodes: readonly string[] = [
   under90.code,
   under60.code,
   under30.code,
   schwarz.code,
 ];
 
-export const reAnnouncementCodes: ReadonlyArray<string> = [
+export const reAnnouncementCodes: readonly string[] = [
   reAnnounced.code,
   reAnnouncedUnder90.code,
   reAnnouncedUnder60.code,
@@ -85,7 +85,7 @@ export const reAnnouncementCodes: ReadonlyArray<string> = [
   reAnnouncedSchwarz.code,
 ];
 
-export const contraAnnouncementCodes: ReadonlyArray<string> = [
+export const contraAnnouncementCodes: readonly string[] = [
   contraAnnounced.code,
   contraAnnouncedUnder90.code,
   contraAnnouncedUnder60.code,

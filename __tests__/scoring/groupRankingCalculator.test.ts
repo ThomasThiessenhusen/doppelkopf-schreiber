@@ -16,8 +16,8 @@ const lookup = createPlayerLookup([alice, bob, carol, dave]);
 
 function sheetWith(opts: {
   id: string;
-  players: ReadonlyArray<Player>;
-  games: ReadonlyArray<Game>;
+  players: readonly Player[];
+  games: readonly Game[];
 }): GameSheet {
   const now = new Date('2026-05-01T00:00:00.000Z');
   const round: Round = { index: 0, games: opts.games };
@@ -43,13 +43,13 @@ function classicReWin(reIds: string[], contraIds: string[]): Game {
   });
 }
 
-function byPlayer(entries: ReadonlyArray<RankingEntry>): Record<string, number> {
+function byPlayer(entries: readonly RankingEntry[]): Record<string, number> {
   const out: Record<string, number> = {};
   for (const e of entries) out[e.playerId] = e.value;
   return out;
 }
 
-function ranksByPlayer(entries: ReadonlyArray<RankingEntry>): Record<string, number> {
+function ranksByPlayer(entries: readonly RankingEntry[]): Record<string, number> {
   const out: Record<string, number> = {};
   for (const e of entries) out[e.playerId] = e.rank;
   return out;

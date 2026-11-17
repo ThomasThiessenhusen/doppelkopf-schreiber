@@ -7,10 +7,10 @@ import { ensurePoolMembership } from '@/application/playerUsage';
 
 export interface SheetListState {
   loading: boolean;
-  sheets: ReadonlyArray<GameSheet>;
+  sheets: readonly GameSheet[];
   error: Error | null;
   refresh: () => Promise<void>;
-  createSheet: (sheet: GameSheet, players: ReadonlyArray<Player>) => Promise<GameSheet>;
+  createSheet: (sheet: GameSheet, players: readonly Player[]) => Promise<GameSheet>;
   deleteSheet: (id: string) => Promise<void>;
   /**
    * Vom `sheetStore` aufgerufen, wenn der einzelne Bogen aktualisiert wird —

@@ -26,7 +26,7 @@ function p(id: string, name: string): Player {
 
 function s(
   id: string,
-  playerIds: ReadonlyArray<string>,
+  playerIds: readonly string[],
   groupId: string | null = null,
 ): GameSheet {
   return {

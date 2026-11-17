@@ -2,7 +2,7 @@ import { runV2Migration } from '@/data/migrations/v2PoolReference';
 import type { LocalStorage } from '@/data/local/localStorage';
 import { createInMemoryStorage } from './_inMemoryStorage';
 
-function legacySheet(id: string, players: ReadonlyArray<{ id: string; playerName: string }>) {
+function legacySheet(id: string, players: readonly { id: string; playerName: string }[]) {
   return {
     id,
     title: null,

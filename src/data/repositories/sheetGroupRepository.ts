@@ -6,7 +6,7 @@ import {
 } from '@/domain/models/sheetGroup';
 
 export interface SheetGroupRepository {
-  loadAll(): Promise<ReadonlyArray<SheetGroup>>;
+  loadAll(): Promise<readonly SheetGroup[]>;
   load(id: string): Promise<SheetGroup | null>;
   save(group: SheetGroup): Promise<void>;
   delete(id: string): Promise<void>;

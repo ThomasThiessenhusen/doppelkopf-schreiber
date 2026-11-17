@@ -7,7 +7,7 @@ import {
 } from '@/domain/models/player';
 
 export interface PlayerRepository {
-  loadAll(): Promise<ReadonlyArray<Player>>;
+  loadAll(): Promise<readonly Player[]>;
   save(player: Player): Promise<void>;
   delete(id: string): Promise<void>;
 }

@@ -111,7 +111,7 @@ function RankingSection({
   colorize,
 }: {
   title: string;
-  entries: ReadonlyArray<RankingEntry>;
+  entries: readonly RankingEntry[];
   formatValue: (v: number) => string;
   colorize: boolean;
 }) {

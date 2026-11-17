@@ -9,7 +9,7 @@ const ROW_HEIGHT = 28;
 const VISIBLE_ROWS = 8;
 
 export interface ScoreboardProps {
-  players: ReadonlyArray<Player>;
+  players: readonly Player[];
   /** Punkte pro Spieler aufsummiert ueber den ganzen Bogen. */
   totalsByPlayerId: ReadonlyMap<string, number>;
   /**
@@ -18,11 +18,11 @@ export interface ScoreboardProps {
    * konsistent sein; aussetzende Spieler haben Wert 0 mit Marker im
    * `sittingOutByGame`.
    */
-  pointsByGame: ReadonlyArray<{
+  pointsByGame: readonly {
     gameId: string;
     pointsByPlayerId: ReadonlyMap<string, number>;
     sittingOutPlayerId: string | null;
-  }>;
+  }[];
 }
 
 function formatPoints(points: number): string {

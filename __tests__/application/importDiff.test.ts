@@ -16,7 +16,7 @@ function p(id: string, name: string): Player {
 
 function s(
   id: string,
-  playerIds: ReadonlyArray<string>,
+  playerIds: readonly string[],
   updatedAt = epoch,
   groupId: string | null = null,
 ): GameSheet {
@@ -46,9 +46,9 @@ function g(id: string, name: string, updatedAt = epoch): SheetGroup {
 
 function envelope(
   kind: 'sheet' | 'group' | 'backup',
-  players: ReadonlyArray<Player>,
-  sheets: ReadonlyArray<GameSheet>,
-  groups: ReadonlyArray<SheetGroup>,
+  players: readonly Player[],
+  sheets: readonly GameSheet[],
+  groups: readonly SheetGroup[],
   settings = null as null | typeof appSettingsFallback,
 ): ParsedExportFile {
   return {

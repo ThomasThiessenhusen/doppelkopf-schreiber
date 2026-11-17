@@ -12,7 +12,7 @@ import { useSheetListStore } from '@/application/stores/sheetListStore';
 
 export interface SheetGroupListState {
   loading: boolean;
-  groups: ReadonlyArray<SheetGroup>;
+  groups: readonly SheetGroup[];
   error: Error | null;
   refresh: () => Promise<void>;
   create: (input: { name: string; type: GroupType }) => Promise<SheetGroup>;

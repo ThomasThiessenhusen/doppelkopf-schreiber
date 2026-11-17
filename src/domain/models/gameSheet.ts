@@ -25,15 +25,15 @@ export interface GameSheet {
   readonly title: string | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;
-  readonly playerIds: ReadonlyArray<string>;
-  readonly rounds: ReadonlyArray<Round>;
+  readonly playerIds: readonly string[];
+  readonly rounds: readonly Round[];
   readonly dirty: boolean;
   readonly stackingModeOverride: BockStackingMode | null;
   readonly groupId: string | null;
 }
 
 export interface CreateGameSheetInput {
-  players: ReadonlyArray<Player>;
+  players: readonly Player[];
   title?: string | null;
   at?: Date;
   groupId?: string | null;
@@ -104,8 +104,8 @@ export function nextSittingOutPlayerId(sheet: GameSheet): string | null {
 
 export interface GameSheetPatch {
   title?: string | null;
-  playerIds?: ReadonlyArray<string>;
-  rounds?: ReadonlyArray<Round>;
+  playerIds?: readonly string[];
+  rounds?: readonly Round[];
   updatedAt?: Date;
   dirty?: boolean;
   stackingModeOverride?: BockStackingMode | null;
@@ -134,7 +134,7 @@ export function sheetWithGame(sheet: GameSheet, game: Game): GameSheet {
   const updatedRound = roundWithGame(round, game);
   const lastIndex = sheet.rounds.length - 1;
   const last = lastIndex >= 0 ? sheet.rounds[lastIndex] : undefined;
-  let nextRounds: ReadonlyArray<Round>;
+  let nextRounds: readonly Round[];
   if (last === undefined || last.index !== updatedRound.index) {
     nextRounds = [...sheet.rounds, updatedRound];
   } else {
@@ -160,7 +160,7 @@ export function removeGame(sheet: GameSheet, gameId: string): GameSheet {
   const filtered = sheet.rounds
     .map((r) => ({ index: r.index, games: r.games.filter((g) => g.id !== gameId) }))
     .filter((r) => r.games.length > 0);
-  const renumbered: ReadonlyArray<Round> = filtered.map((r, i) => ({
+  const renumbered: readonly Round[] = filtered.map((r, i) => ({
     index: i,
     games: r.games,
   }));
@@ -218,7 +218,7 @@ export function gameSheetFromJson(json: Record<string, unknown>): GameSheet {
   };
 }
 
-function readPlayerIds(json: Record<string, unknown>): ReadonlyArray<string> {
+function readPlayerIds(json: Record<string, unknown>): readonly string[] {
   const ids = json['playerIds'];
   if (Array.isArray(ids)) {
     return ids.filter((v): v is string => typeof v === 'string');

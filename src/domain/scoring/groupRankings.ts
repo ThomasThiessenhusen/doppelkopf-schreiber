@@ -28,15 +28,15 @@ export interface GroupRankings {
    * Bei Punktegleichstand auf einem Bogen erhalten alle Tied-Spieler den
    * hoeheren Rang (Standard Competition Ranking).
    */
-  readonly placementPoints: ReadonlyArray<RankingEntry>;
+  readonly placementPoints: readonly RankingEntry[];
   /** Summe der Spielpunkte pro Spieler ueber alle Spielboegen, absteigend. */
-  readonly totalPoints: ReadonlyArray<RankingEntry>;
+  readonly totalPoints: readonly RankingEntry[];
   /**
    * Anzahl gewonnener Solo-Spiele pro Spieler. Ein Solo zaehlt nur, wenn der
    * Solist (einziger Re-Spieler) auch der Sieger ist. Verlorene Soli
    * werden nicht erfasst.
    */
-  readonly wonSoli: ReadonlyArray<RankingEntry>;
+  readonly wonSoli: readonly RankingEntry[];
 }
 
 export const groupRankingsEmpty: GroupRankings = {

@@ -10,7 +10,7 @@ import { isPlayerReferenced, PlayerReferencedError } from '@/application/playerU
 
 export interface PlayerListState {
   loading: boolean;
-  players: ReadonlyArray<Player>;
+  players: readonly Player[];
   error: Error | null;
   refresh: () => Promise<void>;
   add: (input: {
@@ -22,7 +22,7 @@ export interface PlayerListState {
   remove: (id: string) => Promise<void>;
 }
 
-function sortByDisplayName(players: ReadonlyArray<Player>): Player[] {
+function sortByDisplayName(players: readonly Player[]): Player[] {
   return [...players].sort((a, b) =>
     playerDisplayName(a).toLowerCase().localeCompare(playerDisplayName(b).toLowerCase()),
   );

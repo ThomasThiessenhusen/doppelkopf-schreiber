@@ -42,16 +42,16 @@ export interface GroupDecision {
 export type SettingsAction = 'replace' | 'keep';
 
 export interface ImportPlan {
-  readonly players: ReadonlyArray<PlayerDecision>;
-  readonly groups: ReadonlyArray<GroupDecision>;
-  readonly sheets: ReadonlyArray<SheetDecision>;
+  readonly players: readonly PlayerDecision[];
+  readonly groups: readonly GroupDecision[];
+  readonly sheets: readonly SheetDecision[];
   readonly settings: { suggested: SettingsAction } | null;
 }
 
 export interface LocalState {
-  readonly players: ReadonlyArray<Player>;
-  readonly groups: ReadonlyArray<SheetGroup>;
-  readonly sheets: ReadonlyArray<GameSheet>;
+  readonly players: readonly Player[];
+  readonly groups: readonly SheetGroup[];
+  readonly sheets: readonly GameSheet[];
   readonly settings: AppSettings;
 }
 

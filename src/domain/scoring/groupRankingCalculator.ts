@@ -12,7 +12,7 @@ import {
 import { totalsFor } from '@/domain/scoring/scoreCalculator';
 
 export interface CalculateGroupRankingsInput {
-  sheets: ReadonlyArray<GameSheet>;
+  sheets: readonly GameSheet[];
   defaultMode: BockStackingMode;
   lookup: PlayerLookup;
 }
@@ -106,7 +106,7 @@ export function calculateGroupRankings(input: CalculateGroupRankingsInput): Grou
 function toRanked(
   values: ReadonlyMap<string, number>,
   names: ReadonlyMap<string, string>,
-): ReadonlyArray<RankingEntry> {
+): readonly RankingEntry[] {
   const entries = [...values.entries()].sort((a, b) => b[1] - a[1]);
   const result: RankingEntry[] = [];
   let rank = 0;

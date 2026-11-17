@@ -6,7 +6,7 @@ import {
 } from '@/domain/models/gameSheet';
 
 export interface GameSheetRepository {
-  loadAll(): Promise<ReadonlyArray<GameSheet>>;
+  loadAll(): Promise<readonly GameSheet[]>;
   load(id: string): Promise<GameSheet | null>;
   save(sheet: GameSheet): Promise<void>;
   delete(id: string): Promise<void>;

@@ -110,7 +110,7 @@ function validatePerKind(
   }
 }
 
-function readArray(v: unknown): ReadonlyArray<Record<string, unknown>> {
+function readArray(v: unknown): readonly Record<string, unknown>[] {
   if (!Array.isArray(v)) return [];
   return v.filter((entry): entry is Record<string, unknown> => isObject(entry));
 }

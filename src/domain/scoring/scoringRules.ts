@@ -333,7 +333,7 @@ export const schwarz = flag({
 });
 
 /** Katalog aller in der App bekannten Punkte-Flags. */
-export const ALL_FLAGS: ReadonlyArray<ScoreFlag> = [
+export const ALL_FLAGS: readonly ScoreFlag[] = [
   reWon,
   contraWon,
   reAnnounced,
@@ -379,6 +379,6 @@ export function flagByCode(code: string): ScoreFlag | null {
 }
 
 /** In der UI auswaehlbare Flags (ohne die automatisch gesetzten Basis-Flags). */
-export function selectableFlags(): ReadonlyArray<ScoreFlag> {
+export function selectableFlags(): readonly ScoreFlag[] {
   return ALL_FLAGS.filter((f) => !f.isBaseFlag);
 }

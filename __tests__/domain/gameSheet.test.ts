@@ -15,7 +15,7 @@ import {
 import type { Player } from '@/domain/models/player';
 import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 
-const players5: ReadonlyArray<Player> = [
+const players5: readonly Player[] = [
   { id: 'a', playerName: 'Anna', firstName: null, lastName: null },
   { id: 'b', playerName: 'Ben', firstName: null, lastName: null },
   { id: 'c', playerName: 'Carla', firstName: null, lastName: null },
@@ -23,7 +23,7 @@ const players5: ReadonlyArray<Player> = [
   { id: 'e', playerName: 'Eva', firstName: null, lastName: null },
 ];
 
-const players4: ReadonlyArray<Player> = players5.slice(0, 4);
+const players4: readonly Player[] = players5.slice(0, 4);
 
 describe('GameSheet', () => {
   test('createGameSheet stores only ids', () => {

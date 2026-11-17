@@ -30,12 +30,12 @@ export function winnerSideToJson(w: WinnerSide): string {
 export interface Game {
   readonly id: string;
   readonly playedAt: Date;
-  readonly rePlayerIds: ReadonlyArray<string>;
-  readonly contraPlayerIds: ReadonlyArray<string>;
+  readonly rePlayerIds: readonly string[];
+  readonly contraPlayerIds: readonly string[];
   /** `null` bei 4-Spieler-Spielen. */
   readonly sittingOutPlayerId: string | null;
   readonly winner: WinnerSide;
-  readonly flagCodes: ReadonlyArray<string>;
+  readonly flagCodes: readonly string[];
   readonly note: string | null;
   /**
    * Solo-Spiel: genau ein Spieler bildet die Re-Partei, die uebrigen drei
@@ -49,10 +49,10 @@ export interface Game {
 }
 
 export interface CreateGameInput {
-  rePlayerIds: ReadonlyArray<string>;
-  contraPlayerIds: ReadonlyArray<string>;
+  rePlayerIds: readonly string[];
+  contraPlayerIds: readonly string[];
   winner: WinnerSide;
-  flagCodes: ReadonlyArray<string>;
+  flagCodes: readonly string[];
   sittingOutPlayerId?: string | null;
   note?: string | null;
   playedAt?: Date;
@@ -83,10 +83,10 @@ export function createGame(input: CreateGameInput): Game {
 }
 
 export interface GamePatch {
-  rePlayerIds?: ReadonlyArray<string>;
-  contraPlayerIds?: ReadonlyArray<string>;
+  rePlayerIds?: readonly string[];
+  contraPlayerIds?: readonly string[];
   winner?: WinnerSide;
-  flagCodes?: ReadonlyArray<string>;
+  flagCodes?: readonly string[];
   /** Auslassen = behalten; `null` = clearen; String = setzen. */
   sittingOutPlayerId?: string | null;
   /** Auslassen = behalten; `null` = clearen; String = setzen. */

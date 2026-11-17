@@ -7,7 +7,7 @@ import type { Player } from '@/domain/models/player';
 const anna: Player = { id: 'a', playerName: 'Anna', firstName: null, lastName: null };
 const ben: Player = { id: 'b', playerName: 'Ben', firstName: null, lastName: null };
 
-function sheetWith(playerIds: ReadonlyArray<string>) {
+function sheetWith(playerIds: readonly string[]) {
   return { playerIds };
 }
 

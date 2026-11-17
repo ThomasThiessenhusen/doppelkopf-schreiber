@@ -10,7 +10,7 @@ import { gameFromJson, gameToJson } from '@/domain/models/game';
  */
 export interface Round {
   readonly index: number;
-  readonly games: ReadonlyArray<Game>;
+  readonly games: readonly Game[];
 }
 
 export function withGame(round: Round, game: Game): Round {

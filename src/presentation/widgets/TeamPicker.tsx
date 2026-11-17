@@ -6,7 +6,7 @@ import { playerDisplayName, type Player } from '@/domain/models/player';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 export interface TeamPickerProps {
-  players: ReadonlyArray<Player>;
+  players: readonly Player[];
   /** `null` bei 4-Spieler-Spielen. */
   sittingOutPlayerId: string | null;
   selectedRePlayerIds: ReadonlySet<string>;
@@ -90,7 +90,7 @@ export function TeamPicker({
 }
 
 interface AussetzerChipProps {
-  players: ReadonlyArray<Player>;
+  players: readonly Player[];
   sittingOutPlayerId: string;
   onSittingOutChanged?: (player: Player) => void;
 }

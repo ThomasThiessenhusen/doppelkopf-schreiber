@@ -9,9 +9,9 @@ export const FORMAT_VERSION = 1;
 export type ExportKind = 'sheet' | 'group' | 'backup';
 
 export interface ExportPayload {
-  readonly players: ReadonlyArray<Player>;
-  readonly sheets: ReadonlyArray<GameSheet>;
-  readonly groups: ReadonlyArray<SheetGroup>;
+  readonly players: readonly Player[];
+  readonly sheets: readonly GameSheet[];
+  readonly groups: readonly SheetGroup[];
   readonly settings: AppSettings | null;
 }
 

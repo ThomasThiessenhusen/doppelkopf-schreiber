@@ -43,7 +43,7 @@ export const mutuallyExclusiveCounterparts: ReadonlyMap<string, string> = new Ma
  * gesetzt wird, sind die Werte zwingend mitselektiert (und umgekehrt: wird
  * einer der Werte abgewaehlt, faellt der Schluessel mit weg).
  */
-export const flagImplications: ReadonlyMap<string, ReadonlyArray<string>> = new Map([
+export const flagImplications: ReadonlyMap<string, readonly string[]> = new Map([
   [schwarz.code, [under30.code, under60.code, under90.code]],
   [under30.code, [under60.code, under90.code]],
   [under60.code, [under90.code]],

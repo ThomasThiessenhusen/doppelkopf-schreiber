@@ -7,7 +7,7 @@
  * (`create...Repository`) ausgetauscht wird.
  */
 export interface LocalStorage {
-  readAll(collection: string): Promise<ReadonlyArray<Record<string, unknown>>>;
+  readAll(collection: string): Promise<readonly Record<string, unknown>[]>;
   readOne(collection: string, id: string): Promise<Record<string, unknown> | null>;
   write(collection: string, id: string, data: Record<string, unknown>): Promise<void>;
   delete(collection: string, id: string): Promise<void>;

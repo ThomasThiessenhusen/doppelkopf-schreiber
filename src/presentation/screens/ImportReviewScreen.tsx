@@ -300,7 +300,7 @@ function PlayerRow({
 }: {
   decision: PlayerDecision;
   action: PlayerAction;
-  localPool: ReadonlyArray<Player>;
+  localPool: readonly Player[];
   onChange: (a: PlayerAction) => void;
 }) {
   const { t } = useTranslation();
@@ -354,7 +354,7 @@ function PlayerRow({
 
 function describePlayerAction(
   action: PlayerAction,
-  localPool: ReadonlyArray<Player>,
+  localPool: readonly Player[],
   t: TFunc,
 ): string {
   switch (action.kind) {
