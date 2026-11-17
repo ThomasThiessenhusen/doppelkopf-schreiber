@@ -8,6 +8,13 @@ Mobile-App zur Spielstand-Erfassung beim Doppelkopf. **Expo SDK 55 (Managed Work
 
 Wahrheits-Quellen für Versionen: [package.json](package.json), [app.json](app.json) — diese Datei nicht damit duplizieren.
 
+### Navigation
+
+- **`@react-navigation/native-stack`**, nicht `expo-router` (Migration abgeschlossen 2026-05). Einstiegspunkt ist `expo/AppEntry` → [App.tsx](App.tsx) mit `NavigationContainer` + Native-Stack.
+- Alle Routen und ihre Parameter sind in `RootStackParamList` in [src/navigation/types.ts](src/navigation/types.ts) getypt — neue Screens/Routen dort eintragen.
+- Navigation per `useNavigation()`: `navigation.navigate('Route', params)`, `navigation.replace(...)`, `navigation.goBack()`; zurück zum Start mit `navigation.reset({ index: 0, routes: [{ name: 'Home' }] })`.
+- Header-Optionen per `useLayoutEffect(() => navigation.setOptions(...), deps)` im Screen setzen.
+
 ## Build-Umgebungen
 
 Das Repo wird in **zwei** Umgebungen entwickelt, die sich denselben `main`-Branch teilen:
@@ -29,7 +36,7 @@ Das Repo wird in **zwei** Umgebungen entwickelt, die sich denselben `main`-Branc
 ### Dependency-Änderungen (kritisch für Cross-Env-Builds)
 
 1. In **einer** Umgebung `npm install <pkg>` (oder Update) ausführen → `package-lock.json` aktualisiert sich.
-2. Beides committen: `package.json` **und** `package.json-lock`.
+2. Beides committen: `package.json` **und** `package-lock.json`.
 3. In der **anderen** Umgebung nach `git pull` zwingend `npm ci` (nicht `npm install`!), damit der Lockfile autoritativ bleibt.
 4. Dann dort einen Plattform-Build ausführen (`npm run android` bzw. `npm run ios`) und prüfen, dass es weiter durchläuft.
 
