@@ -46,6 +46,10 @@ export function resolveBock(
   mode: BockStackingMode,
 ): Map<string, BockLevel> {
   const result = new Map<string, BockLevel>();
+  if (mode === BockStackingMode.off) {
+    for (const game of allGames(sheet)) result.set(game.id, BockLevel.none);
+    return result;
+  }
   const remaining: number[] = [];
   const roundLength = gamesPerRound(sheet);
 
@@ -78,6 +82,7 @@ export function resolveBock(
 }
 
 function levelFor(activeRunden: number, mode: BockStackingMode): BockLevel {
+  if (mode === BockStackingMode.off) return BockLevel.none;
   if (mode === BockStackingMode.sequential) {
     return activeRunden >= 1 ? BockLevel.single : BockLevel.none;
   }
@@ -107,6 +112,7 @@ export function currentBockState(
   sheet: GameSheet,
   mode: BockStackingMode,
 ): BockState {
+  if (mode === BockStackingMode.off) return bockStateEmpty;
   const remaining: number[] = [];
   const roundLength = gamesPerRound(sheet);
 

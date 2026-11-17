@@ -305,3 +305,31 @@ describe('currentBockState', () => {
     expect(state.remainingSingle).toBe(1);
   });
 });
+
+describe('BockResolver — ohne Bock (off)', () => {
+  function sheetWithTriggers(): GameSheet {
+    let sheet = makeSheet();
+    sheet = sheetWithGame(
+      sheet,
+      classicGame({ winner: WinnerSide.contra, flagCodes: [RE_ANNOUNCED] }),
+    );
+    sheet = sheetWithGame(sheet, classicGame({ triggersManualBock: true }));
+    for (let i = 0; i < 4; i++) {
+      sheet = sheetWithGame(sheet, classicGame());
+    }
+    return sheet;
+  }
+
+  test('resolveBock liefert fuer jedes Spiel none, auch bei Triggern', () => {
+    const sheet = sheetWithTriggers();
+    const v = values(resolveBock(sheet, BockStackingMode.off));
+    expect(v).toHaveLength(6);
+    expect(v.every((l) => l === BockLevel.none)).toBe(true);
+  });
+
+  test('currentBockState ist leer, obwohl Trigger vorliegen', () => {
+    let sheet = makeSheet();
+    sheet = sheetWithGame(sheet, classicGame({ triggersManualBock: true }));
+    expect(currentBockState(sheet, BockStackingMode.off)).toEqual(bockStateEmpty);
+  });
+});

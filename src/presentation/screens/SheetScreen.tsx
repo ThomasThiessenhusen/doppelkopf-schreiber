@@ -33,7 +33,7 @@ import {
   effectiveStackingMode,
   resolveBock,
 } from '@/domain/scoring/bockResolver';
-import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
+import { BockStackingMode, bockStackingModeFromJson } from '@/domain/scoring/bockStackingMode';
 import { scoreFor, totalsFor } from '@/domain/scoring/scoreCalculator';
 import { usePlayerListStore } from '@/application/stores/playerListStore';
 import { useSettingsStore } from '@/application/stores/settingsStore';
@@ -42,10 +42,7 @@ import { saveExportToFile, shareExport } from '@/data/export/fileShare';
 import { sharePdf } from '@/data/export/pdfShare';
 import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
 import { useSheetStore } from '@/application/stores/sheetStore';
-import {
-  createPlayerLookup,
-  resolveSheetPlayers,
-} from '@/domain/models/playerLookup';
+import { createPlayerLookup, resolveSheetPlayers } from '@/domain/models/playerLookup';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
 import { Scoreboard } from '@/presentation/widgets/Scoreboard';
 import { RoundSection } from '@/presentation/widgets/RoundSection';
@@ -109,8 +106,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
   const lookup = useMemo(() => createPlayerLookup(pool), [pool]);
   const players = useMemo(() => resolveSheetPlayers(sheet, lookup), [sheet, lookup]);
 
-  const settings =
-    settingsState.status === 'data' ? settingsState.value : appSettingsFallback;
+  const settings = settingsState.status === 'data' ? settingsState.value : appSettingsFallback;
   const mode = effectiveStackingMode(sheet, settings.defaultStackingMode);
 
   // Berechnungen einmalig im Container.
@@ -119,11 +115,11 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
     const l = resolveBock(sheet, mode);
     const bs = sheet.rounds.length === 0 ? bockStateEmpty : currentBockState(sheet, mode);
     const sByGame = new Map<string, ReturnType<typeof scoreFor>>();
-    const rows: Array<{
+    const rows: {
       gameId: string;
       pointsByPlayerId: Map<string, number>;
       sittingOutPlayerId: string | null;
-    }> = [];
+    }[] = [];
     for (const game of allGames(sheet)) {
       const score = scoreFor(game, l.get(game.id) ?? BockLevel.none);
       sByGame.set(game.id, score);
@@ -218,12 +214,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
           <Menu
             visible={menuOpen}
             onDismiss={() => setMenuOpen(false)}
-            anchor={
-              <IconButton
-                icon="dots-vertical"
-                onPress={() => setMenuOpen(true)}
-              />
-            }
+            anchor={<IconButton icon="dots-vertical" onPress={() => setMenuOpen(true)} />}
           >
             <Menu.Item
               title={t('sheet.menuStacking')}
@@ -361,18 +352,19 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
             <RadioButton.Group
               value={stackingChoice}
               onValueChange={(v) =>
-                setStackingChoice(
-                  v === 'default'
-                    ? 'default'
-                    : v === BockStackingMode.doppelbock
-                      ? BockStackingMode.doppelbock
-                      : BockStackingMode.sequential,
-                )
+                setStackingChoice(v === 'default' ? 'default' : bockStackingModeFromJson(v))
               }
             >
               <RadioButton.Item label={t('sheet.stackingUseDefault')} value="default" />
-              <RadioButton.Item label={t('sheet.stackingSequential')} value={BockStackingMode.sequential} />
-              <RadioButton.Item label={t('sheet.stackingDoppelbock')} value={BockStackingMode.doppelbock} />
+              <RadioButton.Item
+                label={t('sheet.stackingSequential')}
+                value={BockStackingMode.sequential}
+              />
+              <RadioButton.Item
+                label={t('sheet.stackingDoppelbock')}
+                value={BockStackingMode.doppelbock}
+              />
+              <RadioButton.Item label={t('sheet.stackingOff')} value={BockStackingMode.off} />
             </RadioButton.Group>
           </Dialog.Content>
           <Dialog.Actions>
@@ -403,7 +395,10 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
               {groups.map((g) => (
                 <RadioButton.Item
                   key={g.id}
-                  label={t('sheet.groupOptionWithType', { name: g.name, type: t(groupTypeLabelKey(g.type)) })}
+                  label={t('sheet.groupOptionWithType', {
+                    name: g.name,
+                    type: t(groupTypeLabelKey(g.type)),
+                  })}
                   value={g.id}
                 />
               ))}
@@ -481,10 +476,7 @@ function BockBanner({ bockState }: { bockState: ReturnType<typeof currentBockSta
         <Icon source="fire" size={24} color={theme.colors.onTertiaryContainer} />
         <View style={{ flex: 1 }}>
           {lines.map((l) => (
-            <Text
-              key={l}
-              style={{ color: theme.colors.onTertiaryContainer, fontWeight: '600' }}
-            >
+            <Text key={l} style={{ color: theme.colors.onTertiaryContainer, fontWeight: '600' }}>
               {l}
             </Text>
           ))}

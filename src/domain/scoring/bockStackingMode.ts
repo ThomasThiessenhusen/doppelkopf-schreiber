@@ -5,15 +5,19 @@
  *   solange mindestens eine aktiv ist, gilt einfacher Bock.
  * - `doppelbock`: bei zwei oder mehr parallel aktiven Bockrunden gilt
  *   Doppelbock.
+ * - `off`: ohne Bock — Trigger werden ignoriert, kein Spiel erhaelt einen
+ *   Bock-Bonus. Die Trigger bleiben im Spiel gespeichert, sodass ein spaeterer
+ *   Moduswechsel die Bockrunden wieder korrekt ableitet.
  */
-export type BockStackingMode = 'sequential' | 'doppelbock';
+export type BockStackingMode = 'sequential' | 'doppelbock' | 'off';
 
 export const BockStackingMode = {
   sequential: 'sequential' as const,
   doppelbock: 'doppelbock' as const,
+  off: 'off' as const,
 };
 
-const ALL: ReadonlyArray<BockStackingMode> = ['sequential', 'doppelbock'];
+const ALL: readonly BockStackingMode[] = ['sequential', 'doppelbock', 'off'];
 
 export function bockStackingModeToJson(mode: BockStackingMode): string {
   return mode;

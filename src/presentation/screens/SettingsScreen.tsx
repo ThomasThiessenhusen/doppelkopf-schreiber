@@ -67,6 +67,7 @@ export function SettingsScreen() {
           buttons={[
             { value: BockStackingMode.sequential, label: t('settings.stackingSequential') },
             { value: BockStackingMode.doppelbock, label: t('settings.stackingDoppelbock') },
+            { value: BockStackingMode.off, label: t('settings.stackingOff') },
           ]}
         />
       </View>

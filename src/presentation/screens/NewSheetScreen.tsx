@@ -211,6 +211,7 @@ export function NewSheetScreen({ initialGroupId = null }: NewSheetScreenProps) {
           buttons={[
             { value: BockStackingMode.sequential, label: t('newSheet.stackingSequential') },
             { value: BockStackingMode.doppelbock, label: t('newSheet.stackingDoppelbock') },
+            { value: BockStackingMode.off, label: t('newSheet.stackingOff') },
           ]}
         />
       </View>

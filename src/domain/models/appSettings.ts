@@ -1,15 +1,16 @@
 import {
   BockStackingMode,
+  bockStackingModeFromJson,
   bockStackingModeToJson,
 } from '@/domain/scoring/bockStackingMode';
 
 /** Sprachpräferenz: 'system' folgt OS-Sprache; 'de'/'en' überschreiben manuell. */
 export type LanguagePreference = 'system' | 'de' | 'en';
 
-const LANGUAGE_VALUES: ReadonlyArray<LanguagePreference> = ['system', 'de', 'en'];
+const LANGUAGE_VALUES: readonly LanguagePreference[] = ['system', 'de', 'en'];
 
 function parseLanguage(raw: unknown): LanguagePreference {
-  return typeof raw === 'string' && (LANGUAGE_VALUES as ReadonlyArray<string>).includes(raw)
+  return typeof raw === 'string' && (LANGUAGE_VALUES as readonly string[]).includes(raw)
     ? (raw as LanguagePreference)
     : 'system';
 }
@@ -39,10 +40,16 @@ export function appSettingsToJson(settings: AppSettings): Record<string, unknown
  */
 export function appSettingsFromJson(json: Record<string, unknown>): AppSettings {
   const rawMode = json['defaultStackingMode'];
-  const defaultStackingMode: BockStackingMode =
-    rawMode === 'sequential' || rawMode === 'doppelbock'
-      ? rawMode
-      : appSettingsFallback.defaultStackingMode;
+  const defaultStackingMode = parseStackingMode(rawMode);
   const language = parseLanguage(json['language']);
   return { defaultStackingMode, language };
+}
+
+function parseStackingMode(raw: unknown): BockStackingMode {
+  if (typeof raw !== 'string') return appSettingsFallback.defaultStackingMode;
+  try {
+    return bockStackingModeFromJson(raw);
+  } catch {
+    return appSettingsFallback.defaultStackingMode;
+  }
 }

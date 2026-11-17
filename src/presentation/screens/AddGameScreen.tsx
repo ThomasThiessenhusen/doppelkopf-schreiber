@@ -28,15 +28,13 @@ import { FlagGroup, type ScoreFlag, FlagTarget } from '@/domain/models/scoreFlag
 import { appSettingsFallback } from '@/domain/models/appSettings';
 import { BockLevel } from '@/domain/scoring/bockLevel';
 import { effectiveStackingMode, resolveBock } from '@/domain/scoring/bockResolver';
+import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import { scoreFor } from '@/domain/scoring/scoreCalculator';
 import { selectableFlags } from '@/domain/scoring/scoringRules';
 import { usePlayerListStore } from '@/application/stores/playerListStore';
 import { useSettingsStore } from '@/application/stores/settingsStore';
 import { useSheetStore } from '@/application/stores/sheetStore';
-import {
-  createPlayerLookup,
-  resolveSheetPlayers,
-} from '@/domain/models/playerLookup';
+import { createPlayerLookup, resolveSheetPlayers } from '@/domain/models/playerLookup';
 import { FlagChip } from '@/presentation/widgets/FlagChip';
 import { TeamPicker } from '@/presentation/widgets/TeamPicker';
 import {
@@ -55,7 +53,6 @@ import {
   isFlagBlockedByConflict,
   mutuallyExclusiveCounterparts,
 } from '@/presentation/screens/addGame/flagConflicts';
-
 
 export interface AddGameScreenProps {
   sheetId: string;
@@ -82,7 +79,9 @@ export function AddGameScreen({ sheetId, gameId }: AddGameScreenProps) {
   if (state.status === 'error') {
     return (
       <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
-        <Text>{t('common.errorLoading')}: {state.error.message}</Text>
+        <Text>
+          {t('common.errorLoading')}: {state.error.message}
+        </Text>
       </View>
     );
   }
@@ -158,8 +157,7 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
     (rePlayerIds.size === 1 || rePlayerIds.size === 2) &&
     [...rePlayerIds].every((id) => activeIds.has(id));
 
-  const settings =
-    settingsState.status === 'data' ? settingsState.value : appSettingsFallback;
+  const settings = settingsState.status === 'data' ? settingsState.value : appSettingsFallback;
   const mode = effectiveStackingMode(sheet, settings.defaultStackingMode);
 
   const { currentBockLevel } = useMemo(() => {
@@ -387,7 +385,10 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
           setWinner(v === WinnerSide.contra ? WinnerSide.contra : WinnerSide.re)
         }
         buttons={[
-          { value: WinnerSide.re, label: isSolo ? t('addGame.winnerSoloRe') : t('addGame.winnerRe') },
+          {
+            value: WinnerSide.re,
+            label: isSolo ? t('addGame.winnerSoloRe') : t('addGame.winnerRe'),
+          },
           { value: WinnerSide.contra, label: t('addGame.winnerKontra') },
         ]}
       />
@@ -493,19 +494,19 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
         </View>
       </Card>
 
-      <Card mode="contained">
-        <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, gap: 12 }}>
-          <View style={{ flex: 1 }}>
-            <Text variant="bodyMedium" style={{ fontWeight: '600' }}>
-              {t('addGame.manualBockTitle')}
-            </Text>
-            <Text variant="bodySmall">
-              {t('addGame.manualBockHint')}
-            </Text>
+      {mode !== BockStackingMode.off && (
+        <Card mode="contained">
+          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 12, gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text variant="bodyMedium" style={{ fontWeight: '600' }}>
+                {t('addGame.manualBockTitle')}
+              </Text>
+              <Text variant="bodySmall">{t('addGame.manualBockHint')}</Text>
+            </View>
+            <Switch value={triggersManualBock} onValueChange={setTriggersManualBock} />
           </View>
-          <Switch value={triggersManualBock} onValueChange={setTriggersManualBock} />
-        </View>
-      </Card>
+        </Card>
+      )}
 
       <Button mode="contained" icon="check" disabled={!canSubmit} onPress={() => void submit()}>
         {existing === null ? t('addGame.submitNew') : t('addGame.submitEdit')}
@@ -527,11 +528,11 @@ function previewText(
 }
 
 interface FlagGroupSectionProps {
-  flags: ReadonlyArray<ScoreFlag>;
+  flags: readonly ScoreFlag[];
   selected: ReadonlySet<string>;
   onToggle: (f: ScoreFlag, selected: boolean) => void;
   displayedValue: (f: ScoreFlag) => number;
-  trailingChips?: ReadonlyArray<React.ReactNode>;
+  trailingChips?: readonly React.ReactNode[];
 }
 
 function FlagGroupSection({

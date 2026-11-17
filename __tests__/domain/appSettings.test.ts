@@ -20,6 +20,15 @@ describe('AppSettings', () => {
     expect(restored.defaultStackingMode).toBe(BockStackingMode.doppelbock);
   });
 
+  test('JSON-Roundtrip erhaelt defaultStackingMode off (ohne Bock)', () => {
+    const settings: AppSettings = {
+      defaultStackingMode: BockStackingMode.off,
+      language: 'system',
+    };
+    const restored = appSettingsFromJson(appSettingsToJson(settings));
+    expect(restored.defaultStackingMode).toBe(BockStackingMode.off);
+  });
+
   test('fromJson mit unbekannten Feldern faellt auf Defaults zurueck', () => {
     const settings = appSettingsFromJson({});
     expect(settings.defaultStackingMode).toBe(BockStackingMode.sequential);
