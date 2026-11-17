@@ -1,4 +1,4 @@
-import type { GameSheet } from '@/domain/models/gameSheet';
+import { referencedPlayerIds, type GameSheet } from '@/domain/models/gameSheet';
 import type { Player } from '@/domain/models/player';
 import { repositories } from '@/application/stores/repositories';
 
@@ -22,7 +22,7 @@ export class PlayerReferencedError extends Error {
  */
 export async function isPlayerReferenced(playerId: string): Promise<boolean> {
   const sheets = await repositories.gameSheet().loadAll();
-  return sheets.some((s) => s.playerIds.includes(playerId));
+  return sheets.some((s) => referencedPlayerIds(s).includes(playerId));
 }
 
 /**
@@ -34,7 +34,7 @@ export function referencedIdsFromSheets(
 ): Set<string> {
   const out = new Set<string>();
   for (const sheet of sheets) {
-    for (const id of sheet.playerIds) out.add(id);
+    for (const id of referencedPlayerIds(sheet)) out.add(id);
   }
   return out;
 }

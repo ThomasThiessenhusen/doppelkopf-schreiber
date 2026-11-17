@@ -10,6 +10,7 @@ import {
   type ExportPayload,
 } from '@/application/export/exportTypes';
 import { suggestFilename } from '@/application/export/filename';
+import { referencedPlayerIds } from '@/domain/models/gameSheet';
 
 function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -40,7 +41,7 @@ export async function exportSheet(sheetId: string): Promise<ExportFile> {
   if (sheet === null) {
     throw new Error(`Spielbogen nicht gefunden: ${sheetId}`);
   }
-  const referencedIds = new Set(sheet.playerIds);
+  const referencedIds = new Set(referencedPlayerIds(sheet));
   const pool = await repositories.player().loadAll();
   const players = pool.filter((p) => referencedIds.has(p.id));
 
@@ -65,7 +66,7 @@ export async function exportGroup(groupId: string): Promise<ExportFile> {
 
   const referencedIds = new Set<string>();
   for (const s of sheets) {
-    for (const id of s.playerIds) referencedIds.add(id);
+    for (const id of referencedPlayerIds(s)) referencedIds.add(id);
   }
   const pool = await repositories.player().loadAll();
   const players = pool.filter((p) => referencedIds.has(p.id));

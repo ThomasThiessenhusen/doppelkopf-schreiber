@@ -146,3 +146,39 @@ describe('exportBackup', () => {
     });
   });
 });
+
+describe('Export mit Vertretungen', () => {
+  const subSheet = (groupId: string | null): GameSheet => ({
+    ...s('sheet-sub', ['a', 'b', 'c', 'd'], groupId),
+    substitutions: [{ substituteId: 'd', mainPlayerId: 'x' }],
+  });
+  beforeEach(async () => {
+    for (const [id, name] of [
+      ['a', 'Anna'],
+      ['b', 'Ben'],
+      ['c', 'Carla'],
+      ['d', 'Dirk'],
+      ['x', 'Xaver'],
+    ] as const) {
+      await repositories.player().save(p(id, name));
+    }
+  });
+  test('exportSheet nimmt den Stammspieler mit', async () => {
+    await repositories.gameSheet().save(subSheet(null));
+    const file = await exportSheet('sheet-sub');
+    expect(file.envelope.payload.players.map((pl) => pl.id)).toContain('x');
+  });
+  test('exportGroup nimmt den Stammspieler mit', async () => {
+    await repositories.sheetGroup().save({
+      id: 'grp',
+      name: 'Saison',
+      type: 'season',
+      createdAt: now,
+      updatedAt: now,
+      dirty: false,
+    });
+    await repositories.gameSheet().save(subSheet('grp'));
+    const file = await exportGroup('grp');
+    expect(file.envelope.payload.players.map((pl) => pl.id)).toContain('x');
+  });
+});

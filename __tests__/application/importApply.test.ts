@@ -289,3 +289,77 @@ describe('applyImportPlan — settings', () => {
     expect(await repositories.settings().load()).toEqual(appSettingsFallback);
   });
 });
+
+describe('applyImportPlan — Vertretungen', () => {
+  function planWith(
+    mainDecision: ImportPlan['players'][number]['suggested'],
+    sheetAction: 'addAsNew' | 'addCopy',
+  ): ImportPlan {
+    const keepAsLocal = (id: string): ImportPlan['players'][number] => ({
+      imported: p(id, id),
+      suggested: { kind: 'useLocal', localId: id },
+      localMatchById: id,
+      localMatchByName: id,
+    });
+    return {
+      players: [
+        {
+          imported: p('imp-d', 'Dirk'),
+          suggested: { kind: 'mergeInto', localId: 'local-d' },
+          localMatchById: null,
+          localMatchByName: 'local-d',
+        },
+        keepAsLocal('local-a'),
+        keepAsLocal('local-b'),
+        keepAsLocal('local-c'),
+        {
+          imported: p('imp-x', 'Xaver'),
+          suggested: mainDecision,
+          localMatchById: null,
+          localMatchByName: null,
+        },
+      ],
+      groups: [],
+      sheets: [
+        {
+          imported: {
+            ...s('imp-sh', ['local-a', 'local-b', 'local-c', 'imp-d']),
+            substitutions: [{ substituteId: 'imp-d', mainPlayerId: 'imp-x' }],
+          },
+          localExisting: null,
+          suggested: { kind: sheetAction },
+        },
+      ],
+      settings: null,
+    };
+  }
+  beforeEach(async () => {
+    for (const id of ['local-a', 'local-b', 'local-c', 'local-d', 'local-x']) {
+      await repositories.player().save(p(id, id));
+    }
+  });
+
+  test('addAsNew remappt Gast und Stammspieler', async () => {
+    await applyImportPlan(planWith({ kind: 'mergeInto', localId: 'local-x' }, 'addAsNew'));
+    const stored = await repositories.gameSheet().load('imp-sh');
+    expect(stored?.substitutions).toEqual([
+      { substituteId: 'local-d', mainPlayerId: 'local-x' },
+    ]);
+  });
+
+  test('addCopy remappt Gast und Stammspieler', async () => {
+    await applyImportPlan(planWith({ kind: 'mergeInto', localId: 'local-x' }, 'addCopy'));
+    const all = await repositories.gameSheet().loadAll();
+    expect(all).toHaveLength(1);
+    expect(all[0]?.substitutions).toEqual([
+      { substituteId: 'local-d', mainPlayerId: 'local-x' },
+    ]);
+  });
+
+  test('uebersprungener Stammspieler: Bogen importiert, Vertretung entfaellt', async () => {
+    const result = await applyImportPlan(planWith({ kind: 'skip' }, 'addAsNew'));
+    expect(result.sheetsAdded).toBe(1);
+    const stored = await repositories.gameSheet().load('imp-sh');
+    expect(stored?.substitutions).toEqual([]);
+  });
+});

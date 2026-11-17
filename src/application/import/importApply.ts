@@ -112,6 +112,9 @@ export async function applyImportPlan(
   }
 
   // 4) Sheets
+  const skippedPlayerIds = new Set(
+    plan.players.filter((d) => d.suggested.kind === 'skip').map((d) => d.imported.id),
+  );
   for (const d of plan.sheets) {
     const action = d.suggested;
     if (action.kind === 'skip' || action.kind === 'keepLocal' || action.kind === 'useLocal') {
@@ -119,6 +122,13 @@ export async function applyImportPlan(
       continue;
     }
     const remappedPlayerIds = d.imported.playerIds.map((id) => playerRemap.get(id) ?? id);
+    // Vertretungen remappen; Paare mit uebersprungenem Stammspieler entfallen.
+    const remappedSubstitutions = d.imported.substitutions
+      .filter((sub) => !skippedPlayerIds.has(sub.mainPlayerId))
+      .map((sub) => ({
+        substituteId: playerRemap.get(sub.substituteId) ?? sub.substituteId,
+        mainPlayerId: playerRemap.get(sub.mainPlayerId) ?? sub.mainPlayerId,
+      }));
     const remappedGroupId =
       d.imported.groupId === null ? null : (groupRemap.get(d.imported.groupId) ?? null);
     switch (action.kind) {
@@ -127,6 +137,7 @@ export async function applyImportPlan(
         const next = copyGameSheet(d.imported, {
           playerIds: remappedPlayerIds,
           groupId: remappedGroupId,
+          substitutions: remappedSubstitutions,
           updatedAt: d.imported.updatedAt,
           dirty: false,
         });
@@ -141,6 +152,7 @@ export async function applyImportPlan(
           id: newId(),
           playerIds: remappedPlayerIds,
           groupId: remappedGroupId,
+          substitutions: remappedSubstitutions,
         };
         await repositories.gameSheet().save(persisted);
         counters.sheetsCopied += 1;

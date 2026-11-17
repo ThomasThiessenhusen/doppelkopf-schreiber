@@ -143,3 +143,19 @@ describe('playerListStore.remove guard', () => {
     expect(players).toEqual([]);
   });
 });
+
+describe('Vertretungen zaehlen als Referenz', () => {
+  const withSub = (base: GameSheet): GameSheet => ({
+    ...base,
+    substitutions: [{ substituteId: 'a', mainPlayerId: 'x' }],
+  });
+  test('referencedIdsFromSheets enthaelt den Stammspieler', () => {
+    expect(referencedIdsFromSheets([withSub(sheet('s1', ['a', 'b'], false))]).has('x')).toBe(
+      true,
+    );
+  });
+  test('isPlayerReferenced ist true fuer den Stammspieler', async () => {
+    await repositories.gameSheet().save(withSub(sheet('s1', ['a', 'b'])));
+    expect(await isPlayerReferenced('x')).toBe(true);
+  });
+});
