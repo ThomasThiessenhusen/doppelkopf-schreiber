@@ -8,6 +8,7 @@ import {
   sheetWithGame,
   type GameSheet,
 } from '@/domain/models/gameSheet';
+import { isValidSubstitutionList, type Substitution } from '@/domain/models/substitution';
 import type { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import {
   asyncData,
@@ -27,6 +28,8 @@ export interface SheetStoreState {
   renameSheet: (title: string | null) => Promise<void>;
   setStackingModeOverride: (mode: BockStackingMode | null) => Promise<void>;
   setGroup: (groupId: string | null) => Promise<void>;
+  /** Wirft, wenn die Liste fuer diesen Bogen ungueltig ist. */
+  setSubstitutions: (subs: readonly Substitution[]) => Promise<void>;
 }
 
 async function persist(sheet: GameSheet): Promise<void> {
@@ -95,6 +98,17 @@ export const useSheetStore = create<SheetStoreState>((set, get) => ({
     const cur = get().state;
     if (cur.status !== 'data') return;
     const next = copyGameSheet(cur.value, { groupId });
+    set({ state: asyncData(next) });
+    await persist(next);
+  },
+
+  async setSubstitutions(subs) {
+    const cur = get().state;
+    if (cur.status !== 'data') return;
+    if (!isValidSubstitutionList(cur.value.playerIds, subs)) {
+      throw new Error('Ungueltige Vertretungen fuer diesen Spielbogen.');
+    }
+    const next = copyGameSheet(cur.value, { substitutions: subs });
     set({ state: asyncData(next) });
     await persist(next);
   },

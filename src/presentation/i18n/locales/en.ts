@@ -232,6 +232,13 @@ export const en: Resources = {
     titlePlaceholder: 'Sheet title',
     menuStacking: 'Bock mode...',
     menuGroup: 'Assign group...',
+    menuSubstitutions: 'Substitutes...',
+    substitutionsTitle: 'Substitutes',
+    substitutionsHint:
+      'Who is playing on behalf of a regular player today? Their placement points also count for that player in the season.',
+    substitutesForLabel: 'substitutes for',
+    substitutesNone: '—',
+    substitutesFor: '{{substitute}} substitutes for {{name}}',
     addGameFab: 'New game',
     emptyTitle: 'No games entered yet',
     emptyHint: 'Tap "New game" to record the first game.',

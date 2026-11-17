@@ -46,6 +46,9 @@ import { createPlayerLookup, resolveSheetPlayers } from '@/domain/models/playerL
 import { useTranslation } from '@/presentation/i18n/useTranslation';
 import { Scoreboard } from '@/presentation/widgets/Scoreboard';
 import { RoundSection } from '@/presentation/widgets/RoundSection';
+import { effectiveSubstitutions, type Substitution } from '@/domain/models/substitution';
+import { playerDisplayName } from '@/domain/models/player';
+import { SubstitutionsDialog } from '@/presentation/screens/sheet/SubstitutionsDialog';
 
 export function SheetScreen({ sheetId }: { sheetId: string }) {
   const { t } = useTranslation();
@@ -83,6 +86,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
   const setStackingModeOverride = useSheetStore((s) => s.setStackingModeOverride);
   const deleteGame = useSheetStore((s) => s.deleteGame);
   const setGroup = useSheetStore((s) => s.setGroup);
+  const setSubstitutions = useSheetStore((s) => s.setSubstitutions);
 
   const settingsState = useSettingsStore((s) => s.state);
   const loadSettings = useSettingsStore((s) => s.load);
@@ -147,6 +151,26 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
   const [stackingDialogOpen, setStackingDialogOpen] = useState(false);
   const [stackingChoice, setStackingChoice] = useState<'default' | BockStackingMode>(
     sheet.stackingModeOverride ?? 'default',
+  );
+
+  const [substitutionsOpen, setSubstitutionsOpen] = useState(false);
+  async function submitSubstitutions(subs: readonly Substitution[]) {
+    setSubstitutionsOpen(false);
+    try {
+      await setSubstitutions(subs);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  const substitutionLines = effectiveSubstitutions(sheet.playerIds, sheet.substitutions).map(
+    (s) => {
+      const sub = lookup.byId(s.substituteId);
+      const main = lookup.byId(s.mainPlayerId);
+      return t('sheet.substitutesFor', {
+        substitute: sub !== null ? playerDisplayName(sub) : s.substituteId,
+        name: main !== null ? playerDisplayName(main) : s.mainPlayerId,
+      });
+    },
   );
 
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
@@ -230,6 +254,15 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
                 setGroupPickerOpen(true);
               }}
             />
+            {sheet.groupId !== null && (
+              <Menu.Item
+                title={t('sheet.menuSubstitutions')}
+                onPress={() => {
+                  setMenuOpen(false);
+                  setSubstitutionsOpen(true);
+                }}
+              />
+            )}
             <Menu.Item
               title={
                 Platform.OS === 'android'
@@ -281,7 +314,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
         </View>
       ),
     });
-  }, [navigation, sheet.title, sheet.id, t, menuOpen, openRename, openStackingDialog]);
+  }, [navigation, sheet.title, sheet.id, t, menuOpen, openRename, openStackingDialog, sheet.groupId]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -291,6 +324,16 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
           totalsByPlayerId={totals.totalsByPlayerId}
           pointsByGame={perGameRows}
         />
+
+        {sheet.groupId !== null && substitutionLines.length > 0 && (
+          <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+            {substitutionLines.map((line) => (
+              <Text key={line} variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                {line}
+              </Text>
+            ))}
+          </View>
+        )}
 
         {bockState.level !== BockLevel.none && <BockBanner bockState={bockState} />}
 
@@ -327,6 +370,14 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
       )}
 
       <Portal>
+        <SubstitutionsDialog
+          visible={substitutionsOpen}
+          sheet={sheet}
+          sheetPlayers={players}
+          pool={pool}
+          onDismiss={() => setSubstitutionsOpen(false)}
+          onSave={(subs) => void submitSubstitutions(subs)}
+        />
         <Dialog visible={renameOpen} onDismiss={() => setRenameOpen(false)}>
           <Dialog.Title>{t('sheet.titleDialogTitle')}</Dialog.Title>
           <Dialog.Content>

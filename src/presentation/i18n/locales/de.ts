@@ -230,6 +230,13 @@ export const de = {
     titlePlaceholder: 'Titel des Spielbogens',
     menuStacking: 'Bockrunden-Modus...',
     menuGroup: 'Gruppe zuordnen...',
+    menuSubstitutions: 'Vertretungen...',
+    substitutionsTitle: 'Vertretungen',
+    substitutionsHint:
+      'Wer spielt heute im Namen eines Stammspielers? Dessen Platzierungspunkte zählen in der Saison auch für den Stammspieler.',
+    substitutesForLabel: 'vertritt',
+    substitutesNone: '—',
+    substitutesFor: '{{substitute}} vertritt {{name}}',
     addGameFab: 'Neues Spiel',
     emptyTitle: 'Noch keine Spiele eingetragen',
     emptyHint: 'Tippe auf „Neues Spiel", um das erste Spiel zu erfassen.',
