@@ -8,6 +8,11 @@ import {
   withGame as roundWithGame,
 } from '@/domain/models/round';
 import {
+  type Substitution,
+  substitutionsFromJson,
+  substitutionToJson,
+} from '@/domain/models/substitution';
+import {
   type BockStackingMode,
   bockStackingModeFromJson,
   bockStackingModeToJson,
@@ -30,6 +35,8 @@ export interface GameSheet {
   readonly dirty: boolean;
   readonly stackingModeOverride: BockStackingMode | null;
   readonly groupId: string | null;
+  /** Vertretungen Gast -> Stammspieler fuer die Gruppen-Rangliste. */
+  readonly substitutions: readonly Substitution[];
 }
 
 export interface CreateGameSheetInput {
@@ -55,7 +62,15 @@ export function createGameSheet(input: CreateGameSheetInput): GameSheet {
     dirty: true,
     stackingModeOverride: null,
     groupId: input.groupId ?? null,
+    substitutions: [],
   };
+}
+
+/** Alle Spieler-IDs, auf die der Bogen verweist: Mitspieler plus Stammspieler aus Vertretungen. */
+export function referencedPlayerIds(sheet: GameSheet): readonly string[] {
+  const out = new Set<string>(sheet.playerIds);
+  for (const s of sheet.substitutions) out.add(s.mainPlayerId);
+  return [...out];
 }
 
 export function playerCount(sheet: GameSheet): number {
@@ -110,6 +125,7 @@ export interface GameSheetPatch {
   dirty?: boolean;
   stackingModeOverride?: BockStackingMode | null;
   groupId?: string | null;
+  substitutions?: readonly Substitution[];
 }
 
 export function copyGameSheet(sheet: GameSheet, patch: GameSheetPatch): GameSheet {
@@ -126,6 +142,7 @@ export function copyGameSheet(sheet: GameSheet, patch: GameSheetPatch): GameShee
         ? (patch.stackingModeOverride ?? null)
         : sheet.stackingModeOverride,
     groupId: 'groupId' in patch ? (patch.groupId ?? null) : sheet.groupId,
+    substitutions: patch.substitutions ?? sheet.substitutions,
   };
 }
 
@@ -179,6 +196,7 @@ export function gameSheetToJson(sheet: GameSheet): Record<string, unknown> {
     stackingModeOverride:
       sheet.stackingModeOverride === null ? null : bockStackingModeToJson(sheet.stackingModeOverride),
     groupId: sheet.groupId,
+    substitutions: sheet.substitutions.map(substitutionToJson),
   };
 }
 
@@ -215,6 +233,7 @@ export function gameSheetFromJson(json: Record<string, unknown>): GameSheet {
     stackingModeOverride:
       typeof rawStacking === 'string' ? bockStackingModeFromJson(rawStacking) : null,
     groupId: typeof json['groupId'] === 'string' ? (json['groupId'] as string) : null,
+    substitutions: substitutionsFromJson(json['substitutions']),
   };
 }
 

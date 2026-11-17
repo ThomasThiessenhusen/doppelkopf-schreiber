@@ -42,6 +42,7 @@ function sheet(
     dirty: false,
     stackingModeOverride: null,
     groupId: null,
+    substitutions: [],
   };
 }
 

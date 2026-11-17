@@ -47,6 +47,7 @@ function sheet(games: readonly Game[]): GameSheet {
     dirty: false,
     stackingModeOverride: null,
     groupId: null,
+    substitutions: [],
   };
 }
 

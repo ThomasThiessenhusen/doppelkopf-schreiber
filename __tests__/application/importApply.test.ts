@@ -36,6 +36,7 @@ function s(
     dirty: false,
     stackingModeOverride: null,
     groupId,
+    substitutions: [],
   };
 }
 function g(id: string, name: string): SheetGroup {

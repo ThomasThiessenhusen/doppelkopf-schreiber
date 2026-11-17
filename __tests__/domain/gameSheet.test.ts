@@ -7,6 +7,7 @@ import {
   gamesPerRound,
   nextSittingOutPlayerId,
   playerCount,
+  referencedPlayerIds,
   removeGame,
   replaceGame,
   sheetWithGame,
@@ -297,5 +298,41 @@ describe('gameSheet JSON', () => {
       rounds: [],
     };
     expect(() => gameSheetFromJson(garbage)).toThrow(/4 oder 5/);
+  });
+});
+
+describe('gameSheet substitutions', () => {
+  const sub = { substituteId: 'a', mainPlayerId: 'x' };
+
+  test('createGameSheet startet ohne Vertretungen', () => {
+    expect(createGameSheet({ players: players4 }).substitutions).toEqual([]);
+  });
+
+  test('JSON-Roundtrip erhaelt Vertretungen', () => {
+    const s = copyGameSheet(createGameSheet({ players: players4 }), { substitutions: [sub] });
+    expect(gameSheetFromJson(gameSheetToJson(s)).substitutions).toEqual([sub]);
+  });
+
+  test('JSON ohne substitutions-Key -> leere Liste', () => {
+    const json = gameSheetToJson(createGameSheet({ players: players4 }));
+    delete json['substitutions'];
+    expect(gameSheetFromJson(json).substitutions).toEqual([]);
+  });
+
+  test('kaputte Eintraege werden beim Laden verworfen', () => {
+    const json = gameSheetToJson(createGameSheet({ players: players4 }));
+    json['substitutions'] = [null, { substituteId: 1 }, sub];
+    expect(gameSheetFromJson(json).substitutions).toEqual([sub]);
+  });
+
+  test('copyGameSheet setzt und behaelt Vertretungen', () => {
+    const s = copyGameSheet(createGameSheet({ players: players4 }), { substitutions: [sub] });
+    expect(s.substitutions).toEqual([sub]);
+    expect(copyGameSheet(s, { title: 'x' }).substitutions).toEqual([sub]);
+  });
+
+  test('referencedPlayerIds enthaelt Bogen-Spieler und Stammspieler', () => {
+    const s = copyGameSheet(createGameSheet({ players: players4 }), { substitutions: [sub] });
+    expect([...referencedPlayerIds(s)].sort()).toEqual(['a', 'b', 'c', 'd', 'x']);
   });
 });

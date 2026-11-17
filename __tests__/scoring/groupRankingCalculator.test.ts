@@ -31,6 +31,7 @@ function sheetWith(opts: {
     dirty: false,
     stackingModeOverride: null,
     groupId: null,
+    substitutions: [],
   };
 }
 

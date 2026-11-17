@@ -30,6 +30,7 @@ function s(
     dirty: false,
     stackingModeOverride: null,
     groupId,
+    substitutions: [],
   };
 }
 
