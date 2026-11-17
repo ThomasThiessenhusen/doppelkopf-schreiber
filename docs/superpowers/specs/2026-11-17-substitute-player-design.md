@@ -14,8 +14,8 @@ Stammspieler in der Saisonwertung gutgeschrieben werden koennen.
 - Pro Spielbogen optional erfassen: "Gast X vertritt Stammspieler Y" (auch mehrere Paare).
 - Saisonuebersicht ([GroupRankingsScreen](../../../src/presentation/screens/GroupRankingsScreen.tsx))
   bekommt einen Schalter **"Vertretungen einrechnen"**:
-  - **Aus** (Default): Verhalten wie heute.
-  - **An**: Der Stammspieler erhaelt die Platzierungspunkte des Gastes fuer diesen
+  - **Aus**: Verhalten wie heute.
+  - **An** (Default): Der Stammspieler erhaelt die Platzierungspunkte des Gastes fuer diesen
     Bogen **zusaetzlich**. Der Gast behaelt seine eigenen Platzierungspunkte auch in
     dieser Ansicht (Entscheidung: Schalter aendert nur die Stammspieler-Zeile).
 
@@ -53,7 +53,7 @@ Stammspieler in der Saisonwertung gutgeschrieben werden koennen.
   analog zu Saison-Zuordnung und Bock-Modus: Dialog "Vertretungen" mit Paaren
   Gast (aus Bogen-Spielern) → Stammspieler (aus Pool, ohne Bogen-Spieler).
   Nur sichtbar/aktiv, wenn der Bogen einer Gruppe zugeordnet ist.
-- **Schalter:** lokaler UI-State im Ranking-Screen, Default aus, nicht persistiert.
+- **Schalter:** lokaler UI-State im Ranking-Screen, Default **an**, nicht persistiert.
 - **Mitziehen, weil Spieler-IDs referenziert werden:**
   - [playerUsage.ts](../../../src/application/playerUsage.ts): Stammspieler einer
     Vertretung gilt als referenziert (nicht loeschbar).
@@ -73,6 +73,7 @@ Stammspieler in der Saisonwertung gutgeschrieben werden koennen.
 
 ## Tests
 
+- Screen: Schalter steht beim Oeffnen auf "an".
 - Calculator: Schalter aus = bisheriges Ergebnis; Schalter an = Stammspieler +N,
   Gast unveraendert; Spielpunkte/Soli identisch in beiden Modi; Stammspieler ohne
   eigene Boegen erscheint mit Vertretungspunkten.
