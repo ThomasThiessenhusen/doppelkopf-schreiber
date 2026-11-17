@@ -1,5 +1,11 @@
-import { createGame, WinnerSide } from '@/domain/models/game';
-import { createGameSheet, sheetWithGame, type GameSheet } from '@/domain/models/gameSheet';
+import { copyGame, createGame, type GamePatch, WinnerSide } from '@/domain/models/game';
+import {
+  allGames,
+  createGameSheet,
+  replaceGame,
+  sheetWithGame,
+  type GameSheet,
+} from '@/domain/models/gameSheet';
 import type { Player } from '@/domain/models/player';
 import { BockLevel } from '@/domain/scoring/bockLevel';
 import {
@@ -8,6 +14,7 @@ import {
   resolveBock,
 } from '@/domain/scoring/bockResolver';
 import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
+import { scoreFor, totalsFor } from '@/domain/scoring/scoreCalculator';
 
 const RE_ANNOUNCED = 'reAnnounced';
 const CONTRA_ANNOUNCED = 'contraAnnounced';
@@ -331,5 +338,117 @@ describe('BockResolver — ohne Bock (off)', () => {
     let sheet = makeSheet();
     sheet = sheetWithGame(sheet, classicGame({ triggersManualBock: true }));
     expect(currentBockState(sheet, BockStackingMode.off)).toEqual(bockStateEmpty);
+  });
+});
+
+/**
+ * Regression: Ein Spiel loest faelschlich eine Bockrunde aus und wird erst
+ * erfasst, nachdem schon Folgespiele eingetragen sind. Nach der Korrektur des
+ * ausloesenden Spiels duerfen die Folgespiele keinen Bock mehr tragen — weder
+ * im Level noch in den Punkten. Hintergrund: Bug-Meldung vom Spielabend
+ * 02.11.2026 (5 Spieler, sequenziell), damals nicht reproduzierbar.
+ */
+describe('BockResolver — Korrektur des ausloesenden Spiels (Regression)', () => {
+  const MODES = [BockStackingMode.sequential, BockStackingMode.doppelbock] as const;
+
+  /**
+   * Baut einen Bogen: `before` normale Spiele, dann der Ausloeser, dann
+   * `after` normale Spiele. Liefert Bogen und ID des Ausloesers.
+   */
+  function sheetWithTriggerAt(
+    playerCount: 4 | 5,
+    before: number,
+    trigger: GamePatch,
+    after: number,
+  ): { sheet: GameSheet; triggerId: string } {
+    let sheet = makeSheet(playerCount);
+    for (let i = 0; i < before; i++) sheet = sheetWithGame(sheet, classicGame());
+    const triggerGame = copyGame(classicGame(), trigger);
+    sheet = sheetWithGame(sheet, triggerGame);
+    for (let i = 0; i < after; i++) sheet = sheetWithGame(sheet, classicGame());
+    return { sheet, triggerId: triggerGame.id };
+  }
+
+  function correct(sheet: GameSheet, gameId: string, patch: GamePatch): GameSheet {
+    const game = [...allGames(sheet)].find((g) => g.id === gameId)!;
+    return replaceGame(sheet, copyGame(game, patch));
+  }
+
+  /** Erwartete Summen, wenn kein Spiel Bock traegt. */
+  function totalsWithoutBock(sheet: GameSheet): Map<string, number> {
+    const totals = new Map<string, number>(sheet.playerIds.map((id) => [id, 0]));
+    for (const g of allGames(sheet)) {
+      const s = scoreFor(g, BockLevel.none);
+      for (const id of g.rePlayerIds) totals.set(id, totals.get(id)! + s.rePerPlayer);
+      for (const id of g.contraPlayerIds) totals.set(id, totals.get(id)! + s.contraPerPlayer);
+    }
+    return totals;
+  }
+
+  function expectNoBockAnywhere(sheet: GameSheet, mode: BockStackingMode) {
+    expect(values(resolveBock(sheet, mode)).every((l) => l === BockLevel.none)).toBe(true);
+    expect(currentBockState(sheet, mode)).toEqual(bockStateEmpty);
+    expect(totalsFor(sheet, mode).totalsByPlayerId).toEqual(totalsWithoutBock(sheet));
+  }
+
+  test.each(MODES)(
+    '5 Spieler, Bockrunde ueber Rundengrenze, Gewinner korrigiert (%s)',
+    (mode) => {
+      // Ausloeser = 4. Spiel von Runde 1, Bockrunde = 5 Spiele bis in Runde 2.
+      const { sheet, triggerId } = sheetWithTriggerAt(
+        5,
+        3,
+        { winner: WinnerSide.contra, flagCodes: [RE_ANNOUNCED] },
+        6,
+      );
+      const levelsBefore = values(resolveBock(sheet, mode));
+      expect(levelsBefore.slice(4, 9).every((l) => l !== BockLevel.none)).toBe(true);
+      expect(levelsBefore[9]).toBe(BockLevel.none);
+
+      const corrected = correct(sheet, triggerId, { winner: WinnerSide.re });
+
+      expectNoBockAnywhere(corrected, mode);
+    },
+  );
+
+  test.each(MODES)(
+    'Spieler-Zuordnung und Gewinner gemeinsam korrigiert (%s)',
+    (mode) => {
+      const { sheet, triggerId } = sheetWithTriggerAt(
+        5,
+        3,
+        { winner: WinnerSide.contra, flagCodes: [RE_ANNOUNCED] },
+        6,
+      );
+
+      const corrected = correct(sheet, triggerId, {
+        rePlayerIds: ['a', 'c'],
+        contraPlayerIds: ['b', 'd'],
+        winner: WinnerSide.re,
+      });
+
+      expectNoBockAnywhere(corrected, mode);
+    },
+  );
+
+  test.each([
+    ['Re-Ansage entfernt', { winner: WinnerSide.contra, flagCodes: [RE_ANNOUNCED] }, { flagCodes: [] }],
+    [
+      'Kontra-Ansage, Gewinner korrigiert',
+      { winner: WinnerSide.re, flagCodes: [CONTRA_ANNOUNCED] },
+      { winner: WinnerSide.contra },
+    ],
+    ['Pflichtbock ausgeschaltet', { triggersManualBock: true }, { triggersManualBock: false }],
+  ] as const)('4 Spieler: %s', (_name, trigger, fix) => {
+    for (const mode of MODES) {
+      const { sheet, triggerId } = sheetWithTriggerAt(4, 0, { ...trigger }, 3);
+      expect(values(resolveBock(sheet, mode)).slice(1)).toEqual([
+        BockLevel.single,
+        BockLevel.single,
+        BockLevel.single,
+      ]);
+
+      expectNoBockAnywhere(correct(sheet, triggerId, { ...fix }), mode);
+    }
   });
 });
