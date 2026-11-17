@@ -1,6 +1,7 @@
 import { WinnerSide } from '@/domain/models/game';
 import { allGames, totalGames, type GameSheet } from '@/domain/models/gameSheet';
 import { playerDisplayName } from '@/domain/models/player';
+import { effectiveSubstitutions } from '@/domain/models/substitution';
 import type { PlayerLookup } from '@/domain/models/playerLookup';
 import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import { effectiveStackingMode } from '@/domain/scoring/bockResolver';
@@ -15,6 +16,11 @@ export interface CalculateGroupRankingsInput {
   sheets: readonly GameSheet[];
   defaultMode: BockStackingMode;
   lookup: PlayerLookup;
+  /**
+   * Platzierungspunkte eines Gastes zusaetzlich seinem Stammspieler
+   * gutschreiben (siehe `GameSheet.substitutions`). Fehlend = `false`.
+   */
+  applySubstitutions?: boolean;
 }
 
 /**
@@ -29,6 +35,7 @@ export interface CalculateGroupRankingsInput {
  */
 export function calculateGroupRankings(input: CalculateGroupRankingsInput): GroupRankings {
   const { sheets, defaultMode, lookup } = input;
+  const applySubstitutions = input.applySubstitutions ?? false;
   if (sheets.length === 0) return groupRankingsEmpty;
 
   const placement = new Map<string, number>();
@@ -80,6 +87,7 @@ export function calculateGroupRankings(input: CalculateGroupRankingsInput): Grou
     const n = sorted.length;
     let rank = 0;
     let lastValue: number | null = null;
+    const sheetPlacement = new Map<string, number>();
     for (let i = 0; i < sorted.length; i++) {
       const [id, value] = sorted[i]!;
       if (value !== lastValue) {
@@ -87,7 +95,22 @@ export function calculateGroupRankings(input: CalculateGroupRankingsInput): Grou
         lastValue = value;
       }
       const pts = n - rank + 1;
+      sheetPlacement.set(id, pts);
       placement.set(id, (placement.get(id) ?? 0) + pts);
+    }
+
+    // Vertretungen: Stammspieler erhaelt die Platzierungspunkte des Gastes zusaetzlich.
+    if (applySubstitutions) {
+      for (const sub of effectiveSubstitutions(sheet.playerIds, sheet.substitutions)) {
+        const pts = sheetPlacement.get(sub.substituteId);
+        if (pts === undefined) continue;
+        const mainId = sub.mainPlayerId;
+        placement.set(mainId, (placement.get(mainId) ?? 0) + pts);
+        if (!names.has(mainId)) {
+          const player = lookup.byId(mainId);
+          names.set(mainId, player !== null ? playerDisplayName(player) : mainId);
+        }
+      }
     }
   }
 

@@ -6,18 +6,23 @@ import type { Round } from '@/domain/models/round';
 import { BockStackingMode } from '@/domain/scoring/bockStackingMode';
 import { calculateGroupRankings } from '@/domain/scoring/groupRankingCalculator';
 import type { RankingEntry } from '@/domain/scoring/groupRankings';
+import type { Substitution } from '@/domain/models/substitution';
 
 const alice: Player = { id: 'a', playerName: 'Alice', firstName: null, lastName: null };
 const bob: Player = { id: 'b', playerName: 'Bob', firstName: null, lastName: null };
 const carol: Player = { id: 'c', playerName: 'Carol', firstName: null, lastName: null };
 const dave: Player = { id: 'd', playerName: 'Dave', firstName: null, lastName: null };
 
-const lookup = createPlayerLookup([alice, bob, carol, dave]);
+const erik: Player = { id: 'e', playerName: 'Erik', firstName: null, lastName: null };
+const xaver: Player = { id: 'x', playerName: 'Xaver', firstName: null, lastName: null };
+
+const lookup = createPlayerLookup([alice, bob, carol, dave, erik, xaver]);
 
 function sheetWith(opts: {
   id: string;
   players: readonly Player[];
   games: readonly Game[];
+  substitutions?: readonly Substitution[];
 }): GameSheet {
   const now = new Date('2026-05-01T00:00:00.000Z');
   const round: Round = { index: 0, games: opts.games };
@@ -31,7 +36,7 @@ function sheetWith(opts: {
     dirty: false,
     stackingModeOverride: null,
     groupId: null,
-    substitutions: [],
+    substitutions: opts.substitutions ?? [],
   };
 }
 
@@ -276,5 +281,82 @@ describe('calculateGroupRankings', () => {
     expect(placement['c']).toBe(4);
     expect(placement['d']).toBe(4);
     expect(placement['e']).toBe(4);
+  });
+});
+
+describe('calculateGroupRankings mit Vertretungen', () => {
+  const dForE: Substitution = { substituteId: 'd', mainPlayerId: 'e' };
+  const base = (subs: readonly Substitution[], id = 's1'): GameSheet =>
+    sheetWith({
+      id,
+      players: [alice, bob, carol, dave],
+      games: [classicReWin(['a', 'b'], ['c', 'd'])],
+      substitutions: subs,
+    });
+  const calc = (sheets: readonly GameSheet[], applySubstitutions: boolean) =>
+    calculateGroupRankings({
+      sheets,
+      defaultMode: BockStackingMode.sequential,
+      lookup,
+      applySubstitutions,
+    });
+
+  test('Vertretung aus: Ergebnis identisch zu ohne substitutions', () => {
+    expect(byPlayer(calc([base([dForE])], false).placementPoints)).toEqual({
+      a: 4,
+      b: 4,
+      c: 2,
+      d: 2,
+    });
+  });
+
+  test('Vertretung an: Stammspieler bekommt Punkte des Gastes zusaetzlich', () => {
+    const r = calc([base([dForE])], true);
+    expect(byPlayer(r.placementPoints)).toEqual({ a: 4, b: 4, c: 2, d: 2, e: 2 });
+    expect(r.placementPoints.find((e) => e.playerId === 'e')?.displayName).toBe('Erik');
+  });
+
+  test('Vertretung an: Spielpunkte und Soli unveraendert', () => {
+    const on = calc([base([dForE])], true);
+    const off = calc([base([dForE])], false);
+    expect(on.totalPoints).toEqual(off.totalPoints);
+    expect(on.wonSoli).toEqual(off.wonSoli);
+  });
+
+  test('Vertretung an: Stammspieler sammelt ueber Boegen', () => {
+    const s2 = sheetWith({
+      id: 's2',
+      players: [alice, bob, carol, dave],
+      games: [classicReWin(['c', 'd'], ['a', 'b'])],
+      substitutions: [dForE],
+    });
+    const r = byPlayer(calc([base([dForE]), s2], true).placementPoints);
+    expect(r['d']).toBe(6);
+    expect(r['e']).toBe(6);
+  });
+
+  test('Ungueltige Vertretung (Stammspieler spielt selbst) wird ignoriert', () => {
+    const invalid = base([{ substituteId: 'd', mainPlayerId: 'a' }]);
+    expect(byPlayer(calc([invalid], true).placementPoints)).toEqual(
+      byPlayer(calc([invalid], false).placementPoints),
+    );
+  });
+
+  test('Gast ohne Spiel auf dem Bogen bekommt nichts weiterzugeben', () => {
+    const s = sheetWith({
+      id: 's5',
+      players: [alice, bob, carol, dave, xaver],
+      games: [
+        createGame({
+          rePlayerIds: ['a', 'b'],
+          contraPlayerIds: ['c', 'd'],
+          sittingOutPlayerId: 'x',
+          winner: WinnerSide.re,
+          flagCodes: [],
+        }),
+      ],
+      substitutions: [{ substituteId: 'x', mainPlayerId: 'e' }],
+    });
+    expect(byPlayer(calc([s], true).placementPoints)['e']).toBeUndefined();
   });
 });
