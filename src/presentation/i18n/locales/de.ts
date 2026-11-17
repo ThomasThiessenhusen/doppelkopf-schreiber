@@ -139,6 +139,7 @@ export const de = {
     rankings: {
       groupNotFound: 'Gruppe nicht gefunden.',
       empty: 'Noch keine ausgewerteten Spielbögen in dieser Gruppe.',
+      applySubstitutions: 'Vertretungen einrechnen',
       byPlacement: 'nach Platzierung',
       byPoints: 'nach Spielpunkten',
       bySoli: 'nach gewonnenen Soli',

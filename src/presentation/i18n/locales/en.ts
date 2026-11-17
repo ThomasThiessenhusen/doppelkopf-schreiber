@@ -141,6 +141,7 @@ export const en: Resources = {
     rankings: {
       groupNotFound: 'Group not found.',
       empty: 'No evaluated sheets in this group yet.',
+      applySubstitutions: 'Include substitutes',
       byPlacement: 'by placement',
       byPoints: 'by game points',
       bySoli: 'by solos won',

@@ -1,6 +1,14 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { ActivityIndicator, Card, Divider, List, Text, useTheme } from 'react-native-paper';
+import {
+  ActivityIndicator,
+  Card,
+  Divider,
+  List,
+  Switch,
+  Text,
+  useTheme,
+} from 'react-native-paper';
 
 import { appSettingsFallback } from '@/domain/models/appSettings';
 import { calculateGroupRankings } from '@/domain/scoring/groupRankingCalculator';
@@ -35,19 +43,25 @@ export function GroupRankingsScreen({ groupId }: { groupId: string }) {
     void refreshPool();
   }, [refreshGroups, refreshSheets, loadSettings, refreshPool]);
 
+  // Default an: Vertretungen werden standardmaessig eingerechnet (nicht persistiert).
+  const [applySubstitutions, setApplySubstitutions] = useState(true);
+
   const group = groups.find((g) => g.id === groupId);
   const settings =
     settingsState.status === 'data' ? settingsState.value : appSettingsFallback;
 
+  const inGroup = useMemo(() => sheets.filter((s) => s.groupId === groupId), [sheets, groupId]);
+  const hasSubstitutions = inGroup.some((s) => s.substitutions.length > 0);
+
   const rankings = useMemo(() => {
-    const inGroup = sheets.filter((s) => s.groupId === groupId);
     const lookup = createPlayerLookup(pool);
     return calculateGroupRankings({
       sheets: inGroup,
       defaultMode: settings.defaultStackingMode,
       lookup,
+      applySubstitutions,
     });
-  }, [sheets, groupId, settings.defaultStackingMode, pool]);
+  }, [inGroup, settings.defaultStackingMode, pool, applySubstitutions]);
 
   if (groupsLoading || sheetsLoading) {
     return (
@@ -82,6 +96,12 @@ export function GroupRankingsScreen({ groupId }: { groupId: string }) {
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }}>
+      {hasSubstitutions && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text variant="bodyLarge">{t('groups.rankings.applySubstitutions')}</Text>
+          <Switch value={applySubstitutions} onValueChange={setApplySubstitutions} />
+        </View>
+      )}
       <RankingSection
         title={t('groups.rankings.byPlacement')}
         entries={rankings.placementPoints}
