@@ -387,7 +387,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
             </Text>
           </View>
         ) : (
-          sheet.rounds.map((r) => (
+          [...sheet.rounds].reverse().map((r) => (
             <RoundSection
               key={r.index}
               round={r}

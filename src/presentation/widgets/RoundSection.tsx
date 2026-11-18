@@ -70,7 +70,11 @@ export function RoundSection({
         <Text variant="titleMedium">{t('sheet.roundTitle', { n: round.index + 1 })}</Text>
       </View>
       <Divider />
-      {round.games.map((game, i) => {
+      {/* Neueste zuerst; die Spielnummer bleibt die chronologische. */}
+      {round.games
+        .map((game, i) => ({ game, i }))
+        .reverse()
+        .map(({ game, i }) => {
         const score = scoresByGame.get(game.id) ?? { rePerPlayer: 0, contraPerPlayer: 0 };
         const level = bockLevelByGame.get(game.id) ?? BockLevel.none;
         const reLabel = game.isSolo ? t('sheet.soloLabel') : t('sheet.reLabel');
