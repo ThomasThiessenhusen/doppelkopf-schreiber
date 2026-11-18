@@ -12,6 +12,7 @@ import {
   Portal,
   Text,
   TextInput,
+  TouchableRipple,
   useTheme,
 } from 'react-native-paper';
 
@@ -36,9 +37,8 @@ import { createPlayer, playerDisplayName, type Player } from '@/domain/models/pl
 import type { RootStackParamList } from '@/navigation/types';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
 
-const IDX_W = 32;
-const COL_W = 108;
-const ACT_W = 40;
+const IDX_W = 28;
+const ACT_W = 36;
 
 function formatPoints(points: number): string {
   return points > 0 ? `+${points}` : `${points}`;
@@ -51,24 +51,13 @@ function cellText(value: PaperCell): string {
 interface CellProps {
   value: PaperCell;
   highlighted: boolean;
-  showSitter: boolean;
-  sitterLabel: string;
   onValue: (value: PaperCell) => void;
-  onSitter: () => void;
   /** Meldet, ob der angezeigte Text ungueltig ist (blockiert dann das Speichern). */
   onInvalidChange: (invalid: boolean) => void;
 }
 
 /** Eine Raster-Zelle; Text bleibt waehrend der Eingabe lokal (z. B. "-" vor "-3"). */
-function Cell({
-  value,
-  highlighted,
-  showSitter,
-  sitterLabel,
-  onValue,
-  onSitter,
-  onInvalidChange,
-}: CellProps) {
+function Cell({ value, highlighted, onValue, onInvalidChange }: CellProps) {
   const theme = useTheme();
   const [text, setText] = useState(cellText(value));
   const [invalid, setInvalid] = useState(false);
@@ -91,7 +80,7 @@ function Cell({
   }, [value]);
 
   return (
-    <View style={{ width: COL_W, flexDirection: 'row', alignItems: 'center' }}>
+    <View style={{ flex: 1, paddingHorizontal: 2 }}>
       <TextInput
         dense
         mode="outlined"
@@ -100,8 +89,8 @@ function Cell({
         error={invalid}
         selectTextOnFocus
         keyboardType="numbers-and-punctuation"
+        contentStyle={{ paddingHorizontal: 2 }}
         style={{
-          flex: 1,
           textAlign: 'center',
           ...(highlighted ? { backgroundColor: theme.colors.tertiaryContainer } : {}),
         }}
@@ -116,16 +105,6 @@ function Cell({
           onValue(parsed);
         }}
       />
-      {showSitter && (
-        <IconButton
-          icon="account-off-outline"
-          size={16}
-          accessibilityLabel={sitterLabel}
-          selected={value === null}
-          onPress={onSitter}
-          style={{ margin: 0, width: 24, height: 24 }}
-        />
-      )}
     </View>
   );
 }
@@ -302,160 +281,200 @@ export function PaperSheetGridScreen() {
       </View>
       {dateInvalid && <HelperText type="error">{t('sheet.playedAtInvalid')}</HelperText>}
 
-      <ScrollView horizontal>
-        <View>
-          {/* Kopf: Name auf dem Papier und Zuordnung je Spalte */}
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-            <View style={{ width: IDX_W }} />
-            {g.columnNames.map((name, col) => {
-              const a = g.assignments[col]!;
-              const colIssues = v.assignmentIssues.filter((x) => x.col === col);
-              const similar = v.similarNameWarnings.find((x) => x.col === col);
-              const similarPlayer =
-                similar === undefined ? undefined : pool.find((p) => p.id === similar.poolPlayerId);
-              return (
-                <View key={col} style={{ width: COL_W, paddingRight: 4 }}>
-                  <TextInput
-                    dense
-                    mode="outlined"
-                    label={t('paperImport.columnNameLabel')}
-                    value={name}
-                    onChangeText={(text) => {
-                      const columnNames = g.columnNames.map((n, i) => (i === col ? text : n));
-                      // Neu-anlegen folgt dem Namen, solange es gewaehlt ist.
-                      const assignments = g.assignments.map((x, i) =>
-                        i === col && x.kind === 'new' ? { kind: 'new' as const, name: text } : x,
-                      );
-                      update({ ...g, columnNames, assignments });
-                    }}
-                  />
-                  <Menu
-                    visible={menuCol === col}
-                    onDismiss={() => setMenuCol(null)}
-                    anchor={
-                      <Button
-                        compact
-                        mode="outlined"
-                        onPress={() => setMenuCol(col)}
-                        labelStyle={{ fontSize: 12 }}
-                      >
-                        {assignmentLabel(a)}
-                      </Button>
-                    }
-                  >
-                    {pool.map((p) => (
-                      <Menu.Item
-                        key={p.id}
-                        title={playerDisplayName(p)}
-                        onPress={() => {
-                          setMenuCol(null);
-                          assign(col, { kind: 'pool', playerId: p.id });
-                        }}
-                      />
-                    ))}
-                    {name.trim() !== '' && (
-                      <Menu.Item
-                        title={t('paperImport.assignNew', { name: name.trim() })}
-                        onPress={() => {
-                          setMenuCol(null);
-                          assign(col, { kind: 'new', name: name.trim() });
-                        }}
-                      />
-                    )}
-                  </Menu>
-                  {colIssues.map((issue) => (
-                    <HelperText key={issue.kind} type="error" style={{ paddingHorizontal: 0 }}>
-                      {issue.kind === 'duplicate'
-                        ? t('paperImport.assignDuplicate')
-                        : t('paperImport.assignUnassigned')}
-                    </HelperText>
-                  ))}
-                  {similarPlayer !== undefined && (
-                    <HelperText type="info" style={{ paddingHorizontal: 0 }}>
-                      {t('paperImport.assignSimilar', { name: playerDisplayName(similarPlayer) })}
-                    </HelperText>
-                  )}
-                </View>
-              );
-            })}
-            <View style={{ width: ACT_W + 70 }} />
-          </View>
-
-          {/* Spiele */}
-          {g.rows.map((cells, row) => {
-            const sum = cells.reduce<number>((acc, c) => acc + (c ?? 0), 0);
-            const issues = rowIssueByRow.get(row) ?? [];
-            const sumBad = v.rowIssues.some((x) => x.row === row && x.kind === 'sum');
+      <View>
+        {/* Kopf: Name auf dem Papier und Zuordnung je Spalte */}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+          <View style={{ width: IDX_W }} />
+          {g.columnNames.map((name, col) => {
+            const a = g.assignments[col]!;
+            const problem = v.assignmentIssues.some((x) => x.col === col);
+            const color = problem ? theme.colors.error : theme.colors.primary;
             return (
-              <View key={rowKeys[row] ?? row} style={{ marginTop: 4 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={{ width: IDX_W, textAlign: 'right', paddingRight: 6 }}>{row + 1}</Text>
-                  {cells.map((cell, col) => (
-                    <Cell
-                      key={col}
-                      value={cell}
-                      highlighted={g.uncertain.some((u) => u.game === row && u.player === col)}
-                      showSitter={colCount === 5}
-                      sitterLabel={t('paperImport.sitterButton')}
-                      onValue={(value) => update(setCell(g, row, col, value))}
-                      onSitter={() => update(setRowSitter(g, row, col))}
-                      onInvalidChange={(inv) => setInvalid(`${rowKeys[row] ?? row}:${col}`, inv)}
+              <View key={col} style={{ flex: 1, paddingHorizontal: 2, gap: 4 }}>
+                <TextInput
+                  dense
+                  mode="outlined"
+                  label={t('paperImport.columnNameLabel')}
+                  value={name}
+                  contentStyle={{ paddingHorizontal: 4 }}
+                  style={{ textAlign: 'center' }}
+                  onChangeText={(text) => {
+                    const columnNames = g.columnNames.map((n, i) => (i === col ? text : n));
+                    // Neu-anlegen folgt dem Namen, solange es gewaehlt ist.
+                    const assignments = g.assignments.map((x, i) =>
+                      i === col && x.kind === 'new' ? { kind: 'new' as const, name: text } : x,
+                    );
+                    update({ ...g, columnNames, assignments });
+                  }}
+                />
+                <Menu
+                  visible={menuCol === col}
+                  onDismiss={() => setMenuCol(null)}
+                  anchor={
+                    <TouchableRipple
+                      onPress={() => setMenuCol(col)}
+                      style={{
+                        borderWidth: 1,
+                        borderRadius: 18,
+                        borderColor: problem ? theme.colors.error : theme.colors.outline,
+                        paddingVertical: 8,
+                        paddingHorizontal: 4,
+                      }}
+                    >
+                      <Text numberOfLines={1} style={{ fontSize: 12, textAlign: 'center', color }}>
+                        {assignmentLabel(a)}
+                      </Text>
+                    </TouchableRipple>
+                  }
+                >
+                  {pool.map((p) => (
+                    <Menu.Item
+                      key={p.id}
+                      title={playerDisplayName(p)}
+                      onPress={() => {
+                        setMenuCol(null);
+                        assign(col, { kind: 'pool', playerId: p.id });
+                      }}
                     />
                   ))}
-                  <View style={{ width: 70, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                    <Icon
-                      source={sumBad ? 'alert-outline' : 'check-circle-outline'}
-                      size={16}
-                      color={sumBad ? theme.colors.error : theme.colors.primary}
+                  {name.trim() !== '' && (
+                    <Menu.Item
+                      title={t('paperImport.assignNew', { name: name.trim() })}
+                      onPress={() => {
+                        setMenuCol(null);
+                        assign(col, { kind: 'new', name: name.trim() });
+                      }}
                     />
-                    <Text
-                      variant="bodySmall"
-                      style={{ color: sumBad ? theme.colors.error : theme.colors.onSurfaceVariant }}
-                    >
-                      {t('paperImport.rowSum', { sum })}
-                    </Text>
-                  </View>
-                  <IconButton
-                    icon="delete-outline"
-                    size={18}
-                    accessibilityLabel={t('paperImport.removeRow')}
-                    onPress={() => removeGridRow(row)}
-                    style={{ width: ACT_W, margin: 0 }}
-                  />
-                </View>
-                {issues.map((text) => (
-                  <HelperText key={text} type="error" style={{ marginLeft: IDX_W }}>
-                    {text}
-                  </HelperText>
-                ))}
+                  )}
+                </Menu>
               </View>
             );
           })}
+          <View style={{ width: ACT_W }} />
+        </View>
 
-          {/* Berechnete Summen */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
-            <Text variant="titleMedium" style={{ width: IDX_W, textAlign: 'right', paddingRight: 6 }}>
-              Σ
-            </Text>
-            {totals.map((total, col) => (
-              <Text
-                key={col}
-                variant="titleMedium"
+        {/* Zuordnungs-Hinweise als einzelne Zeilen statt je Spalte */}
+        {v.assignmentIssues.some((x) => x.kind === 'unassigned') && (
+          <HelperText type="error" style={{ paddingHorizontal: 0 }}>
+            {t('paperImport.assignUnassigned')}
+          </HelperText>
+        )}
+        {v.assignmentIssues.some((x) => x.kind === 'duplicate') && (
+          <HelperText type="error" style={{ paddingHorizontal: 0 }}>
+            {t('paperImport.assignDuplicate')}
+          </HelperText>
+        )}
+        {v.similarNameWarnings.map((w) => {
+          const similarPlayer = pool.find((p) => p.id === w.poolPlayerId);
+          if (similarPlayer === undefined) return null;
+          return (
+            <HelperText key={w.col} type="info" style={{ paddingHorizontal: 0 }}>
+              {t('paperImport.assignSimilar', {
+                column: g.columnNames[w.col] ?? '',
+                name: playerDisplayName(similarPlayer),
+              })}
+            </HelperText>
+          );
+        })}
+
+        {/* Spiele */}
+        {g.rows.map((cells, row) => {
+          const sum = cells.reduce<number>((acc, c) => acc + (c ?? 0), 0);
+          const issues = rowIssueByRow.get(row) ?? [];
+          const sumBad = v.rowIssues.some((x) => x.row === row && x.kind === 'sum');
+          return (
+            <View key={rowKeys[row] ?? row} style={{ marginTop: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ width: IDX_W, textAlign: 'right', paddingRight: 6 }}>{row + 1}</Text>
+                {cells.map((cell, col) => (
+                  <Cell
+                    key={col}
+                    value={cell}
+                    highlighted={g.uncertain.some((u) => u.game === row && u.player === col)}
+                    onValue={(value) => update(setCell(g, row, col, value))}
+                    onInvalidChange={(inv) => setInvalid(`${rowKeys[row] ?? row}:${col}`, inv)}
+                  />
+                ))}
+                <IconButton
+                  icon="delete-outline"
+                  size={18}
+                  accessibilityLabel={t('paperImport.removeRow')}
+                  onPress={() => removeGridRow(row)}
+                  style={{ width: ACT_W, margin: 0 }}
+                />
+              </View>
+              {colCount === 5 && (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ width: IDX_W }} />
+                  {cells.map((cell, col) => (
+                    <View key={col} style={{ flex: 1, alignItems: 'center' }}>
+                      <IconButton
+                        icon="account-off-outline"
+                        size={14}
+                        accessibilityLabel={t('paperImport.sitterButton')}
+                        selected={cell === null}
+                        onPress={() => update(setRowSitter(g, row, col))}
+                        style={{ margin: 0, width: 24, height: 24 }}
+                      />
+                    </View>
+                  ))}
+                  <View style={{ width: ACT_W }} />
+                </View>
+              )}
+              <View
                 style={{
-                  width: COL_W,
-                  textAlign: 'center',
-                  fontWeight: 'bold',
-                  fontVariant: ['tabular-nums'],
-                  color:
-                    total > 0 ? theme.colors.primary : total < 0 ? theme.colors.error : undefined,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 4,
+                  marginLeft: IDX_W,
+                  paddingLeft: 2,
                 }}
               >
-                {formatPoints(total)}
-              </Text>
-            ))}
-          </View>
+                <Icon
+                  source={sumBad ? 'alert-outline' : 'check-circle-outline'}
+                  size={14}
+                  color={sumBad ? theme.colors.error : theme.colors.primary}
+                />
+                <Text
+                  variant="bodySmall"
+                  style={{ color: sumBad ? theme.colors.error : theme.colors.onSurfaceVariant }}
+                >
+                  {t('paperImport.rowSum', { sum })}
+                </Text>
+              </View>
+              {issues.map((text) => (
+                <HelperText key={text} type="error" style={{ marginLeft: IDX_W, paddingLeft: 2 }}>
+                  {text}
+                </HelperText>
+              ))}
+            </View>
+          );
+        })}
+
+        {/* Berechnete Summen */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+          <Text variant="titleMedium" style={{ width: IDX_W, textAlign: 'right', paddingRight: 6 }}>
+            Σ
+          </Text>
+          {totals.map((total, col) => (
+            <Text
+              key={col}
+              variant="titleMedium"
+              style={{
+                flex: 1,
+                textAlign: 'center',
+                fontWeight: 'bold',
+                fontVariant: ['tabular-nums'],
+                color:
+                  total > 0 ? theme.colors.primary : total < 0 ? theme.colors.error : undefined,
+              }}
+            >
+              {formatPoints(total)}
+            </Text>
+          ))}
+          <View style={{ width: ACT_W }} />
         </View>
-      </ScrollView>
+      </View>
 
       {v.paperTotalsMismatch && (
         <HelperText type="info" style={{ paddingHorizontal: 0 }}>
