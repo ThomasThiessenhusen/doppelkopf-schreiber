@@ -22,8 +22,8 @@ export const en: Resources = {
       'This browser stores nothing permanently. Closing the tab loses every sheet — export them first.',
   },
   nav: {
-    paperStart: 'Paper score sheet',
-    paperGrid: 'Enter paper score sheet',
+    paperStart: 'Add past score sheet',
+    paperGrid: 'Add past score sheet',
     home: 'Bockzettel',
     newSheet: 'New sheet',
     sheet: 'Sheet',

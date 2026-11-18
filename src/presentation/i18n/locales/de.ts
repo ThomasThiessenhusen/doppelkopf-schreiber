@@ -20,8 +20,8 @@ export const de = {
       'Dieser Browser speichert nichts dauerhaft. Beim Schließen des Tabs sind alle Bögen verloren — exportiere sie vorher.',
   },
   nav: {
-    paperStart: 'Papier-Spielbogen',
-    paperGrid: 'Papier-Spielbogen erfassen',
+    paperStart: 'Spielbogen nacherfassen',
+    paperGrid: 'Spielbogen nacherfassen',
     home: 'Bockzettel',
     newSheet: 'Neuer Spielbogen',
     sheet: 'Spielbogen',
