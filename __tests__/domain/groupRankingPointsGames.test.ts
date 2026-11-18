@@ -53,4 +53,38 @@ describe('Gruppen-Rangliste mit Punkte-Spielen', () => {
     expect(r.wonSoli.every((e) => e.value === 0)).toBe(true);
     expect(r.wonSoli).toHaveLength(4);
   });
+
+  describe('Soli aus Punkte-Spielen (3:1-Muster)', () => {
+    function soliOf(games: Record<string, number>[]) {
+      let sheet = createGameSheet({ players: pool });
+      for (const pointsByPlayerId of games) {
+        sheet = sheetWithGame(sheet, createPointsGame({ pointsByPlayerId }));
+      }
+      const r = calculateGroupRankings({
+        sheets: [sheet],
+        defaultMode: BockStackingMode.sequential,
+        lookup,
+      });
+      return new Map(r.wonSoli.map((e) => [e.playerId, e.value]));
+    }
+
+    test('einer +3x, drei je -x: gewonnenes Solo fuer den Solisten', () => {
+      const soli = soliOf([
+        { a: 12, b: -4, c: -4, d: -4 },
+        { a: 3, b: 3, c: -3, d: -3 },
+      ]);
+      expect(soli.get('a')).toBe(1);
+      expect(soli.get('b')).toBe(0);
+    });
+
+    test('Solist mit Minuspunkten (verlorenes Solo) zaehlt nicht', () => {
+      const soli = soliOf([{ a: -9, b: 3, c: 3, d: 3 }]);
+      expect([...soli.values()].every((v) => v === 0)).toBe(true);
+    });
+
+    test('Punktegleichheit 0/0/0/0 ist kein Solo', () => {
+      const soli = soliOf([{ a: 0, b: 0, c: 0, d: 0 }]);
+      expect([...soli.values()].every((v) => v === 0)).toBe(true);
+    });
+  });
 });
