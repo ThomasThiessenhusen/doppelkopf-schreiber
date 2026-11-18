@@ -35,7 +35,7 @@ import type { RootStackParamList } from '@/navigation/types';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 const IDX_W = 32;
-const COL_W = 92;
+const COL_W = 108;
 const ACT_W = 40;
 
 function formatPoints(points: number): string {
@@ -165,7 +165,7 @@ export function PaperSheetGridScreen() {
       const p = pool.find((x) => x.id === a.playerId);
       return p ? playerDisplayName(p) : t('paperImport.assignPick');
     }
-    if (a.kind === 'new') return t('paperImport.assignNew', { name: a.name });
+    if (a.kind === 'new') return t('paperImport.assignedNew', { name: a.name });
     return t('paperImport.assignPick');
   }
 
