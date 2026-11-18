@@ -124,6 +124,25 @@ export function scoreFor(game: Game, bockLevel: BockLevel = BockLevel.none): Gam
 }
 
 /**
+ * Punkte pro Spieler fuer ein einzelnes Spiel — fuer normale und
+ * Punkte-Spiele dieselbe Sicht. Aussetzer fehlen in der Map.
+ */
+export function gamePointsByPlayer(
+  game: Game,
+  bockLevel: BockLevel = BockLevel.none,
+): ReadonlyMap<string, number> {
+  const out = new Map<string, number>();
+  if (game.pointsByPlayerId !== undefined) {
+    for (const [id, pts] of Object.entries(game.pointsByPlayerId)) out.set(id, pts);
+    return out;
+  }
+  const score = scoreFor(game, bockLevel);
+  for (const id of game.rePlayerIds) out.set(id, score.rePerPlayer);
+  for (const id of game.contraPlayerIds) out.set(id, score.contraPerPlayer);
+  return out;
+}
+
+/**
  * Aggregierte Punkte pro Spieler ueber den gesamten Spielbogen.
  *
  * `mode` steuert, wie gestapelte Bock-Trigger verrechnet werden
@@ -143,12 +162,8 @@ export function totalsFor(
   for (const round of sheet.rounds) {
     for (const game of round.games) {
       const level = levels.get(game.id) ?? BockLevel.none;
-      const score = scoreFor(game, level);
-      for (const id of game.rePlayerIds) {
-        totals.set(id, (totals.get(id) ?? 0) + score.rePerPlayer);
-      }
-      for (const id of game.contraPlayerIds) {
-        totals.set(id, (totals.get(id) ?? 0) + score.contraPerPlayer);
+      for (const [id, pts] of gamePointsByPlayer(game, level)) {
+        totals.set(id, (totals.get(id) ?? 0) + pts);
       }
       // Aussetzender Spieler (5er): bekommt nichts.
     }

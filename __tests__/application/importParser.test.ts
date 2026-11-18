@@ -53,6 +53,50 @@ describe('parseExportFile happy paths', () => {
   });
 });
 
+describe('parseExportFile formatVersion 2 (Punkte-Spiele)', () => {
+  function pointsEnvelope() {
+    const e = validSheetEnvelope();
+    (e as Record<string, unknown>)['formatVersion'] = 2;
+    (e.payload.sheets[0] as Record<string, unknown>)['rounds'] = [
+      {
+        index: 0,
+        games: [
+          {
+            id: 'g1',
+            playedAt: '2026-05-12T14:00:00.000Z',
+            rePlayerIds: [],
+            contraPlayerIds: [],
+            sittingOutPlayerId: null,
+            winner: 're',
+            flagCodes: [],
+            note: null,
+            isSolo: false,
+            triggersManualBock: false,
+            pointsByPlayerId: { a: 3, b: 3, c: -3, d: -3 },
+          },
+        ],
+      },
+    ];
+    return e;
+  }
+
+  test('formatVersion 2 wird akzeptiert und Punkte bleiben erhalten', () => {
+    const parsed = parseExportFile(JSON.stringify(pointsEnvelope()));
+    expect(parsed.envelope.formatVersion).toBe(2);
+    expect(parsed.envelope.payload.sheets[0]!.rounds[0]!.games[0]!.pointsByPlayerId).toEqual({
+      a: 3,
+      b: 3,
+      c: -3,
+      d: -3,
+    });
+  });
+
+  test('formatVersion 1 bleibt gueltig', () => {
+    const parsed = parseExportFile(JSON.stringify(validSheetEnvelope()));
+    expect(parsed.envelope.formatVersion).toBe(1);
+  });
+});
+
 describe('parseExportFile errors', () => {
   test('non-JSON throws ParseError with readable message', () => {
     expect(() => parseExportFile('not json {')).toThrow(ParseError);

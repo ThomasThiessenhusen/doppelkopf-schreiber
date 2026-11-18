@@ -21,7 +21,9 @@ import {
   useTheme,
 } from 'react-native-paper';
 
-import type { Game } from '@/domain/models/game';
+import { copyGame, isPointsGame, type Game } from '@/domain/models/game';
+import { PointsGameDialog } from '@/presentation/widgets/PointsGameDialog';
+import { gameRowsFor } from '@/domain/scoring/gamePoints';
 import { formatDate, formatDateTime, formatTime, parseDateTime } from '@/domain/dateTimeInput';
 import { allGames, gamesPerRound, type GameSheet } from '@/domain/models/gameSheet';
 import { appSettingsFallback } from '@/domain/models/appSettings';
@@ -87,6 +89,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
   const setPlayedAt = useSheetStore((s) => s.setPlayedAt);
   const setStackingModeOverride = useSheetStore((s) => s.setStackingModeOverride);
   const deleteGame = useSheetStore((s) => s.deleteGame);
+  const updateGame = useSheetStore((s) => s.updateGame);
   const setGroup = useSheetStore((s) => s.setGroup);
   const setSubstitutions = useSheetStore((s) => s.setSubstitutions);
 
@@ -116,37 +119,28 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
   const mode = effectiveStackingMode(sheet, settings.defaultStackingMode);
 
   // Berechnungen einmalig im Container.
-  const { totals, levels, bockState, perGameRows, scoresByGame } = useMemo(() => {
+  const { totals, levels, bockState, perGameRows, scoresByGame, pointsByGame } = useMemo(() => {
     const t = totalsFor(sheet, mode);
     const l = resolveBock(sheet, mode);
     const bs = sheet.rounds.length === 0 ? bockStateEmpty : currentBockState(sheet, mode);
+    const rows = gameRowsFor(sheet, mode);
     const sByGame = new Map<string, ReturnType<typeof scoreFor>>();
-    const rows: {
-      gameId: string;
-      pointsByPlayerId: Map<string, number>;
-      sittingOutPlayerId: string | null;
-      bockLevel: BockLevel;
-      soloPlayerId: string | null;
-    }[] = [];
     for (const game of allGames(sheet)) {
-      const score = scoreFor(game, l.get(game.id) ?? BockLevel.none);
-      sByGame.set(game.id, score);
-      const points = new Map<string, number>();
-      for (const p of players) {
-        const isRe = game.rePlayerIds.includes(p.id);
-        const isContra = game.contraPlayerIds.includes(p.id);
-        points.set(p.id, isRe ? score.rePerPlayer : isContra ? score.contraPerPlayer : 0);
-      }
-      rows.push({
-        gameId: game.id,
-        pointsByPlayerId: points,
-        sittingOutPlayerId: game.sittingOutPlayerId,
-        bockLevel: l.get(game.id) ?? BockLevel.none,
-        soloPlayerId: game.isSolo ? (game.rePlayerIds[0] ?? null) : null,
-      });
+      if (isPointsGame(game)) continue;
+      sByGame.set(game.id, scoreFor(game, l.get(game.id) ?? BockLevel.none));
     }
-    return { totals: t, levels: l, bockState: bs, perGameRows: rows, scoresByGame: sByGame };
-  }, [sheet, mode, players]);
+    const pByGame = new Map<string, ReadonlyMap<string, number>>(
+      rows.map((r) => [r.gameId, r.pointsByPlayerId] as const),
+    );
+    return {
+      totals: t,
+      levels: l,
+      bockState: bs,
+      perGameRows: rows,
+      scoresByGame: sByGame,
+      pointsByGame: pByGame,
+    };
+  }, [sheet, mode]);
 
   const canAddGame = sheet.playerIds.length >= 4;
 
@@ -253,8 +247,21 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
     navigation.navigate('AddGame', { sheetId: sheet.id });
   }
 
+  const [pointsGameTarget, setPointsGameTarget] = useState<Game | null>(null);
+
   function onEditGame(game: Game) {
+    if (isPointsGame(game)) {
+      setPointsGameTarget(game);
+      return;
+    }
     navigation.navigate('AddGame', { sheetId: sheet.id, gameId: game.id });
+  }
+
+  async function submitPointsGame(pointsByPlayerId: Record<string, number>) {
+    const target = pointsGameTarget;
+    setPointsGameTarget(null);
+    if (target === null) return;
+    await updateGame(copyGame(target, { pointsByPlayerId }));
   }
 
   useLayoutEffect(() => {
@@ -396,6 +403,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
               players={players}
               scoresByGame={scoresByGame}
               bockLevelByGame={levels}
+              pointsByGame={pointsByGame}
               onEditGame={onEditGame}
               onDeleteGame={(g) => void deleteGame(g.id)}
             />
@@ -439,6 +447,14 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
             </Button>
           </Dialog.Actions>
         </Dialog>
+
+        <PointsGameDialog
+          visible={pointsGameTarget !== null}
+          game={pointsGameTarget}
+          players={players}
+          onDismiss={() => setPointsGameTarget(null)}
+          onSubmit={(pts) => void submitPointsGame(pts)}
+        />
 
         <Dialog visible={playedAtOpen} onDismiss={() => setPlayedAtOpen(false)}>
           <Dialog.Title>{t('sheet.playedAtTitle')}</Dialog.Title>

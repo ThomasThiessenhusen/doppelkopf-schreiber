@@ -4,7 +4,7 @@ import { playerFromJson } from '@/domain/models/player';
 import { sheetGroupFromJson } from '@/domain/models/sheetGroup';
 import {
   APP_TAG,
-  FORMAT_VERSION,
+  SUPPORTED_FORMAT_VERSIONS,
   type ExportEnvelope,
   type ExportKind,
 } from '@/application/export/exportTypes';
@@ -35,9 +35,10 @@ export function parseExportFile(rawText: string): ParsedExportFile {
       `Unbekanntes app-Feld: ${String(json['app'])} (erwartet ${APP_TAG}).`,
     );
   }
-  if (json['formatVersion'] !== FORMAT_VERSION) {
+  const formatVersion = json['formatVersion'];
+  if (typeof formatVersion !== 'number' || !SUPPORTED_FORMAT_VERSIONS.includes(formatVersion)) {
     throw new ParseError(
-      `Unbekannte formatVersion: ${String(json['formatVersion'])} (erwartet ${FORMAT_VERSION}).`,
+      `Unbekannte formatVersion: ${String(formatVersion)} (unterstuetzt: ${SUPPORTED_FORMAT_VERSIONS.join(', ')}).`,
     );
   }
   const kind = json['kind'];
@@ -70,7 +71,7 @@ export function parseExportFile(rawText: string): ParsedExportFile {
   return {
     envelope: {
       app: APP_TAG,
-      formatVersion: FORMAT_VERSION,
+      formatVersion,
       kind,
       exportedAt,
       exportedFromAppVersion,

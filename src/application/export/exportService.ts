@@ -3,7 +3,7 @@ import Constants from 'expo-constants';
 import { repositories } from '@/application/stores/repositories';
 import {
   APP_TAG,
-  FORMAT_VERSION,
+  formatVersionFor,
   type ExportEnvelope,
   type ExportFile,
   type ExportKind,
@@ -28,7 +28,7 @@ function envelope(
 ): ExportEnvelope {
   return {
     app: APP_TAG,
-    formatVersion: FORMAT_VERSION,
+    formatVersion: formatVersionFor(payload.sheets),
     kind,
     exportedAt: exportedAt.toISOString(),
     exportedFromAppVersion: appVersion(),

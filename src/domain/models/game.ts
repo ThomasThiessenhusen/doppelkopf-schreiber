@@ -46,6 +46,53 @@ export interface Game {
   readonly isSolo: boolean;
   /** Dieses Spiel loest eine manuell angesagte Bockrunde aus. */
   readonly triggersManualBock: boolean;
+  /**
+   * Nur bei Punkte-Spielen (von Papier uebernommen): Punkte pro Spieler.
+   * Enthaelt nur aktive Spieler; ein Aussetzer steht nur in
+   * `sittingOutPlayerId`. Fehlt bei normalen Spielen.
+   */
+  readonly pointsByPlayerId?: Readonly<Record<string, number>>;
+}
+
+/** `true`, wenn das Spiel feste Punkte statt berechneter Punkte traegt. */
+export function isPointsGame(g: Game): boolean {
+  return g.pointsByPlayerId !== undefined;
+}
+
+export interface PointsGameInput {
+  pointsByPlayerId: Readonly<Record<string, number>>;
+  sittingOutPlayerId?: string | null;
+  playedAt?: Date;
+}
+
+/**
+ * Spiel mit expliziten Punkten pro Spieler (Papier-Import). Loest keine
+ * Bockrunde aus und traegt keine Teams oder Flags.
+ */
+export function createPointsGame(input: PointsGameInput): Game {
+  const values = Object.values(input.pointsByPlayerId);
+  if (values.length === 0) {
+    throw new Error('Punkte-Spiel: mindestens ein Spieler noetig.');
+  }
+  if (!values.every((v) => Number.isInteger(v))) {
+    throw new Error('Punkte-Spiel: Punkte muessen ganze Zahlen sein.');
+  }
+  if (values.reduce((a, b) => a + b, 0) !== 0) {
+    throw new Error('Punkte-Spiel: Quersumme muss 0 sein.');
+  }
+  return {
+    id: newId(),
+    playedAt: input.playedAt ?? new Date(),
+    rePlayerIds: [],
+    contraPlayerIds: [],
+    sittingOutPlayerId: input.sittingOutPlayerId ?? null,
+    winner: WinnerSide.re,
+    flagCodes: [],
+    note: null,
+    isSolo: false,
+    triggersManualBock: false,
+    pointsByPlayerId: { ...input.pointsByPlayerId },
+  };
 }
 
 export interface CreateGameInput {
@@ -93,10 +140,14 @@ export interface GamePatch {
   note?: string | null;
   isSolo?: boolean;
   triggersManualBock?: boolean;
+  /** Nur fuer Punkte-Spiele: ersetzt die Punkte. */
+  pointsByPlayerId?: Readonly<Record<string, number>>;
 }
 
 export function copyGame(g: Game, patch: GamePatch): Game {
+  const pointsByPlayerId = patch.pointsByPlayerId ?? g.pointsByPlayerId;
   return {
+    ...(pointsByPlayerId !== undefined ? { pointsByPlayerId } : {}),
     id: g.id,
     playedAt: g.playedAt,
     rePlayerIds: patch.rePlayerIds ?? g.rePlayerIds,
@@ -113,6 +164,7 @@ export function copyGame(g: Game, patch: GamePatch): Game {
 
 export function gameToJson(g: Game): Record<string, unknown> {
   return {
+    ...(g.pointsByPlayerId !== undefined ? { pointsByPlayerId: { ...g.pointsByPlayerId } } : {}),
     id: g.id,
     playedAt: g.playedAt.toISOString(),
     rePlayerIds: [...g.rePlayerIds],
@@ -139,7 +191,9 @@ export function gameFromJson(json: Record<string, unknown>): Game {
   if (!Array.isArray(contraPlayerIds)) throw new Error('Game.contraPlayerIds fehlt');
   if (typeof winner !== 'string') throw new Error('Game.winner fehlt');
   if (!Array.isArray(flagCodes)) throw new Error('Game.flagCodes fehlt');
+  const pointsByPlayerId = readPointsByPlayerId(json['pointsByPlayerId']);
   return {
+    ...(pointsByPlayerId !== undefined ? { pointsByPlayerId } : {}),
     id,
     playedAt: new Date(playedAt),
     rePlayerIds: rePlayerIds.map(String),
@@ -152,4 +206,15 @@ export function gameFromJson(json: Record<string, unknown>): Game {
     isSolo: json['isSolo'] === true,
     triggersManualBock: json['triggersManualBock'] === true,
   };
+}
+
+/** Liest die Punkte-Map; ungueltige Formen werden ignoriert (normales Spiel). */
+function readPointsByPlayerId(v: unknown): Record<string, number> | undefined {
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return undefined;
+  const out: Record<string, number> = {};
+  for (const [k, val] of Object.entries(v)) {
+    if (typeof val !== 'number' || !Number.isInteger(val)) return undefined;
+    out[k] = val;
+  }
+  return out;
 }
