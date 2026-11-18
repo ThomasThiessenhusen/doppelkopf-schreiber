@@ -41,6 +41,7 @@ function sheet(games: readonly Game[]): GameSheet {
     id: 's1',
     title: 'Mein erster',
     createdAt: AT,
+    playedAt: AT,
     updatedAt: AT,
     playerIds: ['p1', 'p2', 'p3', 'p4'],
     rounds: [{ index: 0, games }],

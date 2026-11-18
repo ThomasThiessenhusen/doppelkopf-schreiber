@@ -30,6 +30,7 @@ function sheetWith(opts: {
     id: opts.id,
     title: null,
     createdAt: now,
+    playedAt: now,
     updatedAt: now,
     playerIds: opts.players.map((p) => p.id),
     rounds: opts.games.length === 0 ? [] : [round],

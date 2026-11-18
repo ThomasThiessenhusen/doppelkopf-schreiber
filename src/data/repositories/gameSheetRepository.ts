@@ -1,5 +1,6 @@
 import type { LocalStorage } from '@/data/local/localStorage';
 import {
+  compareSheetsByPlayedAtDesc,
   gameSheetFromJson,
   gameSheetToJson,
   type GameSheet,
@@ -15,7 +16,7 @@ export interface GameSheetRepository {
 /**
  * JSON-File-Storage-Implementierung von `GameSheetRepository`. Pro
  * Spielbogen eine Datei unter der Collection `game_sheets`. `loadAll()`
- * sortiert absteigend nach `updatedAt` — neueste zuerst.
+ * sortiert absteigend nach `playedAt` — neuester Spieltag zuerst.
  */
 export function createLocalGameSheetRepository(
   storage: LocalStorage,
@@ -34,7 +35,7 @@ export function createLocalGameSheetRepository(
           // geladen werden kann (gleiche Politik wie jsonFileStorage.readAll).
         }
       }
-      sheets.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      sheets.sort(compareSheetsByPlayedAtDesc);
       return sheets;
     },
     async load(id) {

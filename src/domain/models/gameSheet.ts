@@ -29,6 +29,8 @@ export interface GameSheet {
   readonly id: string;
   readonly title: string | null;
   readonly createdAt: Date;
+  /** Zeitpunkt, an dem tatsaechlich gespielt wurde. Vorbelegt mit `createdAt`, nachtraeglich aenderbar. */
+  readonly playedAt: Date;
   readonly updatedAt: Date;
   readonly playerIds: readonly string[];
   readonly rounds: readonly Round[];
@@ -56,6 +58,7 @@ export function createGameSheet(input: CreateGameSheetInput): GameSheet {
     id: newId(),
     title: trimmedTitle === undefined || trimmedTitle === '' ? null : trimmedTitle,
     createdAt: now,
+    playedAt: now,
     updatedAt: now,
     playerIds: input.players.map((p) => p.id),
     rounds: [],
@@ -64,6 +67,16 @@ export function createGameSheet(input: CreateGameSheetInput): GameSheet {
     groupId: input.groupId ?? null,
     substitutions: [],
   };
+}
+
+/**
+ * Sortierreihenfolge der Bogenliste: absteigend nach `playedAt` (neuester
+ * Spieltag zuerst), bei Gleichstand absteigend nach `updatedAt`.
+ */
+export function compareSheetsByPlayedAtDesc(a: GameSheet, b: GameSheet): number {
+  return (
+    b.playedAt.getTime() - a.playedAt.getTime() || b.updatedAt.getTime() - a.updatedAt.getTime()
+  );
 }
 
 /** Alle Spieler-IDs, auf die der Bogen verweist: Mitspieler plus Stammspieler aus Vertretungen. */
@@ -121,6 +134,7 @@ export interface GameSheetPatch {
   title?: string | null;
   playerIds?: readonly string[];
   rounds?: readonly Round[];
+  playedAt?: Date;
   updatedAt?: Date;
   dirty?: boolean;
   stackingModeOverride?: BockStackingMode | null;
@@ -133,6 +147,7 @@ export function copyGameSheet(sheet: GameSheet, patch: GameSheetPatch): GameShee
     id: sheet.id,
     title: 'title' in patch ? (patch.title ?? null) : sheet.title,
     createdAt: sheet.createdAt,
+    playedAt: patch.playedAt ?? sheet.playedAt,
     updatedAt: patch.updatedAt ?? new Date(),
     playerIds: patch.playerIds ?? sheet.playerIds,
     rounds: patch.rounds ?? sheet.rounds,
@@ -189,6 +204,7 @@ export function gameSheetToJson(sheet: GameSheet): Record<string, unknown> {
     id: sheet.id,
     title: sheet.title,
     createdAt: sheet.createdAt.toISOString(),
+    playedAt: sheet.playedAt.toISOString(),
     updatedAt: sheet.updatedAt.toISOString(),
     playerIds: [...sheet.playerIds],
     rounds: sheet.rounds.map((r) => roundToJson(r)),
@@ -222,10 +238,13 @@ export function gameSheetFromJson(json: Record<string, unknown>): GameSheet {
     throw new Error(`GameSheet.playerIds muss 4 oder 5 Eintraege haben, hat ${playerIds.length}`);
   }
   const rawStacking = json['stackingModeOverride'];
+  const rawPlayedAt = json['playedAt'];
+  const playedAt = typeof rawPlayedAt === 'string' ? new Date(rawPlayedAt) : new Date(createdAt);
   return {
     id,
     title: typeof json['title'] === 'string' ? (json['title'] as string) : null,
     createdAt: new Date(createdAt),
+    playedAt: Number.isNaN(playedAt.getTime()) ? new Date(createdAt) : playedAt,
     updatedAt: new Date(updatedAt),
     playerIds,
     rounds: rounds.map((r) => roundFromJson(r as Record<string, unknown>)),

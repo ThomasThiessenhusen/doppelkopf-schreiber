@@ -26,6 +26,7 @@ export interface SheetStoreState {
   updateGame: (game: Game) => Promise<void>;
   deleteGame: (gameId: string) => Promise<void>;
   renameSheet: (title: string | null) => Promise<void>;
+  setPlayedAt: (playedAt: Date) => Promise<void>;
   setStackingModeOverride: (mode: BockStackingMode | null) => Promise<void>;
   setGroup: (groupId: string | null) => Promise<void>;
   /** Wirft, wenn die Liste fuer diesen Bogen ungueltig ist. */
@@ -82,6 +83,14 @@ export const useSheetStore = create<SheetStoreState>((set, get) => ({
     const cur = get().state;
     if (cur.status !== 'data') return;
     const next = copyGameSheet(cur.value, { title });
+    set({ state: asyncData(next) });
+    await persist(next);
+  },
+
+  async setPlayedAt(playedAt) {
+    const cur = get().state;
+    if (cur.status !== 'data') return;
+    const next = copyGameSheet(cur.value, { playedAt });
     set({ state: asyncData(next) });
     await persist(next);
   },

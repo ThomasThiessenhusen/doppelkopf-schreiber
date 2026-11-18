@@ -16,6 +16,7 @@
         "id": "hs-2026-03-14",
         "title": "Abend 14.03.2026 (Papier)",
         "createdAt": "2026-03-14T19:00:00.000Z",
+        "playedAt": "2026-03-14T19:00:00.000Z",
         "updatedAt": "2026-03-14T23:00:00.000Z",
         "playerIds": ["hs-anna", "hs-ben", "hs-carla", "hs-dirk"],
         "dirty": false,

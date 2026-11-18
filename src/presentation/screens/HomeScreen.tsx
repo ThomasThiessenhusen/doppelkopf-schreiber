@@ -18,6 +18,7 @@ import {
   Text,
 } from 'react-native-paper';
 
+import { formatDateTime } from '@/domain/dateTimeInput';
 import { groupTypeLabelKey } from '@/domain/models/groupType';
 import type { GameSheet } from '@/domain/models/gameSheet';
 import { useSheetGroupListStore } from '@/application/stores/sheetGroupListStore';
@@ -26,19 +27,8 @@ import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 type TFunc = (k: string, p?: Record<string, unknown>) => string;
 
-function pad2(n: number): string {
-  return String(n).padStart(2, '0');
-}
-
-function formatDateTime(d: Date): string {
-  return (
-    `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()} ` +
-    `${pad2(d.getHours())}:${pad2(d.getMinutes())}`
-  );
-}
-
 function defaultTitle(t: TFunc, sheet: GameSheet): string {
-  return t('home.defaultTitle', { date: formatDateTime(sheet.createdAt) });
+  return t('home.defaultTitle', { date: formatDateTime(sheet.playedAt) });
 }
 
 function totalGamesOf(sheet: GameSheet): number {

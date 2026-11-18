@@ -67,6 +67,7 @@ Rahmendaten (von mir):
       "id": "hs-<Datum>",
       "title": "Abend <TT.MM.JJJJ> (Papier)",
       "createdAt": "<Datum>T19:00:00.000Z",
+      "playedAt": "<Datum>T19:00:00.000Z",
       "updatedAt": "<Datum>T23:00:00.000Z",
       "playerIds": [ <Spieler-IDs in Sitzreihenfolge, 4 oder 5> ],
       "dirty": false,
