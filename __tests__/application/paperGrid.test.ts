@@ -129,6 +129,21 @@ describe('Grid-Aufbau', () => {
     expect(removeRow(g, 0).rows).toEqual([[2, -2, 0, 0]]);
   });
 
+  test('removeRow passt die unsicheren Zellen an', () => {
+    const g = {
+      ...grid4([[1, -1, 0, 0], [2, -2, 0, 0], [3, -3, 0, 0]]),
+      uncertain: [
+        { game: 0, player: 1 },
+        { game: 1, player: 2 },
+        { game: 2, player: 3 },
+      ],
+    };
+    expect(removeRow(g, 1).uncertain).toEqual([
+      { game: 0, player: 1 },
+      { game: 1, player: 3 },
+    ]);
+  });
+
   test('setRowSitter verschiebt den Aussetzer und setzt die alte Stelle auf 0', () => {
     const g: PaperGrid = { ...emptyGrid(5, date), rows: [[3, 3, -3, -3, null]] };
     expect(setRowSitter(g, 0, 1).rows).toEqual([[3, null, -3, -3, 0]]);

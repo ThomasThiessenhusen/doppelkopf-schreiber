@@ -104,6 +104,22 @@ describe('parseScanText Fehler', () => {
     ).toThrow(/Spiel 1/);
   });
 
+  test('Komma am Ende wird als fehlerhaftes JSON gemeldet, nicht als falsches kind', () => {
+    const broken = JSON.stringify(scan()).replace(/\}$/, ',}');
+    expect(() => parseScanText(broken)).toThrow(/fehlerhaft/);
+  });
+
+  test('abgeschnittene Antwort wird als unvollstaendig gemeldet', () => {
+    const cut = JSON.stringify(scan()).slice(0, 120);
+    expect(() => parseScanText(cut)).toThrow(/unvollst/);
+  });
+
+  test('ein Beispiel-Objekt vor der echten Abschrift wird uebersprungen', () => {
+    const text = `Format: {"beispiel": true}
+${JSON.stringify(scan())}`;
+    expect(parseScanText(text).title).toBe('Dienstagsrunde');
+  });
+
   test('totals mit falscher Laenge', () => {
     expect(() => parseScanText(JSON.stringify(scan({ totals: [1, 2] })))).toThrow(/totals/);
   });

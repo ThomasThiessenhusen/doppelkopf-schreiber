@@ -110,7 +110,14 @@ export function addRow(grid: PaperGrid): PaperGrid {
 }
 
 export function removeRow(grid: PaperGrid, row: number): PaperGrid {
-  return { ...grid, rows: grid.rows.filter((_, i) => i !== row) };
+  return {
+    ...grid,
+    rows: grid.rows.filter((_, i) => i !== row),
+    // Unsichere Zellen der geloeschten Zeile entfallen, spaetere Zeilen ruecken auf.
+    uncertain: grid.uncertain
+      .filter((u) => u.game !== row)
+      .map((u) => (u.game > row ? { ...u, game: u.game - 1 } : u)),
+  };
 }
 
 /** Setzt den Aussetzer der Zeile auf `col`; die bisherige leere Stelle wird 0. */

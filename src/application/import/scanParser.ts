@@ -131,19 +131,37 @@ function readPlayedAt(v: unknown): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-/** Erstes ausgewogenes `{...}`, das sich als JSON-Objekt lesen laesst. */
+/**
+ * Sucht die Scan-Abschrift im Text: das erste lesbare JSON-Objekt mit
+ * `kind: "scan"` (ein Beispiel-Objekt davor wird uebersprungen). Findet sich
+ * keines, aber ein Objekt war fehlerhaft oder abgeschnitten, wird genau das
+ * gemeldet statt eines irrefuehrenden "kind"-Fehlers.
+ */
 function extractFirstJsonObject(text: string): Record<string, unknown> | null {
+  let firstOther: Record<string, unknown> | null = null;
+  let damaged = false;
   for (let start = text.indexOf('{'); start !== -1; start = text.indexOf('{', start + 1)) {
     const end = findMatchingBrace(text, start);
-    if (end === -1) continue;
+    if (end === -1) {
+      damaged = true;
+      continue;
+    }
     try {
       const parsed: unknown = JSON.parse(text.slice(start, end + 1));
-      if (isObject(parsed)) return parsed;
+      if (isObject(parsed)) {
+        if (parsed['kind'] === 'scan') return parsed;
+        firstOther ??= parsed;
+      }
     } catch {
-      // kein JSON an dieser Stelle; naechste Klammer probieren
+      damaged = true;
     }
   }
-  return null;
+  if (damaged) {
+    throw new ScanParseError(
+      'Das JSON in der Antwort ist fehlerhaft oder unvollständig (z. B. abgeschnitten oder mit einem Komma am Ende).',
+    );
+  }
+  return firstOther;
 }
 
 function findMatchingBrace(text: string, start: number): number {
