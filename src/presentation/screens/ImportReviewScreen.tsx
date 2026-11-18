@@ -34,6 +34,7 @@ import {
 } from '@/application/import/importParser';
 import { repositories } from '@/application/stores/repositories';
 import type { Player } from '@/domain/models/player';
+import type { SheetGroup } from '@/domain/models/sheetGroup';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 interface PreparedState {
@@ -113,11 +114,14 @@ export function ImportReviewScreen({ fileUri }: ImportReviewScreenProps) {
     });
     return {
       ...prepared.initialPlan,
-      sheets: prepared.initialPlan.sheets.map((d) => ({
-        ...d,
-        suggested:
-          re.sheets.find((s) => s.imported.id === d.imported.id)?.suggested ?? d.suggested,
-      })),
+      sheets: prepared.initialPlan.sheets.map((d) => {
+        const r = re.sheets.find((s) => s.imported.id === d.imported.id);
+        return {
+          ...d,
+          suggested: r?.suggested ?? d.suggested,
+          possibleDuplicateOf: r?.possibleDuplicateOf ?? d.possibleDuplicateOf,
+        };
+      }),
     };
   }, [prepared, playerActions]);
 
@@ -221,6 +225,12 @@ export function ImportReviewScreen({ fileUri }: ImportReviewScreenProps) {
                   subtitle={null}
                   action={groupActions[d.imported.id] ?? d.suggested}
                   isExisting={d.localExisting !== null}
+                  mergeTarget={d.localMatchByName}
+                  warning={
+                    d.localMatchByName !== null
+                      ? t('exportImport.groupSameNameHint', { name: d.localMatchByName.name })
+                      : null
+                  }
                   onChange={(a) =>
                     setGroupActions((prev) => ({ ...prev, [d.imported.id]: a }))
                   }
@@ -244,9 +254,18 @@ export function ImportReviewScreen({ fileUri }: ImportReviewScreenProps) {
                   action={sheetActions[d.imported.id] ?? d.suggested}
                   isExisting={d.localExisting !== null}
                   isBlocked={d.suggested.kind === 'skip' && d.localExisting === null}
-                  onChange={(a) =>
-                    setSheetActions((prev) => ({ ...prev, [d.imported.id]: a }))
+                  warning={
+                    d.possibleDuplicateOf !== null
+                      ? t('exportImport.sheetDuplicateWarning', {
+                          title: d.possibleDuplicateOf.title ?? d.possibleDuplicateOf.id,
+                          date: d.possibleDuplicateOf.playedAt.toLocaleDateString(),
+                        })
+                      : null
                   }
+                  onChange={(a) => {
+                    if (a.kind === 'mergeInto') return;
+                    setSheetActions((prev) => ({ ...prev, [d.imported.id]: a }));
+                  }}
                 />
               </View>
             ))}
@@ -379,24 +398,33 @@ function SheetOrGroupRow({
   action,
   isExisting,
   isBlocked,
+  mergeTarget,
+  warning,
   onChange,
 }: {
   title: string;
   subtitle: string | null;
-  action: SheetAction;
+  action: GroupAction;
   isExisting: boolean;
   isBlocked?: boolean;
-  onChange: (a: SheetAction) => void;
+  /** Nur Gruppen: gleichnamige lokale Gruppe, in die zusammengefuehrt werden kann. */
+  mergeTarget?: SheetGroup | null;
+  warning?: string | null;
+  onChange: (a: GroupAction) => void;
 }) {
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   if (isBlocked === true) {
     return <List.Item title={title} description={t('exportImport.skipDependentSheet')} />;
   }
+  const description = [subtitle, warning]
+    .filter((x): x is string => x !== null && x !== undefined)
+    .join('\n');
   return (
     <List.Item
       title={title}
-      description={subtitle ?? undefined}
+      description={description === '' ? undefined : description}
+      descriptionNumberOfLines={4}
       right={() => (
         <Menu
           visible={menuOpen}
@@ -433,6 +461,15 @@ function SheetOrGroupRow({
             </>
           ) : (
             <>
+              {mergeTarget != null && (
+                <Menu.Item
+                  title={t('exportImport.actionMergeInto', { name: mergeTarget.name })}
+                  onPress={() => {
+                    onChange({ kind: 'mergeInto', localId: mergeTarget.id });
+                    setMenuOpen(false);
+                  }}
+                />
+              )}
               <Menu.Item
                 title={t('exportImport.actionAddAsNew')}
                 onPress={() => {
@@ -463,8 +500,10 @@ function SheetOrGroupRow({
   );
 }
 
-function describeSheetAction(action: SheetAction, t: TFunc): string {
+function describeSheetAction(action: GroupAction, t: TFunc): string {
   switch (action.kind) {
+    case 'mergeInto':
+      return t('exportImport.actionMergeGroup');
     case 'useLocal':
       return t('exportImport.actionUseLocal');
     case 'addAsNew':

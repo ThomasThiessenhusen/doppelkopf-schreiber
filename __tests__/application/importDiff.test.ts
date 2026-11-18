@@ -172,6 +172,95 @@ describe('buildImportPlan — groups', () => {
   });
 });
 
+describe('buildImportPlan — group name match', () => {
+  test('different id, same name (case/trim-insensitive) → mergeInto local group', () => {
+    const local: LocalState = { ...emptyLocal, groups: [g('local-g', 'Saison 2026')] };
+    const plan = buildImportPlan(
+      envelope('group', [], [], [g('imp-g', '  saison 2026 ')]),
+      local,
+    );
+    const d = plan.groups[0]!;
+    expect(d.suggested).toEqual({ kind: 'mergeInto', localId: 'local-g' });
+    expect(d.localMatchByName?.id).toBe('local-g');
+  });
+  test('same id wins over name match', () => {
+    const local: LocalState = {
+      ...emptyLocal,
+      groups: [g('grp-1', 'Alt', epoch), g('other', 'Neu')],
+    };
+    const plan = buildImportPlan(envelope('group', [], [], [g('grp-1', 'Neu', newer)]), local);
+    expect(plan.groups[0]!.suggested.kind).toBe('replaceLocal');
+    expect(plan.groups[0]!.localMatchByName).toBeNull();
+  });
+  test('different name → addAsNew', () => {
+    const local: LocalState = { ...emptyLocal, groups: [g('local-g', 'A')] };
+    const plan = buildImportPlan(envelope('group', [], [], [g('imp-g', 'B')]), local);
+    expect(plan.groups[0]!.suggested.kind).toBe('addAsNew');
+  });
+});
+
+describe('buildImportPlan — possible duplicate sheets', () => {
+  const four = ['a', 'b', 'c', 'd'];
+  test('new id, same group/day/players → possibleDuplicateOf set, action stays addAsNew', () => {
+    const local: LocalState = {
+      ...emptyLocal,
+      players: ['a', 'b', 'c', 'd'].map((x) => p(x, x)),
+      sheets: [s('local-sh', four, epoch, 'grp')],
+    };
+    const plan = buildImportPlan(
+      envelope('sheet', local.players, [s('imp-sh', [...four].reverse(), epoch, 'grp')], []),
+      local,
+    );
+    expect(plan.sheets[0]!.possibleDuplicateOf?.id).toBe('local-sh');
+    expect(plan.sheets[0]!.suggested.kind).toBe('addAsNew');
+  });
+  test('merged group and merged players are compared via local ids', () => {
+    const local: LocalState = {
+      ...emptyLocal,
+      players: [p('la', 'Anna'), p('lb', 'Ben'), p('lc', 'Cem'), p('ld', 'Dora')],
+      groups: [g('local-g', 'Saison')],
+      sheets: [s('local-sh', ['la', 'lb', 'lc', 'ld'], epoch, 'local-g')],
+    };
+    const plan = buildImportPlan(
+      envelope(
+        'group',
+        [p('ia', 'Anna'), p('ib', 'Ben'), p('ic', 'Cem'), p('id', 'Dora')],
+        [s('imp-sh', ['ia', 'ib', 'ic', 'id'], epoch, 'imp-g')],
+        [g('imp-g', 'Saison')],
+      ),
+      local,
+    );
+    expect(plan.sheets[0]!.possibleDuplicateOf?.id).toBe('local-sh');
+  });
+  test('different day, different players or different group → no warning', () => {
+    const base = s('local-sh', four, epoch, 'grp');
+    const local: LocalState = {
+      ...emptyLocal,
+      players: ['a', 'b', 'c', 'd', 'e'].map((x) => p(x, x)),
+      sheets: [base],
+    };
+    const otherDay = { ...s('i1', four, epoch, 'grp'), playedAt: new Date('2026-06-15T12:00:00') };
+    const otherPlayers = s('i2', ['a', 'b', 'c', 'e'], epoch, 'grp');
+    const otherGroup = s('i3', four, epoch, 'grp2');
+    const plan = buildImportPlan(
+      envelope('sheet', local.players, [otherDay, otherPlayers, otherGroup], []),
+      local,
+    );
+    expect(plan.sheets.map((d) => d.possibleDuplicateOf)).toEqual([null, null, null]);
+  });
+  test('same id (already local) → no duplicate warning', () => {
+    const local: LocalState = {
+      ...emptyLocal,
+      sheets: [s('sh-1', four, epoch, 'grp')],
+    };
+    const plan = buildImportPlan(
+      envelope('sheet', [], [s('sh-1', four, newer, 'grp')], []),
+      local,
+    );
+    expect(plan.sheets[0]!.possibleDuplicateOf).toBeNull();
+  });
+});
+
 describe('buildImportPlan — settings (backup only)', () => {
   test('null payload settings → no settings decision', () => {
     const plan = buildImportPlan(

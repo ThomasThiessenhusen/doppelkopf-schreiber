@@ -12,6 +12,7 @@ export interface ImportResult {
   readonly groupsAdded: number;
   readonly groupsReplaced: number;
   readonly groupsCopied: number;
+  readonly groupsMerged: number;
   readonly sheetsAdded: number;
   readonly sheetsReplaced: number;
   readonly sheetsCopied: number;
@@ -41,6 +42,7 @@ export async function applyImportPlan(
     groupsAdded: 0,
     groupsReplaced: 0,
     groupsCopied: 0,
+    groupsMerged: 0,
     sheetsAdded: 0,
     sheetsReplaced: 0,
     sheetsCopied: 0,
@@ -98,6 +100,11 @@ export async function applyImportPlan(
         break;
       case 'keepLocal':
         groupRemap.set(d.imported.id, d.imported.id);
+        break;
+      case 'mergeInto':
+        // Gleichnamige lokale Gruppe: nichts speichern, Boegen dorthin umhaengen.
+        groupRemap.set(d.imported.id, action.localId);
+        counters.groupsMerged += 1;
         break;
       case 'addCopy': {
         const fresh = copyGroupWithNewId(d.imported);
