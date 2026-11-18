@@ -30,6 +30,7 @@ import { GroupRankingsScreen } from '@/presentation/screens/GroupRankingsScreen'
 import { PlayerManagementScreen } from '@/presentation/screens/PlayerManagementScreen';
 import { SettingsScreen } from '@/presentation/screens/SettingsScreen';
 import { ImportReviewScreen } from '@/presentation/screens/ImportReviewScreen';
+import { PaperSheetGridScreen } from '@/presentation/screens/PaperSheetGridScreen';
 import { PaperSheetStartScreen } from '@/presentation/screens/PaperSheetStartScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -148,6 +149,11 @@ function LocalizedStack({ theme }: { theme: typeof lightTheme }) {
         name="PaperSheetStart"
         component={PaperSheetStartScreen}
         options={{ title: t('nav.paperStart') }}
+      />
+      <Stack.Screen
+        name="PaperSheetGrid"
+        component={PaperSheetGridScreen}
+        options={{ title: t('nav.paperGrid') }}
       />
     </Stack.Navigator>
   );
