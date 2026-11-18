@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Chip, Menu, Text } from 'react-native-paper';
+import { Chip, Menu, Text, useTheme } from 'react-native-paper';
 
 import { playerDisplayName, type Player } from '@/domain/models/player';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
@@ -25,6 +25,7 @@ export function TeamPicker({
   onSittingOutChanged,
 }: TeamPickerProps) {
   const { t } = useTranslation();
+  const theme = useTheme();
   const activePlayers = players.filter((p) => p.id !== sittingOutPlayerId);
   const reCount = selectedRePlayerIds.size;
   const hasPreview = reCount === 1 || reCount === 2;
@@ -60,6 +61,20 @@ export function TeamPicker({
               selected={isSelected}
               disabled={disabled}
               showSelectedCheck={false}
+              mode={isSelected ? 'flat' : 'outlined'}
+              style={
+                isSelected
+                  ? {
+                      backgroundColor: theme.colors.primary,
+                      borderColor: theme.colors.primary,
+                      borderWidth: 1,
+                    }
+                  : undefined
+              }
+              textStyle={
+                isSelected ? { color: theme.colors.onPrimary, fontWeight: '700' } : undefined
+              }
+              selectedColor={isSelected ? theme.colors.onPrimary : undefined}
               onPress={() => toggle(p, !isSelected)}
             >
               {playerDisplayName(p)}

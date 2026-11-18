@@ -5,6 +5,7 @@ import type { Player } from '@/domain/models/player';
 import { playerDisplayName } from '@/domain/models/player';
 import { BockLevel } from '@/domain/scoring/bockLevel';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
+import { FONT_SCALE } from '@/presentation/theme/theme';
 
 const ROW_HEIGHT = 28;
 const VISIBLE_ROWS = 8;
@@ -77,7 +78,7 @@ export function Scoreboard({ players, totalsByPlayerId, pointsByGame }: Scoreboa
             />
             <Text
               style={{
-                fontSize: 12,
+                fontSize: Math.round(12 * FONT_SCALE),
                 color: crossSumOk
                   ? theme.colors.onPrimaryContainer
                   : theme.colors.onErrorContainer,

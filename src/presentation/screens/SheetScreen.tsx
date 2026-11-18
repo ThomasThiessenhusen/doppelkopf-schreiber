@@ -23,7 +23,7 @@ import {
 
 import type { Game } from '@/domain/models/game';
 import { formatDate, formatDateTime, formatTime, parseDateTime } from '@/domain/dateTimeInput';
-import { allGames, type GameSheet } from '@/domain/models/gameSheet';
+import { allGames, gamesPerRound, type GameSheet } from '@/domain/models/gameSheet';
 import { appSettingsFallback } from '@/domain/models/appSettings';
 import { GroupType, groupTypeLabelKey } from '@/domain/models/groupType';
 import type { SheetGroup } from '@/domain/models/sheetGroup';
@@ -376,7 +376,9 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
           </View>
         )}
 
-        {bockState.level !== BockLevel.none && <BockBanner bockState={bockState} />}
+        {bockState.level !== BockLevel.none && (
+          <BockBanner bockState={bockState} roundLength={gamesPerRound(sheet)} />
+        )}
 
         {sheet.rounds.length === 0 ? (
           <View style={{ padding: 32, alignItems: 'center', gap: 8 }}>
@@ -575,7 +577,13 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
   );
 }
 
-function BockBanner({ bockState }: { bockState: ReturnType<typeof currentBockState> }) {
+function BockBanner({
+  bockState,
+  roundLength,
+}: {
+  bockState: ReturnType<typeof currentBockState>;
+  roundLength: number;
+}) {
   const { t } = useTranslation();
   const theme = useTheme();
   const lines: string[] = [];
@@ -586,7 +594,12 @@ function BockBanner({ bockState }: { bockState: ReturnType<typeof currentBockSta
     if (bockState.remainingDouble > 0) {
       lines.push(t('sheet.bockAfterDouble', { count: bockState.remainingSingle }));
     } else {
-      lines.push(t('sheet.bockSingleActive', { count: bockState.remainingSingle }));
+      lines.push(
+        t('sheet.bockSingleActive', {
+          played: Math.max(0, roundLength - bockState.remainingSingle),
+          total: roundLength,
+        }),
+      );
     }
   }
   return (

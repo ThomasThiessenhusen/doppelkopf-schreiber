@@ -266,7 +266,7 @@ export const en: Resources = {
     groupCreate: 'Create',
     bockDoubleRemaining: 'Doppelbock — {{count}} games left',
     bockAfterDouble: 'then Bock — {{count}} games',
-    bockSingleActive: 'Bock round active — {{count}} games',
+    bockSingleActive: 'Bock round active — {{played}} of {{total}} played',
     scoreboardTitle: 'Score',
     scoreboardCrossSum: 'Cross-sum {{sum}}',
     roundTitle: 'Round {{n}}',
