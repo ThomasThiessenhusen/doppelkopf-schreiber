@@ -62,6 +62,8 @@ export function calculateGroupRankings(input: CalculateGroupRankingsInput): Grou
     for (const game of allGames(sheet)) {
       for (const id of game.rePlayerIds) activeIds.add(id);
       for (const id of game.contraPlayerIds) activeIds.add(id);
+      // Punkte-Spiele (Papier-Import) kennen keine Teams, nur Punkte je Spieler.
+      for (const id of Object.keys(game.pointsByPlayerId ?? {})) activeIds.add(id);
     }
     if (activeIds.size === 0) continue;
 
