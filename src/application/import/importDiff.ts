@@ -29,13 +29,21 @@ export interface SheetDecision {
   readonly imported: GameSheet;
   readonly localExisting: GameSheet | null;
   readonly suggested: SheetAction;
+  /**
+   * Lokaler Bogen mit anderer ID, aber gleicher Gruppe, gleichem Spieltag und
+   * gleichen Spielern — vermutlich derselbe Spieltag, doppelt erfasst. Nur ein
+   * Hinweis, die vorgeschlagene Aktion bleibt unveraendert.
+   */
+  readonly possibleDuplicateOf: GameSheet | null;
 }
 
-export type GroupAction = SheetAction;
+export type GroupAction = SheetAction | { kind: 'mergeInto'; localId: string };
 
 export interface GroupDecision {
   readonly imported: SheetGroup;
   readonly localExisting: SheetGroup | null;
+  /** Lokale Gruppe mit anderer ID, aber gleichem Namen (nur wenn keine ID-Uebereinstimmung). */
+  readonly localMatchByName: SheetGroup | null;
   readonly suggested: GroupAction;
 }
 
@@ -100,25 +108,57 @@ export function buildImportPlan(
     players.filter((d) => d.suggested.kind === 'skip').map((d) => d.imported.id),
   );
 
-  const groups: GroupDecision[] = parsed.envelope.payload.groups.map((imp) => ({
-    imported: imp,
-    localExisting: localGroupsById.get(imp.id) ?? null,
-    suggested: suggestForRecord(localGroupsById.get(imp.id) ?? null, imp.updatedAt),
-  }));
+  const localGroupsByName = new Map<string, SheetGroup>();
+  for (const lg of local.groups) {
+    const key = groupNameKey(lg.name);
+    if (!localGroupsByName.has(key)) localGroupsByName.set(key, lg);
+  }
+
+  const groups: GroupDecision[] = parsed.envelope.payload.groups.map((imp) => {
+    const byId = localGroupsById.get(imp.id) ?? null;
+    const byName = byId === null ? (localGroupsByName.get(groupNameKey(imp.name)) ?? null) : null;
+    return {
+      imported: imp,
+      localExisting: byId,
+      localMatchByName: byName,
+      suggested:
+        byName !== null
+          ? { kind: 'mergeInto', localId: byName.id }
+          : suggestForRecord(byId, imp.updatedAt),
+    };
+  });
+
+  // Importierte Gruppen-/Spieler-ID -> lokale ID, fuer den Duplikat-Vergleich.
+  const playerIdMap = new Map<string, string>();
+  for (const d of players) {
+    if (d.suggested.kind === 'useLocal' || d.suggested.kind === 'mergeInto') {
+      playerIdMap.set(d.imported.id, d.suggested.localId);
+    }
+  }
+  const groupIdMap = new Map<string, string>();
+  for (const d of groups) {
+    if (d.suggested.kind === 'mergeInto') groupIdMap.set(d.imported.id, d.suggested.localId);
+  }
 
   const sheets: SheetDecision[] = parsed.envelope.payload.sheets.map((imp) => {
+    const localExisting = localSheetsById.get(imp.id) ?? null;
     const blocked = imp.playerIds.some((id) => skippedPlayerIds.has(id));
     if (blocked) {
       return {
         imported: imp,
-        localExisting: localSheetsById.get(imp.id) ?? null,
+        localExisting,
         suggested: { kind: 'skip' },
+        possibleDuplicateOf: null,
       };
     }
     return {
       imported: imp,
-      localExisting: localSheetsById.get(imp.id) ?? null,
-      suggested: suggestForRecord(localSheetsById.get(imp.id) ?? null, imp.updatedAt),
+      localExisting,
+      suggested: suggestForRecord(localExisting, imp.updatedAt),
+      possibleDuplicateOf:
+        localExisting === null
+          ? findPossibleDuplicate(imp, local.sheets, playerIdMap, groupIdMap)
+          : null,
     };
   });
 
@@ -133,6 +173,39 @@ export function buildImportPlan(
         };
 
   return { players, groups, sheets, settings };
+}
+
+function groupNameKey(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function dayKey(d: Date): string {
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+function playerSetKey(ids: readonly string[]): string {
+  return [...new Set(ids)].sort().join('|');
+}
+
+function findPossibleDuplicate(
+  imported: GameSheet,
+  localSheets: readonly GameSheet[],
+  playerIdMap: ReadonlyMap<string, string>,
+  groupIdMap: ReadonlyMap<string, string>,
+): GameSheet | null {
+  const groupId =
+    imported.groupId === null ? null : (groupIdMap.get(imported.groupId) ?? imported.groupId);
+  const players = playerSetKey(imported.playerIds.map((id) => playerIdMap.get(id) ?? id));
+  const day = dayKey(imported.playedAt);
+  return (
+    localSheets.find(
+      (l) =>
+        l.id !== imported.id &&
+        l.groupId === groupId &&
+        dayKey(l.playedAt) === day &&
+        playerSetKey(l.playerIds) === players,
+    ) ?? null
+  );
 }
 
 function suggestForRecord(

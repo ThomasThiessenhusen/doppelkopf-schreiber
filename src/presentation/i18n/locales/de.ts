@@ -368,6 +368,10 @@ export const de = {
     cancelButton: 'Abbrechen',
     importFailed: 'Import fehlgeschlagen',
     skipDependentSheet: 'Abhängiger Spieler übersprungen',
+    actionMergeGroup: 'Mit lokaler Gruppe zusammenführen',
+    groupSameNameHint: 'Lokal existiert bereits eine Gruppe „{{name}}“.',
+    sheetDuplicateWarning:
+      'Möglicherweise doppelt: „{{title}}“ vom {{date}} hat dieselbe Gruppe und dieselben Spieler.',
   },
 } as const;
 

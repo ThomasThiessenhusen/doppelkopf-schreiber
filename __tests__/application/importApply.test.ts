@@ -119,6 +119,7 @@ describe('applyImportPlan — players', () => {
         {
           imported: s('imp-sh', ['imp-a', 'local-b', 'local-c', 'local-d']),
           localExisting: null,
+          possibleDuplicateOf: null,
           suggested: { kind: 'addAsNew' },
         },
       ],
@@ -146,6 +147,7 @@ describe('applyImportPlan — sheets', () => {
         {
           imported: { ...s('sh-1', ['a', 'b', 'c', 'd']), title: 'New' },
           localExisting: s('sh-1', ['a', 'b', 'c', 'd']),
+          possibleDuplicateOf: null,
           suggested: { kind: 'replaceLocal' },
         },
       ],
@@ -170,6 +172,7 @@ describe('applyImportPlan — sheets', () => {
         {
           imported: { ...s('sh-1', ['a', 'b', 'c', 'd']), title: 'Imported' },
           localExisting: s('sh-1', ['a', 'b', 'c', 'd']),
+          possibleDuplicateOf: null,
           suggested: { kind: 'keepLocal' },
         },
       ],
@@ -193,6 +196,7 @@ describe('applyImportPlan — sheets', () => {
         {
           imported: { ...s('sh-1', ['a', 'b', 'c', 'd']), title: 'CopyMe' },
           localExisting: s('sh-1', ['a', 'b', 'c', 'd']),
+          possibleDuplicateOf: null,
           suggested: { kind: 'addCopy' },
         },
       ],
@@ -214,6 +218,7 @@ describe('applyImportPlan — sheets', () => {
         {
           imported: s('sh-1', ['a', 'b', 'c', 'd']),
           localExisting: null,
+          possibleDuplicateOf: null,
           suggested: { kind: 'skip' },
         },
       ],
@@ -238,6 +243,7 @@ describe('applyImportPlan — groups remap', () => {
         {
           imported: g('grp-1', 'ImportedGroup'),
           localExisting: g('grp-1', 'LocalGroup'),
+          localMatchByName: null,
           suggested: { kind: 'addCopy' },
         },
       ],
@@ -245,6 +251,7 @@ describe('applyImportPlan — groups remap', () => {
         {
           imported: s('sh-1', ['a', 'b', 'c', 'd'], 'grp-1'),
           localExisting: null,
+          possibleDuplicateOf: null,
           suggested: { kind: 'addAsNew' },
         },
       ],
@@ -258,6 +265,37 @@ describe('applyImportPlan — groups remap', () => {
       (g) => g.name === 'ImportedGroup',
     );
     expect(stored?.groupId).toBe(copyGroup?.id);
+  });
+
+  test('group mergeInto saves no group and moves sheets to the local group', async () => {
+    for (const [id, n] of [['a', 'Anna'], ['b', 'Ben'], ['c', 'Carla'], ['d', 'Dirk']] as const) {
+      await repositories.player().save(p(id, n));
+    }
+    await repositories.sheetGroup().save(g('local-g', 'Saison'));
+    const plan: ImportPlan = {
+      players: [],
+      groups: [
+        {
+          imported: g('imp-g', 'Saison'),
+          localExisting: null,
+          localMatchByName: g('local-g', 'Saison'),
+          suggested: { kind: 'mergeInto', localId: 'local-g' },
+        },
+      ],
+      sheets: [
+        {
+          imported: s('sh-1', ['a', 'b', 'c', 'd'], 'imp-g'),
+          localExisting: null,
+          possibleDuplicateOf: null,
+          suggested: { kind: 'addAsNew' },
+        },
+      ],
+      settings: null,
+    };
+    const result = await applyImportPlan(plan);
+    expect(result.groupsMerged).toBe(1);
+    expect((await repositories.sheetGroup().loadAll()).map((x) => x.id)).toEqual(['local-g']);
+    expect((await repositories.gameSheet().load('sh-1'))?.groupId).toBe('local-g');
   });
 });
 
@@ -328,6 +366,7 @@ describe('applyImportPlan — Vertretungen', () => {
             substitutions: [{ substituteId: 'imp-d', mainPlayerId: 'imp-x' }],
           },
           localExisting: null,
+          possibleDuplicateOf: null,
           suggested: { kind: sheetAction },
         },
       ],

@@ -370,5 +370,9 @@ export const en: Resources = {
     cancelButton: 'Cancel',
     importFailed: 'Import failed',
     skipDependentSheet: 'Skipped — dependent player skipped',
+    actionMergeGroup: 'Merge into local group',
+    groupSameNameHint: 'A group "{{name}}" already exists locally.',
+    sheetDuplicateWarning:
+      'Possible duplicate: "{{title}}" from {{date}} has the same group and players.',
   },
 };
