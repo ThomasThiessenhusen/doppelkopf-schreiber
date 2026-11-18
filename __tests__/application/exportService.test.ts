@@ -7,7 +7,12 @@ import {
   exportGroup,
   exportSheet,
 } from '@/application/export/exportService';
-import { APP_TAG, FORMAT_VERSION } from '@/application/export/exportTypes';
+import {
+  APP_TAG,
+  FORMAT_VERSION,
+  FORMAT_VERSION_POINTS_GAMES,
+} from '@/application/export/exportTypes';
+import { createPointsGame } from '@/domain/models/game';
 import { createLocalGameSheetRepository } from '@/data/repositories/gameSheetRepository';
 import { createLocalPlayerRepository } from '@/data/repositories/playerRepository';
 import { createLocalSettingsRepository } from '@/data/repositories/settingsRepository';
@@ -78,6 +83,25 @@ describe('exportSheet', () => {
 
   test('throws when sheet not found', async () => {
     await expect(exportSheet('does-not-exist')).rejects.toThrow();
+  });
+
+  test('sheet with a points game gets formatVersion 2', async () => {
+    for (const [id, name] of [['a', 'Anna'], ['b', 'Ben']] as const) {
+      await repositories.player().save(p(id, name));
+    }
+    const base = s('sheet-pts', ['a', 'b', 'c', 'd']);
+    const game = createPointsGame({ pointsByPlayerId: { a: 3, b: 3, c: -3, d: -3 } });
+    await repositories.gameSheet().save({ ...base, rounds: [{ index: 0, games: [game] }] });
+
+    const file = await exportSheet('sheet-pts');
+
+    expect(file.envelope.formatVersion).toBe(FORMAT_VERSION_POINTS_GAMES);
+    expect(file.envelope.payload.sheets[0]!.rounds[0]!.games[0]!.pointsByPlayerId).toEqual({
+      a: 3,
+      b: 3,
+      c: -3,
+      d: -3,
+    });
   });
 });
 
