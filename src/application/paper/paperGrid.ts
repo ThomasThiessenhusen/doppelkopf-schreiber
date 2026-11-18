@@ -23,6 +23,12 @@ export interface PaperGrid {
   readonly playedAt: Date;
   /** Spaltenueberschriften (Namen, so wie sie auf dem Papier stehen). */
   readonly columnNames: readonly string[];
+  /**
+   * `true`: jede Zeile ist der Zwischenstand (Summe aller bisherigen Spiele
+   * plus dieses Spiel); gespeichert werden die Differenzen. `null` heisst dann
+   * "Stand unveraendert" (Aussetzer).
+   */
+  readonly cumulative: boolean;
   readonly assignments: readonly PlayerAssignment[];
   readonly rows: readonly (readonly PaperCell[])[];
   /** Summenzeile des Papiers; nur fuer einen Hinweis, wird nie importiert. */
@@ -35,6 +41,7 @@ export function emptyGrid(playerCount: 4 | 5, playedAt: Date): PaperGrid {
     title: '',
     playedAt,
     columnNames: Array.from({ length: playerCount }, () => ''),
+    cumulative: false,
     assignments: Array.from({ length: playerCount }, (): PlayerAssignment => ({ kind: 'unassigned' })),
     rows: [],
     paperTotals: null,
@@ -47,6 +54,7 @@ export function gridFromScan(scan: ScanSheet, pool: readonly Player[]): PaperGri
     title: scan.title ?? '',
     playedAt: scan.playedAt ?? new Date(),
     columnNames: [...scan.players],
+    cumulative: scan.cumulative,
     assignments: scan.players.map((name): PlayerAssignment => {
       const playerId = matchPlayer(name, pool);
       return playerId === null ? { kind: 'unassigned' } : { kind: 'pool', playerId };
@@ -100,10 +108,16 @@ export function setCell(grid: PaperGrid, row: number, col: number, value: PaperC
 
 /**
  * Neue Zeile: 4 Spieler → lauter Nullen; 5 Spieler → Aussetzer-Vorschlag
- * nach App-Rotation (`rows.length % 5`), vom Nutzer aenderbar.
+ * nach App-Rotation (`rows.length % 5`), vom Nutzer aenderbar. Bei
+ * Zwischenstaenden startet die Zeile mit dem bisherigen Stand (kein
+ * Punktzuwachs), die erste Zeile mit Nullen.
  */
 export function addRow(grid: PaperGrid): PaperGrid {
   const count = grid.columnNames.length;
+  if (grid.cumulative) {
+    const last = carriedRows(grid).at(-1) ?? Array.from({ length: count }, () => 0);
+    return { ...grid, rows: [...grid.rows, [...last]] };
+  }
   const sitter = count === 5 ? grid.rows.length % 5 : -1;
   const row: PaperCell[] = Array.from({ length: count }, (_, i) => (i === sitter ? null : 0));
   return { ...grid, rows: [...grid.rows, row] };
@@ -131,11 +145,60 @@ export function setRowSitter(grid: PaperGrid, row: number, col: number): PaperGr
   );
 }
 
+/**
+ * Zwischenstaende mit uebernommenem Stand: ein leeres Feld (`null`) behaelt
+ * den Wert der Vorzeile (erste Zeile: 0).
+ */
+function carriedRows(grid: PaperGrid): number[][] {
+  const out: number[][] = [];
+  let prev = grid.columnNames.map(() => 0);
+  for (const row of grid.rows) {
+    const cur = row.map((c, i) => c ?? prev[i] ?? 0);
+    out.push(cur);
+    prev = cur;
+  }
+  return out;
+}
+
+/** Ein Spiel, wie es gespeichert wird: Punkte je Spalte, `null` = Aussetzer. */
+export interface ResolvedGameRow {
+  readonly points: readonly (number | null)[];
+  readonly sitterCol: number | null;
+}
+
+/**
+ * Wandelt das Raster in Einzelspiele um. Einzelspiel-Modus: die Zeile ist das
+ * Spiel, `null` ist der Aussetzer. Zwischenstand-Modus: Differenz zur
+ * Vorzeile; Aussetzer ist das leere Feld, sonst bei 5 Spielern der einzige
+ * Spieler ohne Punktzuwachs, sonst keiner (wird nicht geraten).
+ */
+export function resolveGameRows(grid: PaperGrid): ResolvedGameRow[] {
+  if (!grid.cumulative) {
+    return grid.rows.map((cells) => {
+      const idx = cells.indexOf(null);
+      return { points: [...cells], sitterCol: idx === -1 ? null : idx };
+    });
+  }
+  const count = grid.columnNames.length;
+  const carried = carriedRows(grid);
+  return grid.rows.map((cells, i) => {
+    const prev = i === 0 ? grid.columnNames.map(() => 0) : carried[i - 1]!;
+    const delta = carried[i]!.map((c, col) => c - (prev[col] ?? 0));
+    const nullCol = cells.indexOf(null);
+    let sitterCol: number | null = nullCol === -1 ? null : nullCol;
+    if (sitterCol === null && count === 5) {
+      const zeros = delta.flatMap((d, col) => (d === 0 ? [col] : []));
+      if (zeros.length === 1) sitterCol = zeros[0]!;
+    }
+    return { points: delta.map((d, col) => (col === sitterCol ? null : d)), sitterCol };
+  });
+}
+
 export function computedColumnTotals(grid: PaperGrid): number[] {
   const totals = grid.columnNames.map(() => 0);
-  for (const row of grid.rows) {
-    row.forEach((cell, i) => {
-      totals[i] = (totals[i] ?? 0) + (cell ?? 0);
+  for (const game of resolveGameRows(grid)) {
+    game.points.forEach((p, i) => {
+      totals[i] = (totals[i] ?? 0) + (p ?? 0);
     });
   }
   return totals;
@@ -154,11 +217,16 @@ export interface GridValidation {
 export function validateGrid(grid: PaperGrid, pool: readonly Player[]): GridValidation {
   const playerCount = grid.columnNames.length;
   const rowIssues: { row: number; kind: 'sum' | 'empty' | 'sitter' }[] = [];
+  const carried = grid.cumulative ? carriedRows(grid) : null;
   grid.rows.forEach((cells, row) => {
     const nulls = cells.filter((c) => c === null).length;
     if (playerCount === 4 && nulls > 0) rowIssues.push({ row, kind: 'empty' });
-    if (playerCount === 5 && nulls !== 1) rowIssues.push({ row, kind: 'sitter' });
-    const sum = cells.reduce<number>((a, c) => a + (c ?? 0), 0);
+    if (playerCount === 5) {
+      // Einzelspiele: genau ein Aussetzer; Zwischenstaende: hoechstens ein leeres Feld.
+      if (grid.cumulative ? nulls > 1 : nulls !== 1) rowIssues.push({ row, kind: 'sitter' });
+    }
+    const values = carried !== null ? carried[row]! : cells;
+    const sum = values.reduce<number>((a, c) => a + (c ?? 0), 0);
     if (sum !== 0) rowIssues.push({ row, kind: 'sum' });
   });
 
@@ -204,17 +272,14 @@ export function buildSheetFromGrid(grid: PaperGrid, players: readonly Player[]):
     throw new Error('Spielerliste passt nicht zur Spaltenzahl.');
   }
   const base = createGameSheet({ players, title: grid.title, at: grid.playedAt });
-  const games: Game[] = grid.rows.map((cells, i) => {
+  const games: Game[] = resolveGameRows(grid).map((game, i) => {
     const pointsByPlayerId: Record<string, number> = {};
-    let sittingOutPlayerId: string | null = null;
-    cells.forEach((cell, col) => {
-      const id = players[col]!.id;
-      if (cell === null) sittingOutPlayerId = id;
-      else pointsByPlayerId[id] = cell;
+    game.points.forEach((p, col) => {
+      if (p !== null) pointsByPlayerId[players[col]!.id] = p;
     });
     return createPointsGame({
       pointsByPlayerId,
-      sittingOutPlayerId,
+      sittingOutPlayerId: game.sitterCol === null ? null : players[game.sitterCol]!.id,
       playedAt: new Date(grid.playedAt.getTime() + i * 1000),
     });
   });

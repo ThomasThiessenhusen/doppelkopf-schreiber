@@ -268,6 +268,9 @@ export const en: Resources = {
     leaveDiscard: 'Discard',
     invalidCells: 'At least one cell does not contain a valid number.',
     promptLabel: 'Prompt (to hand to the AI)',
+    cumulativeLabel: 'Running totals: each row is the sum of all previous games plus this game',
+    cumulativeGame: 'Game: {{points}}',
+    rowSitterMax: 'At most one empty cell per row',
     needRows: 'At least one game is required.',
   },
   pointsGame: {

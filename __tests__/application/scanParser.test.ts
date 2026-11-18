@@ -65,6 +65,12 @@ describe('parseScanText gueltige Eingaben', () => {
     expect(s.uncertain).toEqual([]);
   });
 
+  test('cumulative: true wird gelesen, fehlend oder ungueltig ist false', () => {
+    expect(parseScanText(JSON.stringify(scan({ cumulative: true }))).cumulative).toBe(true);
+    expect(parseScanText(JSON.stringify(scan())).cumulative).toBe(false);
+    expect(parseScanText(JSON.stringify(scan({ cumulative: 'ja' }))).cumulative).toBe(false);
+  });
+
   test('Spielernamen werden getrimmt', () => {
     const s = parseScanText(JSON.stringify(scan({ players: [' Thomas ', 'Anna', 'Ben', 'Clara'] })));
     expect(s.players[0]).toBe('Thomas');

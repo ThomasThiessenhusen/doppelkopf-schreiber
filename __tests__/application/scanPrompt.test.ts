@@ -28,6 +28,12 @@ describe('buildScanPrompt', () => {
     }
   });
 
+  test.each(['de', 'en'] as const)('%s erklaert die Zwischenstaende', (lang) => {
+    const p = buildScanPrompt(lang);
+    expect(p).toContain('"cumulative"');
+    expect(p).toMatch(/Zwischenstand|running total/);
+  });
+
   test('de erwaehnt, dass die Bock-Markierung ignoriert wird', () => {
     expect(buildScanPrompt('de')).toMatch(/Bock/);
     expect(buildScanPrompt('en')).toMatch(/Bock/i);

@@ -7,6 +7,7 @@ import {
   matchPlayer,
   parseCellInput,
   removeRow,
+  resolveGameRows,
   setCell,
   setRowSitter,
   sumOfInputs,
@@ -94,6 +95,7 @@ describe('Grid-Aufbau', () => {
       title: 'Dienstag',
       playedAt: date,
       players: ['Anna', 'Ben', 'Zoe', 'Anton'],
+      cumulative: false,
       games: [[3, 3, -3, -3]],
       totals: [3, 3, -3, -3],
       uncertain: [{ game: 0, player: 2 }],
@@ -325,5 +327,119 @@ describe('sumOfInputs (Punkte-Dialog)', () => {
   test('leere oder ungueltige Eingaben sind invalid', () => {
     expect(sumOfInputs(['5', ''])).toBe('invalid');
     expect(sumOfInputs(['5', 'x'])).toBe('invalid');
+  });
+});
+
+describe('Zwischenstaende (kumulierte Raster)', () => {
+  function cum4(rows: (number | null)[][]): PaperGrid {
+    return { ...grid4(rows), cumulative: true };
+  }
+  function cum5(rows: (number | null)[][]): PaperGrid {
+    return {
+      ...emptyGrid(5, date),
+      assignments: ['a', 'b', 'c', 'd', 'e'].map((name) => ({ kind: 'new', name }) as const),
+      cumulative: true,
+      rows,
+    };
+  }
+
+  test('emptyGrid startet mit Einzelspielen', () => {
+    expect(emptyGrid(4, date).cumulative).toBe(false);
+  });
+
+  test('gridFromScan uebernimmt cumulative', () => {
+    const scan: ScanSheet = {
+      title: null,
+      playedAt: date,
+      players: ['A', 'B', 'C', 'D'],
+      cumulative: true,
+      games: [[3, 3, -3, -3]],
+      totals: null,
+      uncertain: [],
+    };
+    expect(gridFromScan(scan, pool).cumulative).toBe(true);
+  });
+
+  test('resolveGameRows bildet die Differenz zur Vorzeile, die erste Zeile zu 0', () => {
+    const rows = resolveGameRows(cum4([[3, 3, -3, -3], [0, 6, 0, -6]]));
+    expect(rows.map((r) => r.points)).toEqual([
+      [3, 3, -3, -3],
+      [-3, 3, 3, -3],
+    ]);
+  });
+
+  test('null bedeutet Stand unveraendert und ist der Aussetzer', () => {
+    const rows = resolveGameRows(cum5([[2, 2, -2, -2, 0], [4, 1, -2, -3, null]]));
+    expect(rows[1]!.sitterCol).toBe(4);
+    expect(rows[1]!.points).toEqual([2, -1, 0, -1, null]);
+  });
+
+  test('bei 5 Spielern bestimmt der einzige Nullzuwachs den Aussetzer', () => {
+    const rows = resolveGameRows(cum5([[2, 2, -2, -2, 0]]));
+    expect(rows[0]!.sitterCol).toBe(4);
+    expect(rows[0]!.points).toEqual([2, 2, -2, -2, null]);
+  });
+
+  test('mehrere Nullzuwaechse: kein Aussetzer wird geraten', () => {
+    const rows = resolveGameRows(cum5([[2, -2, 0, 0, 0]]));
+    expect(rows[0]!.sitterCol).toBeNull();
+    expect(rows[0]!.points).toEqual([2, -2, 0, 0, 0]);
+  });
+
+  test('4 Spieler haben nie einen Aussetzer', () => {
+    const rows = resolveGameRows(cum4([[3, 3, -3, -3], [3, 3, -3, -3]]));
+    expect(rows[1]!.sitterCol).toBeNull();
+    expect(rows[1]!.points).toEqual([0, 0, 0, 0]);
+  });
+
+  test('Summen sind der letzte Stand', () => {
+    expect(computedColumnTotals(cum4([[3, 3, -3, -3], [0, 6, 0, -6]]))).toEqual([0, 6, 0, -6]);
+  });
+
+  test('Zeilensumme gilt fuer den Zwischenstand', () => {
+    const v = validateGrid(cum4([[3, 3, -3, -3], [0, 6, 0, -5]]), pool);
+    expect(v.rowIssues).toContainEqual({ row: 1, kind: 'sum' });
+    expect(v.canConfirm).toBe(false);
+  });
+
+  test('gueltige Zwischenstaende sind bestaetigbar', () => {
+    expect(validateGrid(cum4([[3, 3, -3, -3], [0, 6, 0, -6]]), pool).canConfirm).toBe(true);
+  });
+
+  test('4 Spieler: leeres Feld blockiert, 5 Spieler: hoechstens ein leeres Feld', () => {
+    expect(validateGrid(cum4([[3, 3, -6, null]]), pool).rowIssues).toContainEqual({
+      row: 0,
+      kind: 'empty',
+    });
+    expect(validateGrid(cum5([[3, 3, -3, null, null]]), pool).rowIssues).toContainEqual({
+      row: 0,
+      kind: 'sitter',
+    });
+    expect(validateGrid(cum5([[2, 2, -2, -2, 0]]), pool).rowIssues).toEqual([]);
+  });
+
+  test('addRow kopiert im Zwischenstand-Modus die letzte Zeile', () => {
+    const g = addRow(cum4([[3, 3, -3, -3]]));
+    expect(g.rows[1]).toEqual([3, 3, -3, -3]);
+    expect(addRow({ ...emptyGrid(4, date), cumulative: true }).rows).toEqual([[0, 0, 0, 0]]);
+    expect(addRow({ ...emptyGrid(5, date), cumulative: true }).rows).toEqual([[0, 0, 0, 0, 0]]);
+  });
+
+  test('buildSheetFromGrid speichert Einzelspiele, Summen sind der letzte Stand', () => {
+    const players = [player('a', 'A'), player('b', 'B'), player('c', 'C'), player('d', 'D')];
+    const sheet = buildSheetFromGrid(cum4([[3, 3, -3, -3], [0, 6, 0, -6]]), players);
+    const games = [...allGames(sheet)];
+    expect(games[0]!.pointsByPlayerId).toEqual({ a: 3, b: 3, c: -3, d: -3 });
+    expect(games[1]!.pointsByPlayerId).toEqual({ a: -3, b: 3, c: 3, d: -3 });
+    const totals = totalsFor(sheet, BockStackingMode.sequential).totalsByPlayerId;
+    expect(['a', 'b', 'c', 'd'].map((id) => totals.get(id))).toEqual([0, 6, 0, -6]);
+  });
+
+  test('buildSheetFromGrid setzt bei 5 Spielern den erkannten Aussetzer', () => {
+    const five = ['a', 'b', 'c', 'd', 'e'].map((id) => player(id, id.toUpperCase()));
+    const sheet = buildSheetFromGrid(cum5([[2, 2, -2, -2, 0]]), five);
+    const game = [...allGames(sheet)][0]!;
+    expect(game.sittingOutPlayerId).toBe('e');
+    expect(game.pointsByPlayerId).toEqual({ a: 2, b: 2, c: -2, d: -2 });
   });
 });

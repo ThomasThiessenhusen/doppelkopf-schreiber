@@ -266,6 +266,9 @@ export const de = {
     leaveDiscard: 'Verwerfen',
     invalidCells: 'Mindestens eine Zelle enthält keine gültige Zahl.',
     promptLabel: 'Prompt (zum Weitergeben an die KI)',
+    cumulativeLabel: 'Zwischenstände: Jede Zeile ist die Summe aller bisherigen Spiele plus dieses Spiel',
+    cumulativeGame: 'Spiel: {{points}}',
+    rowSitterMax: 'Höchstens ein leeres Feld pro Zeile',
     needRows: 'Mindestens ein Spiel ist nötig.',
   },
   pointsGame: {

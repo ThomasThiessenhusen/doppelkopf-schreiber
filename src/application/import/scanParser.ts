@@ -10,6 +10,8 @@ export interface ScanSheet {
   readonly title: string | null;
   readonly playedAt: Date | null;
   readonly players: readonly string[];
+  /** `true`, wenn jede Zeile den Zwischenstand (Summe bis dahin) zeigt statt der Punkte des Spiels. */
+  readonly cumulative: boolean;
   /** Pro Spiel ein Wert je Spieler; `null` = leeres Feld/Strich (Aussetzer). */
   readonly games: readonly (readonly (number | null)[])[];
   readonly totals: readonly (number | null)[] | null;
@@ -43,6 +45,7 @@ export function parseScanText(raw: string): ScanSheet {
     title: typeof json['title'] === 'string' && json['title'].trim() !== '' ? json['title'].trim() : null,
     playedAt: readPlayedAt(json['playedAt']),
     players,
+    cumulative: json['cumulative'] === true,
     games,
     totals,
     uncertain,

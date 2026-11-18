@@ -122,6 +122,16 @@ Die App rechnet Punkte bisher aus Rohdaten. Für importierte Papierbögen gibt e
 - **Reihenfolge und `playedAt`:** Die Reihenfolge der Spiele ist die Reihenfolge in `rounds[].games`; die Anzeige "neueste zuerst" arbeitet darauf. Für Spiele ist `playedAt` = Spieldatum des Bogens + Spielindex in Sekunden, damit die Zeitstempel eindeutig und aufsteigend sind und keine Sortierung durcheinanderkommt.
 - **Offen für den Builder:** ob Tests oder Validierung ein `Game` ohne `winner`/Teamdaten ablehnen; das neue Feld muss `winner` bzw. Teamdaten ersetzen oder sinnvolle Standardwerte erhalten, ohne dass normale Spiele betroffen sind.
 
+## Nachtrag: Zwischenstände (kumulierte Papierbögen)
+
+Manche Papierbögen führen jede Zeile als Zwischenstand (Summe aller bisherigen Spiele plus dieses Spiel). Beides wird unterstützt:
+
+- Das Raster hat einen Schalter "Zwischenstände" (`PaperGrid.cumulative`). Die Zahlen bleiben so, wie sie auf dem Papier stehen; gespeichert werden Einzelspiele als Differenz zur Vorzeile (erste Zeile: Differenz zu 0). Die Summen sind der letzte Stand.
+- Die Zeilensumme (muss 0 sein) gilt für den Zwischenstand der Zeile. Ein leeres Feld bedeutet "Stand unverändert" (Aussetzer). 4 Spieler: kein leeres Feld; 5 Spieler: höchstens ein leeres Feld.
+- Aussetzer bei 5 Spielern: das leere Feld; sonst der einzige Spieler ohne Punktzuwachs; ist das nicht eindeutig, wird kein Aussetzer gesetzt (nichts geraten).
+- Neue Zeilen starten im Zwischenstand-Modus mit dem bisherigen Stand. Unter jeder Zeile zeigt das Raster die daraus berechneten Einzelspiel-Punkte zur Kontrolle.
+- Scan-Format: optionales Feld `cumulative` (nur `true` zählt, sonst `false`). Der Prompt erklärt der KI beide Papierarten; sie schreibt die Zahlen ab und bildet keine Differenzen.
+
 ## Dem Builder überlassen
 
 - Genaue Form des neuen `Game`-Feldes und der gemeinsamen "Punkte pro Spieler"-Sicht; Umbau der Verbraucher (`totalsFor`, `SheetScreen`, `RoundSection`, `sheetHtml`, `groupRankingCalculator`, `AddGameScreen`/Editor-Zugang für Punkte-Spiele).

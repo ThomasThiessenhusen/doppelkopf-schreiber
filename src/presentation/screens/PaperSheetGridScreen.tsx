@@ -10,6 +10,7 @@ import {
   IconButton,
   Menu,
   Portal,
+  Switch,
   Text,
   TextInput,
   TouchableRipple,
@@ -22,6 +23,7 @@ import {
   computedColumnTotals,
   parseCellInput,
   removeRow,
+  resolveGameRows,
   setCell,
   setRowSitter,
   validateGrid,
@@ -249,9 +251,13 @@ export function PaperSheetGridScreen() {
   for (const issue of v.rowIssues) {
     const list = rowIssueByRow.get(issue.row) ?? [];
     if (issue.kind === 'empty') list.push(t('paperImport.rowEmpty'));
-    if (issue.kind === 'sitter') list.push(t('paperImport.rowSitter'));
+    if (issue.kind === 'sitter') {
+      list.push(t(g.cumulative ? 'paperImport.rowSitterMax' : 'paperImport.rowSitter'));
+    }
     rowIssueByRow.set(issue.row, list);
   }
+
+  const resolved = g.cumulative ? resolveGameRows(g) : [];
 
   return (
     <ScrollView contentContainerStyle={{ padding: 12, gap: 12 }}>
@@ -280,6 +286,16 @@ export function PaperSheetGridScreen() {
         />
       </View>
       {dateInvalid && <HelperText type="error">{t('sheet.playedAtInvalid')}</HelperText>}
+
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Switch
+          value={g.cumulative}
+          onValueChange={(cumulative) => update({ ...g, cumulative })}
+        />
+        <Text variant="bodyMedium" style={{ flex: 1 }}>
+          {t('paperImport.cumulativeLabel')}
+        </Text>
+      </View>
 
       <View>
         {/* Kopf: Name auf dem Papier und Zuordnung je Spalte */}
@@ -403,7 +419,7 @@ export function PaperSheetGridScreen() {
                   style={{ width: ACT_W, margin: 0 }}
                 />
               </View>
-              {colCount === 5 && (
+              {colCount === 5 && !g.cumulative && (
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View style={{ width: IDX_W }} />
                   {cells.map((cell, col) => (
@@ -442,6 +458,22 @@ export function PaperSheetGridScreen() {
                   {t('paperImport.rowSum', { sum })}
                 </Text>
               </View>
+              {g.cumulative && resolved[row] !== undefined && (
+                <Text
+                  variant="bodySmall"
+                  style={{
+                    marginLeft: IDX_W,
+                    paddingLeft: 2,
+                    color: theme.colors.onSurfaceVariant,
+                  }}
+                >
+                  {t('paperImport.cumulativeGame', {
+                    points: resolved[row]!.points
+                      .map((p) => (p === null ? '—' : formatPoints(p)))
+                      .join('  '),
+                  })}
+                </Text>
+              )}
               {issues.map((text) => (
                 <HelperText key={text} type="error" style={{ marginLeft: IDX_W, paddingLeft: 2 }}>
                   {text}
