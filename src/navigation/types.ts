@@ -8,4 +8,6 @@ export type RootStackParamList = {
   Players: undefined;
   Settings: undefined;
   ImportReview: { fileUri: string };
+  PaperSheetStart: undefined;
+  PaperSheetGrid: undefined;
 };

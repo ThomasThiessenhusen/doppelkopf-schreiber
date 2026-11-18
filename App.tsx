@@ -30,6 +30,7 @@ import { GroupRankingsScreen } from '@/presentation/screens/GroupRankingsScreen'
 import { PlayerManagementScreen } from '@/presentation/screens/PlayerManagementScreen';
 import { SettingsScreen } from '@/presentation/screens/SettingsScreen';
 import { ImportReviewScreen } from '@/presentation/screens/ImportReviewScreen';
+import { PaperSheetStartScreen } from '@/presentation/screens/PaperSheetStartScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -58,6 +59,10 @@ function HomeHeaderRight() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   return (
     <>
+      <IconButton
+        icon="file-document-edit-outline"
+        onPress={() => navigation.navigate('PaperSheetStart')}
+      />
       <IconButton icon="account-group-outline" onPress={() => navigation.navigate('Players')} />
       <IconButton icon="cog-outline" onPress={() => navigation.navigate('Settings')} />
     </>
@@ -138,6 +143,11 @@ function LocalizedStack({ theme }: { theme: typeof lightTheme }) {
         name="ImportReview"
         component={ImportReviewRoute}
         options={{ title: t('exportImport.reviewTitle') }}
+      />
+      <Stack.Screen
+        name="PaperSheetStart"
+        component={PaperSheetStartScreen}
+        options={{ title: t('nav.paperStart') }}
       />
     </Stack.Navigator>
   );
