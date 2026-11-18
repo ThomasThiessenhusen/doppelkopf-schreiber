@@ -21,7 +21,8 @@ import {
   useTheme,
 } from 'react-native-paper';
 
-import { isPointsGame, type Game } from '@/domain/models/game';
+import { copyGame, isPointsGame, type Game } from '@/domain/models/game';
+import { PointsGameDialog } from '@/presentation/widgets/PointsGameDialog';
 import { gameRowsFor } from '@/domain/scoring/gamePoints';
 import { formatDate, formatDateTime, formatTime, parseDateTime } from '@/domain/dateTimeInput';
 import { allGames, gamesPerRound, type GameSheet } from '@/domain/models/gameSheet';
@@ -88,6 +89,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
   const setPlayedAt = useSheetStore((s) => s.setPlayedAt);
   const setStackingModeOverride = useSheetStore((s) => s.setStackingModeOverride);
   const deleteGame = useSheetStore((s) => s.deleteGame);
+  const updateGame = useSheetStore((s) => s.updateGame);
   const setGroup = useSheetStore((s) => s.setGroup);
   const setSubstitutions = useSheetStore((s) => s.setSubstitutions);
 
@@ -245,8 +247,21 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
     navigation.navigate('AddGame', { sheetId: sheet.id });
   }
 
+  const [pointsGameTarget, setPointsGameTarget] = useState<Game | null>(null);
+
   function onEditGame(game: Game) {
+    if (isPointsGame(game)) {
+      setPointsGameTarget(game);
+      return;
+    }
     navigation.navigate('AddGame', { sheetId: sheet.id, gameId: game.id });
+  }
+
+  async function submitPointsGame(pointsByPlayerId: Record<string, number>) {
+    const target = pointsGameTarget;
+    setPointsGameTarget(null);
+    if (target === null) return;
+    await updateGame(copyGame(target, { pointsByPlayerId }));
   }
 
   useLayoutEffect(() => {
@@ -432,6 +447,14 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
             </Button>
           </Dialog.Actions>
         </Dialog>
+
+        <PointsGameDialog
+          visible={pointsGameTarget !== null}
+          game={pointsGameTarget}
+          players={players}
+          onDismiss={() => setPointsGameTarget(null)}
+          onSubmit={(pts) => void submitPointsGame(pts)}
+        />
 
         <Dialog visible={playedAtOpen} onDismiss={() => setPlayedAtOpen(false)}>
           <Dialog.Title>{t('sheet.playedAtTitle')}</Dialog.Title>

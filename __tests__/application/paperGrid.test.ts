@@ -9,6 +9,7 @@ import {
   removeRow,
   setCell,
   setRowSitter,
+  sumOfInputs,
   validateGrid,
   type PaperGrid,
   type PlayerAssignment,
@@ -295,5 +296,19 @@ describe('buildSheetFromGrid', () => {
 
   test('wirft bei Zeile mit Summe ungleich 0', () => {
     expect(() => buildSheetFromGrid(grid4([[1, 1, 0, 0]]), players)).toThrow();
+  });
+});
+
+describe('sumOfInputs (Punkte-Dialog)', () => {
+  test('ausgeglichene Eingaben ergeben 0', () => {
+    expect(sumOfInputs(['5', '-5'])).toBe(0);
+    expect(sumOfInputs(['3', '3', '−3', '-3'])).toBe(0);
+  });
+  test('Summe ungleich 0 wird gemeldet', () => {
+    expect(sumOfInputs(['5', '-3'])).toBe(2);
+  });
+  test('leere oder ungueltige Eingaben sind invalid', () => {
+    expect(sumOfInputs(['5', ''])).toBe('invalid');
+    expect(sumOfInputs(['5', 'x'])).toBe('invalid');
   });
 });

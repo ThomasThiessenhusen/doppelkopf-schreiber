@@ -218,3 +218,17 @@ export function buildSheetFromGrid(grid: PaperGrid, players: readonly Player[]):
   }
   return copyGameSheet(base, { rounds });
 }
+
+/**
+ * Summe der Zelleneingaben eines Punkte-Spiels. Leere oder ungueltige
+ * Eingaben ergeben `'invalid'` (im Dialog muss jeder aktive Spieler einen Wert haben).
+ */
+export function sumOfInputs(texts: readonly string[]): number | 'invalid' {
+  let sum = 0;
+  for (const text of texts) {
+    const v = parseCellInput(text);
+    if (v === 'invalid' || v === null) return 'invalid';
+    sum += v;
+  }
+  return sum;
+}

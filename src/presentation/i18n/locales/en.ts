@@ -226,6 +226,11 @@ export const en: Resources = {
     modeNormal: 'Normal game',
     summary: '{{mode}} · Kontra: {{names}}',
   },
+  pointsGame: {
+    editTitle: 'Edit paper game',
+    sumLabel: 'Sum: {{sum}}',
+    sumError: 'The points must add up to 0.',
+  },
   sheet: {
     errorPrefix: 'Error',
     titleFallback: 'Sheet',

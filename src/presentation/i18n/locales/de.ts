@@ -224,6 +224,11 @@ export const de = {
     modeNormal: 'Normales Spiel',
     summary: '{{mode}} · Kontra: {{names}}',
   },
+  pointsGame: {
+    editTitle: 'Papier-Spiel bearbeiten',
+    sumLabel: 'Summe: {{sum}}',
+    sumError: 'Die Punkte müssen sich zu 0 summieren.',
+  },
   sheet: {
     errorPrefix: 'Fehler',
     titleFallback: 'Spielbogen',
