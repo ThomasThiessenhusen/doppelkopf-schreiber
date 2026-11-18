@@ -1,4 +1,4 @@
-import { WinnerSide } from '@/domain/models/game';
+import { WinnerSide, type Game } from '@/domain/models/game';
 import { allGames, totalGames, type GameSheet } from '@/domain/models/gameSheet';
 import { playerDisplayName } from '@/domain/models/player';
 import { effectiveSubstitutions } from '@/domain/models/substitution';
@@ -81,6 +81,9 @@ export function calculateGroupRankings(input: CalculateGroupRankingsInput): Grou
       if (game.isSolo && game.winner === WinnerSide.re && game.rePlayerIds.length > 0) {
         const soloistId = game.rePlayerIds[0]!;
         wonSoli.set(soloistId, (wonSoli.get(soloistId) ?? 0) + 1);
+      } else {
+        const soloistId = wonSoloistOfPointsGame(game);
+        if (soloistId !== null) wonSoli.set(soloistId, (wonSoli.get(soloistId) ?? 0) + 1);
       }
     }
 
@@ -121,6 +124,24 @@ export function calculateGroupRankings(input: CalculateGroupRankingsInput): Grou
     totalPoints: toRanked(points, names),
     wonSoli: toRanked(wonSoli, names),
   };
+}
+
+/**
+ * Punkte-Spiele (Papier-Import) kennen keine Teams. Ein gewonnenes Solo
+ * erkennt man am 3:1-Muster: ein Spieler mit +3x, die drei anderen je -x
+ * (x > 0). Ein 2:2-Spiel (+x, +x, -x, -x) passt nie in dieses Muster.
+ * Liefert die Solisten-ID oder `null`.
+ */
+function wonSoloistOfPointsGame(game: Game): string | null {
+  if (game.pointsByPlayerId === undefined) return null;
+  const entries = Object.entries(game.pointsByPlayerId);
+  if (entries.length !== 4) return null;
+  for (const [id, value] of entries) {
+    if (value <= 0) continue;
+    const others = entries.filter(([otherId]) => otherId !== id);
+    if (others.every(([, v]) => v === -value / 3)) return id;
+  }
+  return null;
 }
 
 /**
