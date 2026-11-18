@@ -1,7 +1,7 @@
 import { repositories } from '@/application/stores/repositories';
 import { appSettingsFallback } from '@/domain/models/appSettings';
 import { formatDateTime } from '@/domain/dateTimeInput';
-import { WinnerSide } from '@/domain/models/game';
+import { isPointsGame, WinnerSide } from '@/domain/models/game';
 import { allGames } from '@/domain/models/gameSheet';
 import type { GameSheet } from '@/domain/models/gameSheet';
 import { playerDisplayName } from '@/domain/models/player';
@@ -9,6 +9,7 @@ import type { Player } from '@/domain/models/player';
 import { createPlayerLookup, resolveSheetPlayers } from '@/domain/models/playerLookup';
 import { BockLevel } from '@/domain/scoring/bockLevel';
 import { effectiveStackingMode, resolveBock } from '@/domain/scoring/bockResolver';
+import { gameRowsFor } from '@/domain/scoring/gamePoints';
 import { scoreFor, totalsFor } from '@/domain/scoring/scoreCalculator';
 import type { GameScore } from '@/domain/scoring/scoreCalculator';
 import { flagByCode } from '@/domain/scoring/scoringRules';
@@ -139,10 +140,33 @@ export function buildSheetHtml(input: SheetHtmlInput): string {
       .join(' · ');
   }
 
+  const rowByGameId = new Map(gameRows.map((r) => [r.gameId, r] as const));
+
   const roundsHtml = sheet.rounds
     .map((round) => {
       const gamesHtml = round.games
         .map((game, gi) => {
+          if (isPointsGame(game)) {
+            // Punkte-Spiel (Papier-Import): keine Teams/Flags, nur Punkte je Spieler.
+            const row = rowByGameId.get(game.id);
+            const sittingOutP =
+              game.sittingOutPlayerId !== null ? playerById(game.sittingOutPlayerId) : null;
+            const pointsText = players
+              .filter((p) => row?.pointsByPlayerId.has(p.id) === true)
+              .map((p) => esc(`${playerDisplayName(p)} ${formatPoints(row!.pointsByPlayerId.get(p.id)!)}`))
+              .join(' · ');
+            return `
+          <div class="game">
+            <div class="game-row">
+              <div class="game-num">${gi + 1}.</div>
+              <div class="game-detail">
+                <div><span class="re-label">${esc(t('sheet.pointsGameLabel'))}</span></div>
+                ${sittingOutP !== null && sittingOutP !== undefined ? `<div class="muted">${esc(t('sheet.sittingOut', { name: playerDisplayName(sittingOutP) }))}</div>` : ''}
+                <div class="meta">${pointsText}</div>
+              </div>
+            </div>
+          </div>`;
+          }
           const score = scoresByGame.get(game.id) ?? { rePerPlayer: 0, contraPerPlayer: 0 };
           const level = bockLevelByGame.get(game.id) ?? BockLevel.none;
           const reLabel = game.isSolo ? t('sheet.soloLabel') : t('sheet.reLabel');
@@ -264,29 +288,12 @@ export async function renderSheetHtml(
   const totals = totalsFor(sheet, mode);
   const bockLevelByGame = resolveBock(sheet, mode);
 
-  // Pre-compute per-game score rows
-  const gameRows: {
-    gameId: string;
-    pointsByPlayerId: Map<string, number>;
-    sittingOutPlayerId: string | null;
-  }[] = [];
+  // Punkte je Spiel ueber die gemeinsame Sicht (normale und Punkte-Spiele).
+  const gameRows = gameRowsFor(sheet, mode);
   const scoresByGame = new Map<string, GameScore>();
   for (const game of allGames(sheet)) {
-    const level = bockLevelByGame.get(game.id) ?? BockLevel.none;
-    const score = scoreFor(game, level);
-    scoresByGame.set(game.id, score);
-    const points = new Map<string, number>();
-    for (const p of players) {
-      points.set(
-        p.id,
-        game.rePlayerIds.includes(p.id)
-          ? score.rePerPlayer
-          : game.contraPlayerIds.includes(p.id)
-            ? score.contraPerPlayer
-            : 0,
-      );
-    }
-    gameRows.push({ gameId: game.id, pointsByPlayerId: points, sittingOutPlayerId: game.sittingOutPlayerId });
+    if (isPointsGame(game)) continue;
+    scoresByGame.set(game.id, scoreFor(game, bockLevelByGame.get(game.id) ?? BockLevel.none));
   }
 
   const html = buildSheetHtml({

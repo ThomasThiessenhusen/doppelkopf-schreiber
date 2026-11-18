@@ -281,6 +281,7 @@ export const de = {
     bockDoubleShort: 'DB',
     contraPerPlayer: 'je Kontra: {{points}}',
     deleteGameTitle: 'Spiel löschen?',
+    pointsGameLabel: 'Papier-Spiel',
   },
   exportImport: {
     exportSheetMenu: 'Bogen exportieren...',

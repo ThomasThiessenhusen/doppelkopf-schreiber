@@ -11,7 +11,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 
-import { type Game, WinnerSide } from '@/domain/models/game';
+import { type Game, isPointsGame, WinnerSide } from '@/domain/models/game';
 import { playerDisplayName, type Player } from '@/domain/models/player';
 import type { Round } from '@/domain/models/round';
 import { BockLevel } from '@/domain/scoring/bockLevel';
@@ -24,6 +24,8 @@ export interface RoundSectionProps {
   players: readonly Player[];
   scoresByGame: ReadonlyMap<string, GameScore>;
   bockLevelByGame: ReadonlyMap<string, BockLevel>;
+  /** Punkte je Spieler pro Spiel; fuer Punkte-Spiele (Papier-Import) die Anzeige. */
+  pointsByGame: ReadonlyMap<string, ReadonlyMap<string, number>>;
   onEditGame: (game: Game) => void;
   onDeleteGame: (game: Game) => void;
 }
@@ -37,6 +39,7 @@ export function RoundSection({
   players,
   scoresByGame,
   bockLevelByGame,
+  pointsByGame,
   onEditGame,
   onDeleteGame,
 }: RoundSectionProps) {
@@ -75,6 +78,42 @@ export function RoundSection({
         .map((game, i) => ({ game, i }))
         .reverse()
         .map(({ game, i }) => {
+        if (isPointsGame(game)) {
+          const pts = pointsByGame.get(game.id);
+          const sitting = game.sittingOutPlayerId !== null ? byId(game.sittingOutPlayerId) : null;
+          return (
+            <TouchableRipple
+              key={game.id}
+              onPress={() => onEditGame(game)}
+              onLongPress={() => setDeleteTarget(game)}
+            >
+              <View style={{ flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 10 }}>
+                <View style={{ width: 28 }}>
+                  <Text variant="bodyLarge">{i + 1}.</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text
+                    variant="bodySmall"
+                    style={{ color: theme.colors.primary, fontWeight: 'bold' }}
+                  >
+                    {t('sheet.pointsGameLabel')}
+                  </Text>
+                  {sitting !== undefined && sitting !== null && (
+                    <Text variant="bodySmall">
+                      {t('sheet.sittingOut', { name: playerDisplayName(sitting) })}
+                    </Text>
+                  )}
+                  <Text variant="bodyMedium" style={{ fontVariant: ['tabular-nums'] }}>
+                    {players
+                      .filter((p) => pts?.has(p.id) === true)
+                      .map((p) => `${playerDisplayName(p)} ${formatPoints(pts!.get(p.id)!)}`)
+                      .join(' · ')}
+                  </Text>
+                </View>
+              </View>
+            </TouchableRipple>
+          );
+        }
         const score = scoresByGame.get(game.id) ?? { rePerPlayer: 0, contraPerPlayer: 0 };
         const level = bockLevelByGame.get(game.id) ?? BockLevel.none;
         const reLabel = game.isSolo ? t('sheet.soloLabel') : t('sheet.reLabel');

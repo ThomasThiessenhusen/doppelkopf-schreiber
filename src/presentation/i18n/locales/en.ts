@@ -283,6 +283,7 @@ export const en: Resources = {
     bockDoubleShort: 'DB',
     contraPerPlayer: 'per Kontra: {{points}}',
     deleteGameTitle: 'Delete game?',
+    pointsGameLabel: 'Paper game',
   },
   exportImport: {
     exportSheetMenu: 'Export sheet...',
