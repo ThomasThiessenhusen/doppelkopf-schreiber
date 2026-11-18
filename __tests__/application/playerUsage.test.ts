@@ -36,6 +36,7 @@ function sheet(
     id,
     title: null,
     createdAt: now,
+    playedAt: now,
     updatedAt: now,
     playerIds: finalIds,
     rounds: [],

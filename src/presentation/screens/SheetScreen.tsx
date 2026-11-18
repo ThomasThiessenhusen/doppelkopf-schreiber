@@ -22,6 +22,7 @@ import {
 } from 'react-native-paper';
 
 import type { Game } from '@/domain/models/game';
+import { formatDate, formatDateTime, formatTime, parseDateTime } from '@/domain/dateTimeInput';
 import { allGames, type GameSheet } from '@/domain/models/gameSheet';
 import { appSettingsFallback } from '@/domain/models/appSettings';
 import { GroupType, groupTypeLabelKey } from '@/domain/models/groupType';
@@ -83,6 +84,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Sheet'>>();
   const theme = useTheme();
   const renameSheet = useSheetStore((s) => s.renameSheet);
+  const setPlayedAt = useSheetStore((s) => s.setPlayedAt);
   const setStackingModeOverride = useSheetStore((s) => s.setStackingModeOverride);
   const deleteGame = useSheetStore((s) => s.deleteGame);
   const setGroup = useSheetStore((s) => s.setGroup);
@@ -123,6 +125,8 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
       gameId: string;
       pointsByPlayerId: Map<string, number>;
       sittingOutPlayerId: string | null;
+      bockLevel: BockLevel;
+      soloPlayerId: string | null;
     }[] = [];
     for (const game of allGames(sheet)) {
       const score = scoreFor(game, l.get(game.id) ?? BockLevel.none);
@@ -137,6 +141,8 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
         gameId: game.id,
         pointsByPlayerId: points,
         sittingOutPlayerId: game.sittingOutPlayerId,
+        bockLevel: l.get(game.id) ?? BockLevel.none,
+        soloPlayerId: game.isSolo ? (game.rePlayerIds[0] ?? null) : null,
       });
     }
     return { totals: t, levels: l, bockState: bs, perGameRows: rows, scoresByGame: sByGame };
@@ -146,6 +152,28 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
 
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameValue, setRenameValue] = useState('');
+
+  const [playedAtOpen, setPlayedAtOpen] = useState(false);
+  const [playedAtDate, setPlayedAtDate] = useState('');
+  const [playedAtTime, setPlayedAtTime] = useState('');
+  const [playedAtError, setPlayedAtError] = useState(false);
+
+  const openPlayedAt = useCallback(() => {
+    setPlayedAtDate(formatDate(sheet.playedAt));
+    setPlayedAtTime(formatTime(sheet.playedAt));
+    setPlayedAtError(false);
+    setPlayedAtOpen(true);
+  }, [sheet.playedAt]);
+
+  async function submitPlayedAt() {
+    const parsed = parseDateTime(playedAtDate, playedAtTime);
+    if (parsed === null) {
+      setPlayedAtError(true);
+      return;
+    }
+    await setPlayedAt(parsed);
+    setPlayedAtOpen(false);
+  }
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [stackingDialogOpen, setStackingDialogOpen] = useState(false);
@@ -241,6 +269,13 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
             anchor={<IconButton icon="dots-vertical" onPress={() => setMenuOpen(true)} />}
           >
             <Menu.Item
+              title={t('sheet.menuPlayedAt')}
+              onPress={() => {
+                setMenuOpen(false);
+                openPlayedAt();
+              }}
+            />
+            <Menu.Item
               title={t('sheet.menuStacking')}
               onPress={() => {
                 setMenuOpen(false);
@@ -314,7 +349,7 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
         </View>
       ),
     });
-  }, [navigation, sheet.title, sheet.id, t, menuOpen, openRename, openStackingDialog, sheet.groupId]);
+  }, [navigation, sheet.title, sheet.id, t, menuOpen, openRename, openPlayedAt, openStackingDialog, sheet.groupId]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -324,6 +359,12 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
           totalsByPlayerId={totals.totalsByPlayerId}
           pointsByGame={perGameRows}
         />
+
+        <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+            {t('sheet.playedAtLabel', { date: formatDateTime(sheet.playedAt) })}
+          </Text>
+        </View>
 
         {sheet.groupId !== null && substitutionLines.length > 0 && (
           <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
@@ -392,6 +433,46 @@ function Loaded({ sheet }: { sheet: GameSheet }) {
           <Dialog.Actions>
             <Button onPress={() => setRenameOpen(false)}>{t('common.cancel')}</Button>
             <Button mode="contained" onPress={() => void submitRename()}>
+              {t('common.save')}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+
+        <Dialog visible={playedAtOpen} onDismiss={() => setPlayedAtOpen(false)}>
+          <Dialog.Title>{t('sheet.playedAtTitle')}</Dialog.Title>
+          <Dialog.Content style={{ gap: 12 }}>
+            <TextInput
+              mode="outlined"
+              label={t('sheet.playedAtDateLabel')}
+              value={playedAtDate}
+              onChangeText={(v) => {
+                setPlayedAtDate(v);
+                setPlayedAtError(false);
+              }}
+              keyboardType="numbers-and-punctuation"
+              error={playedAtError}
+              autoFocus
+            />
+            <TextInput
+              mode="outlined"
+              label={t('sheet.playedAtTimeLabel')}
+              value={playedAtTime}
+              onChangeText={(v) => {
+                setPlayedAtTime(v);
+                setPlayedAtError(false);
+              }}
+              keyboardType="numbers-and-punctuation"
+              error={playedAtError}
+            />
+            {playedAtError && (
+              <Text variant="bodySmall" style={{ color: theme.colors.error }}>
+                {t('sheet.playedAtInvalid')}
+              </Text>
+            )}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setPlayedAtOpen(false)}>{t('common.cancel')}</Button>
+            <Button mode="contained" onPress={() => void submitPlayedAt()}>
               {t('common.save')}
             </Button>
           </Dialog.Actions>

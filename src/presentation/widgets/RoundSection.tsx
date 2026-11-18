@@ -117,11 +117,29 @@ export function RoundSection({
                 <Text variant="bodySmall" style={{ marginTop: 2 }}>
                   {t('sheet.winnerWins', { side: winnerText })}
                   {flags !== '' ? ` · ${flags}` : ''}
-                  {level === BockLevel.single ? ` · ${t('sheet.bockSingleSuffix')}` : ''}
-                  {level === BockLevel.double ? ` · ${t('sheet.bockDoubleSuffix')}` : ''}
                 </Text>
               </View>
               <View style={{ marginLeft: 8, alignItems: 'flex-end' }}>
+                {level !== BockLevel.none && (
+                  <View
+                    style={{
+                      backgroundColor: theme.colors.tertiaryContainer,
+                      paddingHorizontal: 8,
+                      paddingVertical: 2,
+                      borderRadius: 8,
+                      marginBottom: 4,
+                    }}
+                  >
+                    <Text
+                      variant="labelSmall"
+                      style={{ color: theme.colors.onTertiaryContainer, fontWeight: 'bold' }}
+                    >
+                      {level === BockLevel.double
+                        ? t('sheet.bockDoubleSuffix')
+                        : t('sheet.bockSingleSuffix')}
+                    </Text>
+                  </View>
+                )}
                 <Text
                   variant="titleMedium"
                   style={{ color: scoreColor, fontVariant: ['tabular-nums'] }}

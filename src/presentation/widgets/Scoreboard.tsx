@@ -3,6 +3,7 @@ import { Card, Icon, Text, useTheme } from 'react-native-paper';
 
 import type { Player } from '@/domain/models/player';
 import { playerDisplayName } from '@/domain/models/player';
+import { BockLevel } from '@/domain/scoring/bockLevel';
 import { useTranslation } from '@/presentation/i18n/useTranslation';
 
 const ROW_HEIGHT = 28;
@@ -22,6 +23,10 @@ export interface ScoreboardProps {
     gameId: string;
     pointsByPlayerId: ReadonlyMap<string, number>;
     sittingOutPlayerId: string | null;
+    /** Bock-Niveau des Spiels; fehlt = kein Bock. */
+    bockLevel?: BockLevel;
+    /** Spieler-ID des Solospielers, wenn das Spiel ein Solo war; sonst null/fehlt. */
+    soloPlayerId?: string | null;
   }[];
 }
 
@@ -85,7 +90,7 @@ export function Scoreboard({ players, totalsByPlayerId, pointsByGame }: Scoreboa
 
         {/* Header */}
         <View style={{ flexDirection: 'row', paddingVertical: 6 }}>
-          <View style={{ width: 32 }} />
+          <View style={{ width: 44 }} />
           {players.map((p) => (
             <View key={p.id} style={{ flex: 1 }}>
               <Text
@@ -108,9 +113,17 @@ export function Scoreboard({ players, totalsByPlayerId, pointsByGame }: Scoreboa
           {pointsByGame.map((row, idx) => (
             <View
               key={row.gameId}
-              style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4 }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 4,
+                backgroundColor:
+                  row.bockLevel !== undefined && row.bockLevel !== BockLevel.none
+                    ? theme.colors.tertiaryContainer
+                    : undefined,
+              }}
             >
-              <View style={{ width: 32 }}>
+              <View style={{ width: 44 }}>
                 <Text
                   variant="bodySmall"
                   style={{
@@ -120,21 +133,33 @@ export function Scoreboard({ players, totalsByPlayerId, pointsByGame }: Scoreboa
                   }}
                 >
                   {idx + 1}
+                  {row.bockLevel === BockLevel.single ? ` ${t('sheet.bockSingleShort')}` : ''}
+                  {row.bockLevel === BockLevel.double ? ` ${t('sheet.bockDoubleShort')}` : ''}
                 </Text>
               </View>
               {players.map((p) => {
                 const isSittingOut = p.id === row.sittingOutPlayerId;
                 const points = row.pointsByPlayerId.get(p.id) ?? 0;
+                const isSolo = !isSittingOut && row.soloPlayerId === p.id;
+                const color = isSittingOut ? theme.colors.onSurfaceVariant : colorForPoints(points);
                 return (
-                  <View key={p.id} style={{ flex: 1 }}>
+                  <View key={p.id} style={{ flex: 1, alignItems: 'center' }}>
                     <Text
                       variant="bodyMedium"
                       style={{
                         textAlign: 'center',
                         fontVariant: ['tabular-nums'],
-                        color: isSittingOut
-                          ? theme.colors.onSurfaceVariant
-                          : colorForPoints(points),
+                        color,
+                        ...(isSolo
+                          ? {
+                              fontWeight: 'bold',
+                              borderWidth: 1.5,
+                              borderColor: color ?? theme.colors.outline,
+                              borderRadius: 10,
+                              paddingHorizontal: 8,
+                              overflow: 'hidden',
+                            }
+                          : {}),
                       }}
                     >
                       {isSittingOut ? '—' : formatPoints(points)}
@@ -152,7 +177,7 @@ export function Scoreboard({ players, totalsByPlayerId, pointsByGame }: Scoreboa
 
         {/* Totals */}
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8 }}>
-          <View style={{ width: 32 }}>
+          <View style={{ width: 44 }}>
             <Text variant="titleMedium" style={{ textAlign: 'right' }}>
               Σ
             </Text>

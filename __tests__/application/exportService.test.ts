@@ -33,6 +33,7 @@ function s(
     id,
     title: null,
     createdAt: now,
+    playedAt: now,
     updatedAt: now,
     playerIds,
     rounds: [],

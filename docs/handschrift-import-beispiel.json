@@ -1,0 +1,86 @@
+{
+  "app": "doppelkopf_schreiber",
+  "formatVersion": 1,
+  "kind": "sheet",
+  "exportedAt": "2026-03-14T23:00:00.000Z",
+  "exportedFromAppVersion": "handschrift-import",
+  "payload": {
+    "players": [
+      { "id": "hs-anna", "playerName": "Anna" },
+      { "id": "hs-ben", "playerName": "Ben" },
+      { "id": "hs-carla", "playerName": "Carla" },
+      { "id": "hs-dirk", "playerName": "Dirk" }
+    ],
+    "sheets": [
+      {
+        "id": "hs-2026-03-14",
+        "title": "Abend 14.03.2026 (Papier)",
+        "createdAt": "2026-03-14T19:00:00.000Z",
+        "playedAt": "2026-03-14T19:00:00.000Z",
+        "updatedAt": "2026-03-14T23:00:00.000Z",
+        "playerIds": ["hs-anna", "hs-ben", "hs-carla", "hs-dirk"],
+        "dirty": false,
+        "stackingModeOverride": "sequential",
+        "groupId": null,
+        "substitutions": [],
+        "rounds": [
+          {
+            "index": 0,
+            "games": [
+              {
+                "id": "hs-2026-03-14-g01",
+                "playedAt": "2026-03-14T19:10:00.000Z",
+                "rePlayerIds": ["hs-anna", "hs-ben"],
+                "contraPlayerIds": ["hs-carla", "hs-dirk"],
+                "sittingOutPlayerId": null,
+                "winner": "re",
+                "flagCodes": ["reAnnounced", "under90"],
+                "note": null,
+                "isSolo": false,
+                "triggersManualBock": false
+              },
+              {
+                "id": "hs-2026-03-14-g02",
+                "playedAt": "2026-03-14T19:20:00.000Z",
+                "rePlayerIds": ["hs-carla", "hs-dirk"],
+                "contraPlayerIds": ["hs-anna", "hs-ben"],
+                "sittingOutPlayerId": null,
+                "winner": "contra",
+                "flagCodes": ["reAnnounced"],
+                "note": null,
+                "isSolo": false,
+                "triggersManualBock": false
+              },
+              {
+                "id": "hs-2026-03-14-g03",
+                "playedAt": "2026-03-14T19:30:00.000Z",
+                "rePlayerIds": ["hs-ben"],
+                "contraPlayerIds": ["hs-anna", "hs-carla", "hs-dirk"],
+                "sittingOutPlayerId": null,
+                "winner": "re",
+                "flagCodes": [],
+                "note": "Damensolo",
+                "isSolo": true,
+                "triggersManualBock": false
+              },
+              {
+                "id": "hs-2026-03-14-g04",
+                "playedAt": "2026-03-14T19:40:00.000Z",
+                "rePlayerIds": ["hs-anna", "hs-carla"],
+                "contraPlayerIds": ["hs-ben", "hs-dirk"],
+                "sittingOutPlayerId": null,
+                "winner": "re",
+                "flagCodes": ["reFuchs1"],
+                "note": null,
+                "isSolo": false,
+                "triggersManualBock": false
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "groups": [],
+    "settings": null
+  }
+}

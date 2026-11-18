@@ -32,6 +32,18 @@ beforeEach(async () => {
   await useSheetStore.getState().load('sh');
 });
 
+describe('sheetStore.setPlayedAt', () => {
+  test('speichert das Spieldatum, createdAt bleibt', async () => {
+    const before = useSheetStore.getState().state;
+    if (before.status !== 'data') throw new Error('Bogen nicht geladen');
+    const played = new Date('2026-05-20T19:00:00.000Z');
+    await useSheetStore.getState().setPlayedAt(played);
+    const stored = await repositories.gameSheet().load('sh');
+    expect(stored?.playedAt).toEqual(played);
+    expect(stored?.createdAt).toEqual(before.value.createdAt);
+  });
+});
+
 describe('sheetStore.setSubstitutions', () => {
   test('speichert gueltige Vertretungen', async () => {
     await useSheetStore.getState().setSubstitutions([{ substituteId: 'd', mainPlayerId: 'x' }]);

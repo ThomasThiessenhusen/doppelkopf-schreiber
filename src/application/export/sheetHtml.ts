@@ -1,5 +1,6 @@
 import { repositories } from '@/application/stores/repositories';
 import { appSettingsFallback } from '@/domain/models/appSettings';
+import { formatDateTime } from '@/domain/dateTimeInput';
 import { WinnerSide } from '@/domain/models/game';
 import { allGames } from '@/domain/models/gameSheet';
 import type { GameSheet } from '@/domain/models/gameSheet';
@@ -30,10 +31,6 @@ export type TranslateFn = (key: string, options?: Record<string, unknown>) => st
 
 function formatPoints(p: number): string {
   return p > 0 ? `+${p}` : `${p}`;
-}
-
-function formatDate(d: Date): string {
-  return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 function esc(s: string): string {
@@ -83,7 +80,7 @@ export function buildSheetHtml(input: SheetHtmlInput): string {
   const { sheet, players, totalsByPlayerId, gameRows, scoresByGame, bockLevelByGame, t } = input;
 
   const title = sheet.title ?? t('sheet.titleFallback');
-  const dateStr = formatDate(sheet.createdAt);
+  const dateStr = formatDateTime(sheet.playedAt);
   const playerNames = players.map((p) => esc(playerDisplayName(p)));
 
   // ---- Scoreboard table ----

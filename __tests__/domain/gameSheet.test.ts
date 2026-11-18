@@ -301,6 +301,46 @@ describe('gameSheet JSON', () => {
   });
 });
 
+describe('gameSheet playedAt', () => {
+  test('createGameSheet belegt playedAt mit dem Erstellzeitpunkt vor', () => {
+    const at = new Date('2026-06-01T18:30:00.000Z');
+    const s = createGameSheet({ players: players4, at });
+    expect(s.playedAt).toEqual(at);
+    expect(s.createdAt).toEqual(at);
+  });
+
+  test('copyGameSheet aendert playedAt, createdAt bleibt', () => {
+    const s = createGameSheet({ players: players4, at: new Date('2026-06-01T18:30:00.000Z') });
+    const played = new Date('2026-05-20T19:00:00.000Z');
+    const next = copyGameSheet(s, { playedAt: played });
+    expect(next.playedAt).toEqual(played);
+    expect(next.createdAt).toEqual(s.createdAt);
+  });
+
+  test('copyGameSheet ohne playedAt-Patch behaelt den Wert', () => {
+    const s = createGameSheet({ players: players4 });
+    expect(copyGameSheet(s, { title: 'x' }).playedAt).toEqual(s.playedAt);
+  });
+
+  test('JSON-Roundtrip erhaelt playedAt', () => {
+    const played = new Date('2026-05-20T19:00:00.000Z');
+    const s = copyGameSheet(createGameSheet({ players: players4 }), { playedAt: played });
+    expect(gameSheetFromJson(gameSheetToJson(s)).playedAt).toEqual(played);
+  });
+
+  test('JSON ohne playedAt faellt auf createdAt zurueck (legacy)', () => {
+    const sheet = gameSheetFromJson({
+      id: 's',
+      createdAt: '2026-01-01T10:00:00.000Z',
+      updatedAt: '2026-01-02T10:00:00.000Z',
+      playerIds: ['a', 'b', 'c', 'd'],
+      rounds: [],
+      dirty: false,
+    });
+    expect(sheet.playedAt).toEqual(new Date('2026-01-01T10:00:00.000Z'));
+  });
+});
+
 describe('gameSheet substitutions', () => {
   const sub = { substituteId: 'a', mainPlayerId: 'x' };
 

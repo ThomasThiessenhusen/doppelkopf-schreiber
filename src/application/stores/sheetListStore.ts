@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import type { GameSheet } from '@/domain/models/gameSheet';
+import { compareSheetsByPlayedAtDesc, type GameSheet } from '@/domain/models/gameSheet';
 import { repositories } from '@/application/stores/repositories';
 import type { Player } from '@/domain/models/player';
 import { ensurePoolMembership } from '@/application/playerUsage';
@@ -40,7 +40,7 @@ export const useSheetListStore = create<SheetListState>((set, get) => ({
   async createSheet(sheet, players) {
     await ensurePoolMembership(players);
     await repositories.gameSheet().save(sheet);
-    set({ sheets: [sheet, ...get().sheets] });
+    set({ sheets: [sheet, ...get().sheets].sort(compareSheetsByPlayedAtDesc) });
     return sheet;
   },
 
@@ -51,6 +51,6 @@ export const useSheetListStore = create<SheetListState>((set, get) => ({
 
   upsertLocal(sheet) {
     const others = get().sheets.filter((s) => s.id !== sheet.id);
-    set({ sheets: [sheet, ...others] });
+    set({ sheets: [sheet, ...others].sort(compareSheetsByPlayedAtDesc) });
   },
 }));
