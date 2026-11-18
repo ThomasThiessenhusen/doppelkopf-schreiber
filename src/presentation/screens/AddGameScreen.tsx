@@ -393,7 +393,7 @@ function Loaded({ sheet, gameId }: { sheet: GameSheet; gameId?: string }) {
         ]}
       />
 
-      <View style={{ alignSelf: 'flex-start' }}>
+      <View style={{ alignSelf: 'center' }}>
         <Chip selected={levelCount() > 0} showSelectedCheck={false} onPress={() => cycleLevel()}>
           {buildLevelChipLabel(levelCount())}
         </Chip>

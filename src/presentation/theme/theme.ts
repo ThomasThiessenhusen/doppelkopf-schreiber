@@ -47,10 +47,31 @@ function paperColorsFromScheme(
   };
 }
 
+/** Globaler Faktor für alle Paper-Textvarianten (1 = Material-Standard). */
+export const FONT_SCALE = 1.2;
+
+function scaleFonts(fonts: MD3Theme['fonts']): MD3Theme['fonts'] {
+  const entries = Object.entries(fonts).map(([key, v]) => {
+    const font = v as { fontSize?: number; lineHeight?: number };
+    return [
+      key,
+      {
+        ...v,
+        ...(font.fontSize !== undefined && { fontSize: Math.round(font.fontSize * FONT_SCALE) }),
+        ...(font.lineHeight !== undefined && {
+          lineHeight: Math.round(font.lineHeight * FONT_SCALE),
+        }),
+      },
+    ];
+  });
+  return Object.fromEntries(entries) as MD3Theme['fonts'];
+}
+
 const seedHct = Hct.fromInt(argbFromHex(SEED));
 
 export const lightTheme: MD3Theme = {
   ...MD3LightTheme,
+  fonts: scaleFonts(MD3LightTheme.fonts),
   colors: paperColorsFromScheme(
     new SchemeTonalSpot(seedHct, false, 0),
     MD3LightTheme.colors,
@@ -59,6 +80,7 @@ export const lightTheme: MD3Theme = {
 
 export const darkTheme: MD3Theme = {
   ...MD3DarkTheme,
+  fonts: scaleFonts(MD3DarkTheme.fonts),
   colors: paperColorsFromScheme(
     new SchemeTonalSpot(seedHct, true, 0),
     MD3DarkTheme.colors,
