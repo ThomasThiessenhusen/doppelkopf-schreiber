@@ -1,13 +1,15 @@
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, type NavigationAction } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import {
   Button,
+  Dialog,
   HelperText,
   Icon,
   IconButton,
   Menu,
+  Portal,
   Text,
   TextInput,
   useTheme,
@@ -53,13 +55,31 @@ interface CellProps {
   sitterLabel: string;
   onValue: (value: PaperCell) => void;
   onSitter: () => void;
+  /** Meldet, ob der angezeigte Text ungueltig ist (blockiert dann das Speichern). */
+  onInvalidChange: (invalid: boolean) => void;
 }
 
 /** Eine Raster-Zelle; Text bleibt waehrend der Eingabe lokal (z. B. "-" vor "-3"). */
-function Cell({ value, highlighted, showSitter, sitterLabel, onValue, onSitter }: CellProps) {
+function Cell({
+  value,
+  highlighted,
+  showSitter,
+  sitterLabel,
+  onValue,
+  onSitter,
+  onInvalidChange,
+}: CellProps) {
   const theme = useTheme();
   const [text, setText] = useState(cellText(value));
   const [invalid, setInvalid] = useState(false);
+  const invalidCallback = useRef(onInvalidChange);
+  invalidCallback.current = onInvalidChange;
+
+  useEffect(() => {
+    invalidCallback.current(invalid);
+    // Beim Entfernen der Zelle (z. B. Zeile geloescht) die Meldung zuruecknehmen.
+    return () => invalidCallback.current(false);
+  }, [invalid]);
 
   useEffect(() => {
     // Von aussen geaenderte Werte (z. B. Aussetzer verschoben) uebernehmen.
@@ -78,6 +98,7 @@ function Cell({ value, highlighted, showSitter, sitterLabel, onValue, onSitter }
         value={text}
         placeholder="—"
         error={invalid}
+        selectTextOnFocus
         keyboardType="numbers-and-punctuation"
         style={{
           flex: 1,
@@ -126,7 +147,7 @@ export function PaperSheetGridScreen() {
 
   useEffect(() => {
     // Ohne Entwurf (z. B. nach App-Neustart) zurueck zum Start.
-    if (grid === null) navigation.replace('PaperSheetStart');
+    if (grid === null && !savedRef.current) navigation.replace('PaperSheetStart');
   }, [grid, navigation]);
 
   const [dateText, setDateText] = useState(() => (grid ? formatDate(grid.playedAt) : ''));
@@ -135,6 +156,24 @@ export function PaperSheetGridScreen() {
   const [menuCol, setMenuCol] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Stabile Zeilenschluessel, damit Zelltexte beim Loeschen nicht mitwandern.
+  const nextRowKey = useRef(grid?.rows.length ?? 0);
+  const [rowKeys, setRowKeys] = useState<number[]>(() =>
+    grid ? grid.rows.map((_, i) => i) : [],
+  );
+  const [invalidCells, setInvalidCells] = useState<ReadonlySet<string>>(new Set());
+  const savedRef = useRef(false);
+  const [leaveAction, setLeaveAction] = useState<NavigationAction | null>(null);
+
+  useEffect(() => {
+    // Zurueck/Schliessen mit Eingaben im Raster erst nach Rueckfrage.
+    return navigation.addListener('beforeRemove', (e) => {
+      const draft = usePaperDraftStore.getState().grid;
+      if (savedRef.current || draft === null || draft.rows.length === 0) return;
+      e.preventDefault();
+      setLeaveAction(e.data.action);
+    });
+  }, [navigation]);
 
   const validation = useMemo(() => (grid ? validateGrid(grid, pool) : null), [grid, pool]);
   const totals = useMemo(() => (grid ? computedColumnTotals(grid) : []), [grid]);
@@ -154,6 +193,34 @@ export function PaperSheetGridScreen() {
     const parsed = parseDateTime(nextDate, nextTime);
     setDateInvalid(parsed === null);
     if (parsed !== null) update({ ...g, playedAt: parsed });
+  }
+
+  function addGridRow() {
+    setRowKeys((keys) => [...keys, nextRowKey.current++]);
+    update(addRow(g));
+  }
+
+  function removeGridRow(row: number) {
+    setRowKeys((keys) => keys.filter((_, i) => i !== row));
+    update(removeRow(g, row));
+  }
+
+  function setInvalid(key: string, invalid: boolean) {
+    setInvalidCells((prev) => {
+      if (prev.has(key) === invalid) return prev;
+      const next = new Set(prev);
+      if (invalid) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  }
+
+  function discardAndLeave() {
+    const action = leaveAction;
+    setLeaveAction(null);
+    savedRef.current = true;
+    usePaperDraftStore.getState().reset();
+    if (action !== null) navigation.dispatch(action);
   }
 
   function assign(col: number, a: PlayerAssignment) {
@@ -185,6 +252,7 @@ export function PaperSheetGridScreen() {
       const sheet = buildSheetFromGrid(g, players);
       await useSheetListStore.getState().createSheet(sheet, players);
       await usePlayerListStore.getState().refresh();
+      savedRef.current = true;
       usePaperDraftStore.getState().reset();
       navigation.reset({
         index: 1,
@@ -319,7 +387,7 @@ export function PaperSheetGridScreen() {
             const issues = rowIssueByRow.get(row) ?? [];
             const sumBad = v.rowIssues.some((x) => x.row === row && x.kind === 'sum');
             return (
-              <View key={row} style={{ marginTop: 4 }}>
+              <View key={rowKeys[row] ?? row} style={{ marginTop: 4 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Text style={{ width: IDX_W, textAlign: 'right', paddingRight: 6 }}>{row + 1}</Text>
                   {cells.map((cell, col) => (
@@ -331,6 +399,7 @@ export function PaperSheetGridScreen() {
                       sitterLabel={t('paperImport.sitterButton')}
                       onValue={(value) => update(setCell(g, row, col, value))}
                       onSitter={() => update(setRowSitter(g, row, col))}
+                      onInvalidChange={(inv) => setInvalid(`${rowKeys[row] ?? row}:${col}`, inv)}
                     />
                   ))}
                   <View style={{ width: 70, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
@@ -350,7 +419,7 @@ export function PaperSheetGridScreen() {
                     icon="delete-outline"
                     size={18}
                     accessibilityLabel={t('paperImport.removeRow')}
-                    onPress={() => update(removeRow(g, row))}
+                    onPress={() => removeGridRow(row)}
                     style={{ width: ACT_W, margin: 0 }}
                   />
                 </View>
@@ -394,7 +463,7 @@ export function PaperSheetGridScreen() {
         </HelperText>
       )}
 
-      <Button icon="plus" mode="outlined" onPress={() => update(addRow(g))}>
+      <Button icon="plus" mode="outlined" onPress={addGridRow}>
         {t('paperImport.addRow')}
       </Button>
 
@@ -402,12 +471,30 @@ export function PaperSheetGridScreen() {
       {saveError !== null && <HelperText type="error">{saveError}</HelperText>}
       <Button
         mode="contained"
-        disabled={!v.canConfirm || saving}
+        disabled={!v.canConfirm || saving || dateInvalid || invalidCells.size > 0}
         loading={saving}
         onPress={() => void confirm()}
       >
         {t('paperImport.createSheet')}
       </Button>
+      {invalidCells.size > 0 && (
+        <HelperText type="error">{t('paperImport.invalidCells')}</HelperText>
+      )}
+
+      <Portal>
+        <Dialog visible={leaveAction !== null} onDismiss={() => setLeaveAction(null)}>
+          <Dialog.Title>{t('paperImport.leaveTitle')}</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">{t('paperImport.leaveBody')}</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setLeaveAction(null)}>{t('paperImport.leaveStay')}</Button>
+            <Button mode="contained-tonal" onPress={discardAndLeave}>
+              {t('paperImport.leaveDiscard')}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </ScrollView>
   );
 }

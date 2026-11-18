@@ -91,6 +91,14 @@ export function PaperSheetStartScreen() {
         <Card.Title title={t('paperImport.aiTitle')} />
         <Card.Content style={{ gap: 12 }}>
           <Text variant="bodySmall">{t('paperImport.aiIntro')}</Text>
+          <TextInput
+            mode="outlined"
+            multiline
+            editable={false}
+            label={t('paperImport.promptLabel')}
+            value={prompt}
+            style={{ maxHeight: 160 }}
+          />
           <Button mode="outlined" icon="share-variant" onPress={() => void sharePrompt()}>
             {t('paperImport.sharePrompt')}
           </Button>

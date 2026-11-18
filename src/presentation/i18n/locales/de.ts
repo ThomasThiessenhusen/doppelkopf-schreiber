@@ -260,6 +260,12 @@ export const de = {
       'Die Summen auf dem Papier stimmen rechnerisch nicht mit den Spielen überein. Gespeichert werden die berechneten Summen.',
     createSheet: 'Bogen anlegen',
     saveFailed: 'Der Bogen konnte nicht gespeichert werden.',
+    leaveTitle: 'Eingaben verwerfen?',
+    leaveBody: 'Die bisherigen Eingaben im Raster gehen verloren.',
+    leaveStay: 'Weiter bearbeiten',
+    leaveDiscard: 'Verwerfen',
+    invalidCells: 'Mindestens eine Zelle enthält keine gültige Zahl.',
+    promptLabel: 'Prompt (zum Weitergeben an die KI)',
     needRows: 'Mindestens ein Spiel ist nötig.',
   },
   pointsGame: {

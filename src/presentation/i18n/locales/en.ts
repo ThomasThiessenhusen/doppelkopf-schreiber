@@ -262,6 +262,12 @@ export const en: Resources = {
       'The totals on the paper do not add up with the games. The calculated totals are saved.',
     createSheet: 'Create sheet',
     saveFailed: 'The sheet could not be saved.',
+    leaveTitle: 'Discard input?',
+    leaveBody: 'The input entered in the grid so far will be lost.',
+    leaveStay: 'Keep editing',
+    leaveDiscard: 'Discard',
+    invalidCells: 'At least one cell does not contain a valid number.',
+    promptLabel: 'Prompt (to hand to the AI)',
     needRows: 'At least one game is required.',
   },
   pointsGame: {
